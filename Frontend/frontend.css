@@ -1,0 +1,7 @@
+@import url('Global_canvas/Global_style_canvas.css');
+@import url('fonts/fonts_faces.css');
+@import url('Component_Based_Design/heder/Header.css');
+@import url('/Frontend/Component_Based_Design/focus_component/catalog/catalog.css');
+@import url('Component_Based_Design/focus_component/galerey/galerey.css');
+@import url('/Frontend/Component_Based_Design/breadcrumbs.css');
+@import url('Component_Based_Design/footer/footer.css');

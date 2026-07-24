@@ -1,0 +1,11 @@
+/* ==========================================================================
+   2. ГЛОБАЛЬНЫЙ КАНВАС / КОНТЕЙНЕР
+   ========================================================================== */
+.container {
+  width: 100%;
+  max-width: var(--site-max-width);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--site-padding-x);
+  padding-right: var(--site-padding-x);
+}

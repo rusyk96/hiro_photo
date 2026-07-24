@@ -1,0 +1,16 @@
+/* ==========================================================================
+   3. 12-КОЛОНОЧНАЯ СЕТКА-КОСТИ (Grid System)
+   ========================================================================== */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(var(--grid-columns), 1fr);
+  gap: var(--grid-gap);
+}
+
+.grid-auto-fit {
+  display: grid;
+  /* Подняли порог до 340px — 4 карточки больше не влезут по ширине! */
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: var(--grid-gap);
+  width: 100%;
+}

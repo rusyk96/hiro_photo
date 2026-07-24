@@ -1,0 +1,21 @@
+/* ==========================================================================
+   FONT FACES
+   ========================================================================== */
+
+/* 1. Bebas Neue (для акцентных заголовков) */
+@font-face {
+  font-family: 'Bebas Neue';
+  src: url('/assets/fonts/bebas-neue-regular.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap; /* Чтобы текст не "прыгал" при загрузке */
+}
+
+/* 2. Steppe (основной гарнитур для интерфейса и текста) */
+@font-face {
+  font-family: 'Steppe';
+  src: url('/assets/fonts/Steppe.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}

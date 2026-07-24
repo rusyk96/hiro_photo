@@ -1,0 +1,35 @@
+/* 1. ИМПОРТЫ ВСЕГДА НА САМОМ ВЕРХУ! (без первого слэша /) */
+@import url('Component/Col_span.css');
+@import url('Component/Global_style_container.css');
+@import url('Component/Grid_System.css');
+
+/* ==========================================================================
+   2. СБРОС И ГЛОБАЛЬНЫЕ НАСТРОЙКИ (Box Sizing)
+   ========================================================================== */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg-color: #EDE7E4;
+  --text-color: #ffffff;
+  
+  --site-max-width: 1280px;
+  --site-padding-x: 32px;
+  
+  --grid-columns: 12;
+  --grid-gap: 20px;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  font-family: system-ui, -apple-system, sans-serif;
+  min-height: 100vh;
+}
+
+.row-span-2 { 
+  grid-row: span 2; 
+}

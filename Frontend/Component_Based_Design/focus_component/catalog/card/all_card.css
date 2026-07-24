@@ -1,0 +1,49 @@
+/* Базовый вид карточки (квадрат/модуль) */
+.work-card {
+  position: relative;
+  aspect-ratio: 16 / 10; /* Прямоугольная кинематографичная пропорция */
+  /* min-height убираем! */
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px; /* Если используешь скругления */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #1a1a1a;
+  transition: border-color 0.2s ease;
+  overflow: hidden;
+
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+/* 1. ПЕРВАЯ КАРТОЧКА: Пунктирный контур или аккуратный прозрачный фон */
+.card-empty {
+  background-image: url('/assets/img/photo/НЕ\ спонтанный\ концерт\ \ \ -291.webp');
+  background-size: cover;       /* Масштабирует фото, чтобы полностью заполнить блок */
+  background-position: center;  /* Центрирует кадр */
+  background-repeat: no-repeat; /* Отключает повторение */
+}
+
+.card-empty:hover {
+  border-color: rgba(208, 207, 207, 0.756);
+}
+
+/* 2. КАРТОЧКИ "COMING SOON" */
+.card-disabled {
+  opacity: 0.5; /* Легкая приглушенность */
+  user-select: none;
+  pointer-events: none; /* Блокирует взаимодействия */
+}
+
+/* Стиль аккуратной надписи/плашки */
+.status-badge {
+  font-family: 'Steppe', sans-serif; 
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #dedede;
+  border: 1px solid rgba(227, 227, 227, 0.667);
+  padding: 6px 12px;
+  border-radius: 20px;
+}

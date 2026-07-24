@@ -1,0 +1,57 @@
+/* ==========================================================================
+   ГАЛЕРЕЯ АЛЬБОМА (Bento Grid)
+   ========================================================================== */
+
+@import url('/Frontend/Component_Based_Design/focus_component/galerey/slider/Lightbox_Slider_Modal.css');
+
+/* Контейнер галереи */
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: var(--grid-gap, 20px);
+  width: 100%;
+}
+
+/* Десктопные спаны колонок */
+.gallery-card.col-4 {
+  grid-column: span 4;
+}
+
+.gallery-card.col-8 {
+  grid-column: span 8;
+}
+
+/* Базовые стили карточки */
+.gallery-card {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 10; /* Кинематографичные пропорции 16:10 */
+  border-radius: 18px;
+  overflow: hidden;
+  background-color: #1a1a1a;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Картинка внутри карточки */
+.gallery-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+/* Ховер-эффект */
+.gallery-card:hover .gallery-img {
+  transform: scale(1.02);
+}
+
+/* ==========================================================================
+   АДАПТИВ (Мобильные устройства)
+   ========================================================================== */
+@media (max-width: 768px) {
+  .gallery-card.col-4,
+  .gallery-card.col-8 {
+    grid-column: span 12; /* На телефонах все кадры встают друг под друга */
+  }
+}

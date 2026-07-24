@@ -1,0 +1,29 @@
+.breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 24px;
+  font-family: 'Steppe', sans-serif;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.crumb-link {
+  color: rgba(95, 89, 89, 0.813);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.crumb-link:hover {
+  color: #ffffff;
+}
+
+.crumb-separator {
+  color: rgba(48, 45, 45, 0.575);
+}
+
+.crumb-current {
+  color: #292828;
+  font-weight: 500;
+}

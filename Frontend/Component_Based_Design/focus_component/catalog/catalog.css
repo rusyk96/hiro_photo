@@ -1,0 +1,15 @@
+@import url('/Frontend/Component_Based_Design/focus_component/catalog/card/all_card.css');
+
+/* Обертка для фокус-зоны (если нужен внешний отступ от шапки) */
+.focus-zone {
+  width: 100%;
+  padding-top: 10px;
+  padding-bottom: 60px;
+}
+
+/* Применять ховер-подсветку только к обычным карточкам */
+.work-card:not(.card-empty):hover {
+  transform: translateY(-2px);
+  border-color: #444444;
+  background-color: #1f1f1f; /* Светло-серый #ababab сильно выбивается из тёмной темы, лучше тёмный акцент */
+}

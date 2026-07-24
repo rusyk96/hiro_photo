@@ -1,0 +1,30 @@
+/* Внешняя полоса — закрашивает весь экран по ширине */
+.header-banner {
+  width: 100%;
+  background-color: #EDE7E4; /* Твой цвет фона */
+  margin-bottom: 40px;       /* Отодвигаем весь блок с фоном от контента ниже */
+}
+
+.site-header {
+  display: flex;
+  align-items: center;            /* Выравнивание по вертикальному центру */
+  justify-content: space-between; /* Логотип слева, навигация справа */
+  padding-top: 20px;
+  padding-bottom: 20px;
+}
+
+/* Контейнер логотипа */
+.header-logo {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+/* Картинка логотипа */
+.logo-img {
+  /* clamp(МИНИМУМ, ДИНАМИКА, МАКСИМУМ) */
+  height: clamp(48px, 8vw, 80px);
+  width: auto; /* Сохраняет идеальные пропорции SVG */
+  display: block;
+  transition: height 0.2s ease; /* Плавность при ресайзе */
+}
