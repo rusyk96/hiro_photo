@@ -19,7 +19,7 @@
 
 /* 1. ПЕРВАЯ КАРТОЧКА: Пунктирный контур или аккуратный прозрачный фон */
 .card-empty {
-  background-image: url('/assets/img/photo/НЕ\ спонтанный\ концерт\ \ \ -291.webp');
+  background-image: url('assets/img/photo/НЕ\ спонтанный\ концерт\ \ \ -291.webp');
   background-size: cover;       /* Масштабирует фото, чтобы полностью заполнить блок */
   background-position: center;  /* Центрирует кадр */
   background-repeat: no-repeat; /* Отключает повторение */
