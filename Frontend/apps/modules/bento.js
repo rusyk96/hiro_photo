@@ -172,3 +172,29 @@ function buildSmartBentoGallery(photos) {
   container.appendChild(fragment);
   initLightboxEvents();
 }
+
+// Вспомогательная функция: ждёт загрузки первых N картинок из контейнера
+export function waitForFirstImages(count = 4) {
+  const container = document.getElementById('album-gallery-container');
+  if (!container) return Promise.resolve();
+
+  // Находим первые N картинок
+  const images = Array.from(container.querySelectorAll('img')).slice(0, count);
+
+  if (images.length === 0) return Promise.resolve();
+
+  const loadPromises = images.map((img) => {
+    // Если картинка уже успела закешироваться и загрузиться
+    if (img.complete && img.naturalHeight !== 0) {
+      return Promise.resolve();
+    }
+
+    return new Promise((resolve) => {
+      // Ждём успешной загрузки или ошибки (чтобы сайт не повис навсегда, если сеть сбойнула)
+      img.addEventListener('load', resolve, { once: true });
+      img.addEventListener('error', resolve, { once: true });
+    });
+  });
+
+  return Promise.all(loadPromises);
+}
