@@ -45,11 +45,11 @@ const RAW_BASE_URL = "https://raw.githubusercontent.com/rusyk96/ne_spont/main/we
 let globalPhotoFiles = [];
 let currentIndex = 0;
 
+// 1. Загрузка данных и запуск сборщика Bento-сетки
 async function renderAlbumGallery(fallbackCount = 371) {
   const container = document.getElementById('album-gallery-container');
   if (!container) return;
 
-  // Очищаем контейнер перед рендером
   container.innerHTML = '';
 
   try {
@@ -67,57 +67,11 @@ async function renderAlbumGallery(fallbackCount = 371) {
     }
   }
 
-  // Используем фрагмент, чтобы не дергать DOM на каждой из 371 карточек
-  const fragment = document.createDocumentFragment();
-
-  globalPhotoFiles.forEach((fileItem, index) => {
-    const i = index + 1;
-    const fileName = typeof fileItem === 'string' ? fileItem : fileItem.name;
-    const cleanFileName = fileName.normalize('NFC');
-    const photoUrl = `${RAW_BASE_URL}${encodeURIComponent(cleanFileName)}`;
-
-    // Создаем карточку
-    const card = document.createElement('div');
-    card.className = 'gallery-card medium'; // Дефолтный размер до загрузки
-    card.onclick = () => openLightbox(index);
-
-    const img = document.createElement('img');
-    img.src = photoUrl;
-    img.alt = `НЕ спонтанный концерт — кадр ${i}`;
-    img.className = 'gallery-img';
-    img.loading = 'lazy';
-    img.decoding = 'async';
-
-    // Подстраиваем класс при загрузке
-    img.onload = function() {
-      adjustBentoCard(this);
-    };
-
-    // Если картинка отвалилась
-    img.onerror = function() {
-      const parentCard = this.closest('.gallery-card');
-      if (parentCard) parentCard.style.display = 'none';
-    };
-
-    card.appendChild(img);
-    fragment.appendChild(card);
-
-    // Если картинка УЖЕ закеширована браузером, вызываем проверку вручную
-    if (img.complete && img.naturalWidth !== 0) {
-      adjustBentoCard(img);
-    }
-  });
-
-  // Вставляем все 371 карточки одним махом!
-  container.appendChild(fragment);
-
-  if (typeof initLightboxEvents === 'function') {
-    initLightboxEvents();
-  }
+  // Запускаем сборку блочной Bento-галереи по макетам 1-5!
+  buildBentoGallery(globalPhotoFiles);
 }
 
-// Функция парсит массив фоток и строит секции по твоим макетам 1-5
-// Основная функция сборки галереи по макетам 1-5
+// 2. Основная функция сборки галереи по секциям (макеты 1-5)
 function buildBentoGallery(photoList) {
   const container = document.getElementById('album-gallery-container');
   if (!container) return;
@@ -126,19 +80,18 @@ function buildBentoGallery(photoList) {
   const fragment = document.createDocumentFragment();
 
   let currentIndex = 0;
-  let isMirrored = false; // Переключатель для зеркалирования
+  let isMirrored = false; // Переключатель для зеркалирования блоков
 
   while (currentIndex < photoList.length) {
     const remaining = photoList.length - currentIndex;
     const row = document.createElement('div');
     row.className = 'bento-row';
 
-    // Берем чанки по 4 или 3 кадра
     const chunkSize = Math.min(remaining >= 4 ? 4 : remaining, 4);
     const photosChunk = photoList.slice(currentIndex, currentIndex + chunkSize);
 
     if (chunkSize === 4) {
-      // Макет 4 / 5 (3 небольших кадра слева + 1 акцентный справа)
+      // Макет 4 / 5 (3 небольших кадра + 1 акцентный)
       if (!isMirrored) {
         row.innerHTML = `
           <div class="bento-col-4">
@@ -151,7 +104,6 @@ function buildBentoGallery(photoList) {
           </div>
         `;
       } else {
-        // Зеркальный вариант (1 акцентный слева + 3 справа)
         row.innerHTML = `
           <div class="bento-col-8">
             ${createCardHtml(photosChunk[3], currentIndex + 3)}
@@ -164,7 +116,7 @@ function buildBentoGallery(photoList) {
         `;
       }
     } else if (chunkSize === 3) {
-      // Макет 1 / 2 / 3 (2 кадра слева + 1 акцентный справа)
+      // Макет 1 / 2 / 3 (2 кадра + 1 акцентный)
       if (!isMirrored) {
         row.innerHTML = `
           <div class="bento-col-4">
@@ -176,7 +128,6 @@ function buildBentoGallery(photoList) {
           </div>
         `;
       } else {
-        // Зеркальный вариант (1 акцентный слева + 2 справа)
         row.innerHTML = `
           <div class="bento-col-8">
             ${createCardHtml(photosChunk[2], currentIndex + 2)}
@@ -188,7 +139,7 @@ function buildBentoGallery(photoList) {
         `;
       }
     } else {
-      // Остаток (1-2 кадра в конце альбома)
+      // Хвост альбома (1-2 кадра)
       photosChunk.forEach((file, idx) => {
         const col = document.createElement('div');
         col.className = chunkSize === 1 ? 'bento-col-8' : 'bento-col-6';
@@ -199,18 +150,17 @@ function buildBentoGallery(photoList) {
 
     fragment.appendChild(row);
     currentIndex += chunkSize;
-    isMirrored = !isMirrored; // Переворачиваем зеркало для следующей секции
+    isMirrored = !isMirrored;
   }
 
   container.appendChild(fragment);
 
-  // Инициализируем лайтбокс после рендера
   if (typeof initLightboxEvents === 'function') {
     initLightboxEvents();
   }
 }
 
-// Вспомогательная функция генерации HTML одной карточки
+// 3. Вспомогательная функция сборки HTML одной карточки
 function createCardHtml(fileItem, index) {
   const fileName = typeof fileItem === 'string' ? fileItem : fileItem.name;
   const cleanFileName = fileName.normalize('NFC');
@@ -230,27 +180,7 @@ function createCardHtml(fileItem, index) {
   `;
 }
 
-// Вспомогательная функция сборки карточки
-function createCardHtml(fileItem, index) {
-  const fileName = typeof fileItem === 'string' ? fileItem : fileItem.name;
-  const cleanFileName = fileName.normalize('NFC');
-  const photoUrl = `${RAW_BASE_URL}${encodeURIComponent(cleanFileName)}`;
-
-  return `
-    <div class="gallery-card" onclick="openLightbox(${index})">
-      <img 
-        src="${photoUrl}" 
-        alt="Кадр ${index + 1}" 
-        class="gallery-img"
-        loading="lazy"
-        decoding="async"
-        onerror="this.closest('.gallery-card').style.display='none';"
-      />
-    </div>
-  `;
-}
-
-// 3. Менеджер состояний (Роутер)
+// 4. Менеджер состояний (Роутер)
 async function initRouter() {
   const urlParams = new URLSearchParams(window.location.search);
   const currentAlbum = urlParams.get('album');
@@ -263,22 +193,28 @@ async function initRouter() {
   }
 }
 
-// 4. Инициализация и обработчик кликов
-document.addEventListener('DOMContentLoaded', () => {
-  initRouter();
+// 5. Инициализация кликов и событий DOM
+document.addEventListener('DOMContentLoaded', async () => {
+  // Загружаем базовые шапку и подвал
+  if (typeof includeComponent === 'function') {
+    await includeComponent('header-slot', 'Frontend/Global_frames/heder_and_footer/heder.html');
+    await includeComponent('footer-slot', 'Frontend/Global_frames/heder_and_footer/footer.html');
+  }
 
+  // Запускаем роутинг при старте
+  await initRouter();
+
+  // Слушаем клики по всему документу для навигации
   document.addEventListener('click', async (e) => {
-    // Переход к альбому
     const concertCard = e.target.closest('#concert-card');
     if (concertCard) {
       e.preventDefault();
       history.pushState({ album: 'ne_spont' }, '', '?album=ne_spont');
       await includeComponent('focus-slot', 'Frontend/Global_frames/focus_zone/focus-album-gallery.html');
-      await renderAlbumGallery();
+      await renderAlbumGallery(); // Обязательно вызываем рендер после подгрузки DOM!
       return;
     }
 
-    // Возврат в каталог
     const backLink = e.target.closest('.crumb-link');
     if (backLink) {
       e.preventDefault();
