@@ -49,6 +49,9 @@ async function renderAlbumGallery(fallbackCount = 371) {
   const container = document.getElementById('album-gallery-container');
   if (!container) return;
 
+  // Очищаем контейнер перед рендером
+  container.innerHTML = '';
+
   try {
     const response = await fetch(`${RAW_BASE_URL}manifest.json?t=${Date.now()}`);
     if (response.ok) {
@@ -67,31 +70,50 @@ async function renderAlbumGallery(fallbackCount = 371) {
   let htmlContent = '';
 
   globalPhotoFiles.forEach((fileName, index) => {
-    const i = index + 1;
-    const isEvenPair = Math.floor((i - 1) / 2) % 2 === 0;
-    const colClass = (i % 2 !== 0) 
-      ? (isEvenPair ? 'col-4' : 'col-8') 
-      : (isEvenPair ? 'col-8' : 'col-4');
+  const i = index + 1;
+  const cleanFileName = fileName.normalize('NFC');
+  const photoUrl = `${RAW_BASE_URL}${encodeURIComponent(cleanFileName)}`;
 
-    const cleanFileName = fileName.normalize('NFC');
-    const photoUrl = `${RAW_BASE_URL}${encodeURIComponent(cleanFileName)}`;
+  // Создаем карточку
+  const card = document.createElement('div');
+  card.className = 'gallery-card medium'; // По умолчанию даем средний размер
+  card.onclick = () => openLightbox(index);
 
-    htmlContent += `
-      <div class="gallery-card ${colClass}" onclick="openLightbox(${index})">
-        <img 
-          src="${photoUrl}" 
-          alt="НЕ спонтанный концерт — кадр ${i}" 
-          class="gallery-img"
-          loading="lazy"
-          decoding="async"
-          onerror="this.closest('.gallery-card').style.display='none';"
-        />
-      </div>
-    `;
-  });
+  card.innerHTML = `
+    <img 
+      src="${photoUrl}" 
+      alt="НЕ спонтанный концерт — кадр ${i}" 
+      class="gallery-img"
+      loading="lazy"
+      decoding="async"
+      onload="adjustBentoCard(this)"
+      onerror="this.closest('.gallery-card').style.display='none';"
+    />
+  `;
+
+  container.appendChild(card);
+});
 
   container.innerHTML = htmlContent;
   initLightboxEvents();
+}
+
+// Функция подстраивает Bento-класс карточки в момент загрузки файла
+function adjustBentoCard(img) {
+  const card = img.closest('.gallery-card');
+  if (!card) return;
+
+  const ratio = img.naturalWidth / img.naturalHeight;
+
+  card.classList.remove('medium', 'portrait', 'landscape');
+
+  if (ratio < 0.85) {
+    card.classList.add('portrait');   // Вертикальный кадр
+  } else if (ratio > 1.3) {
+    card.classList.add('landscape');  // Широкий кадр
+  } else {
+    card.classList.add('medium');     // Обычный кадр
+  }
 }
 
 // 3. Менеджер состояний (Роутер)
