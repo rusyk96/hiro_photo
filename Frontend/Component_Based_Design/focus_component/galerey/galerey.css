@@ -8,7 +8,6 @@
    ОСНОВНОЙ КОНТЕЙНЕР И СЕКЦИИ
    ========================================================================== */
 
-/* Главный контейнер альбома */
 .gallery-grid {
   display: flex;
   flex-direction: column;
@@ -16,7 +15,6 @@
   width: 100%;
 }
 
-/* Стандартный ряд (12-колоночная сетка) */
 .bento-row {
   display: grid;
   grid-template-columns: repeat(12, 1fr);
@@ -64,7 +62,6 @@
   width: 100%;
 }
 
-/* Верхняя группа: левая и правая стороны */
 .bento-top-group {
   display: grid;
   grid-template-columns: repeat(12, 1fr);
@@ -72,7 +69,6 @@
   width: 100%;
 }
 
-/* Колонки внутри верхнего блока */
 .bento-left-col,
 .bento-right-col {
   grid-column: span 6;
@@ -81,7 +77,11 @@
   gap: var(--grid-gap, 24px);
 }
 
-/* Выравнивание высоты портрета под две левые горизонтали */
+/* Фикс для правой колонки: заставляем портрет корректно растягиваться в Grid */
+.bento-right-col {
+  height: 100%;
+}
+
 .bento-right-col .gallery-card {
   height: 100%;
 }
@@ -101,12 +101,16 @@
 .gallery-card {
   position: relative;
   width: 100%;
-  height: 100%;
   border-radius: 20px;
   overflow: hidden;
   background-color: #1a1a1a;
-  flex: 1;
   cursor: pointer;
+  /* Убрали flex: 1 и height: 100% по умолчанию, чтобы не ломать Blink */
+}
+
+/* Кастомный фикс для выравнивания высоты внутри левой колонки */
+.bento-left-col .gallery-card {
+  aspect-ratio: 4 / 3;
 }
 
 .gallery-img {
@@ -115,6 +119,10 @@
   object-fit: cover;
   display: block;
   transition: transform 0.3s ease;
+  
+  /* Фикс для Chrome: явное указание предсказуемого сжатия */
+  min-width: 0;
+  min-height: 0;
 }
 
 .gallery-card:hover .gallery-img {
@@ -127,7 +135,7 @@
 
 @media (max-width: 768px) {
   :root {
-    --grid-gap: 12px; /* Чуть ужимаем гэп для мобилок */
+    --grid-gap: 12px;
   }
 
   .gallery-grid {
@@ -146,18 +154,16 @@
     width: 100%;
   }
 
-  /* Для стандартных карточек в потоке */
   .bento-row .gallery-card {
     aspect-ratio: 3 / 2;
   }
 
-  /* --- Адаптация нового Bento-макета с картинки --- */
   .bento-pattern-row {
     gap: 12px;
   }
 
   .bento-top-group {
-    grid-template-columns: 1fr 1fr; /* 2 равные колонки */
+    grid-template-columns: 1fr 1fr;
     gap: 12px;
   }
 
@@ -167,18 +173,15 @@
     gap: 12px;
   }
 
-  /* Две горизонтали слева */
   .bento-left-col .gallery-card {
     aspect-ratio: 4 / 3;
   }
 
-  /* Портрет справа растягивается во всю высоту */
   .bento-right-col .gallery-card {
     height: 100%;
     aspect-ratio: unset; 
   }
 
-  /* Нижний широкий кадр */
   .bento-bottom-full .gallery-card {
     aspect-ratio: 16 / 9;
   }
