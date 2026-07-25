@@ -116,31 +116,138 @@ async function renderAlbumGallery(fallbackCount = 371) {
   }
 }
 
-// Функция подстраивает Bento-класс карточки в момент загрузки файла
-function adjustBentoCard(img) {
-  if (!img || img.naturalWidth === 0) return;
-  
-  const card = img.closest('.gallery-card');
-  if (!card) return;
+// Функция парсит массив фоток и строит секции по твоим макетам 1-5
+// Основная функция сборки галереи по макетам 1-5
+function buildBentoGallery(photoList) {
+  const container = document.getElementById('album-gallery-container');
+  if (!container) return;
 
-  const ratio = img.naturalWidth / img.naturalHeight;
+  container.innerHTML = '';
+  const fragment = document.createDocumentFragment();
 
-  // Сбрасываем старые классы
-  card.classList.remove('portrait', 'landscape-wide', 'landscape-std', 'square');
+  let currentIndex = 0;
+  let isMirrored = false; // Переключатель для зеркалирования
 
-  if (ratio < 0.85) {
-    // Вертикальный портрет (2:3 / 3:4)
-    card.classList.add('portrait');
-  } else if (ratio > 1.55) {
-    // Панорамный / кино-кадр (16:9)
-    card.classList.add('landscape-wide');
-  } else if (ratio > 1.1) {
-    // Классический фото-горизонт (3:2)
-    card.classList.add('landscape-std');
-  } else {
-    // Квадрат / околоквадрат
-    card.classList.add('square');
+  while (currentIndex < photoList.length) {
+    const remaining = photoList.length - currentIndex;
+    const row = document.createElement('div');
+    row.className = 'bento-row';
+
+    // Берем чанки по 4 или 3 кадра
+    const chunkSize = Math.min(remaining >= 4 ? 4 : remaining, 4);
+    const photosChunk = photoList.slice(currentIndex, currentIndex + chunkSize);
+
+    if (chunkSize === 4) {
+      // Макет 4 / 5 (3 небольших кадра слева + 1 акцентный справа)
+      if (!isMirrored) {
+        row.innerHTML = `
+          <div class="bento-col-4">
+            ${createCardHtml(photosChunk[0], currentIndex)}
+            ${createCardHtml(photosChunk[1], currentIndex + 1)}
+            ${createCardHtml(photosChunk[2], currentIndex + 2)}
+          </div>
+          <div class="bento-col-8">
+            ${createCardHtml(photosChunk[3], currentIndex + 3)}
+          </div>
+        `;
+      } else {
+        // Зеркальный вариант (1 акцентный слева + 3 справа)
+        row.innerHTML = `
+          <div class="bento-col-8">
+            ${createCardHtml(photosChunk[3], currentIndex + 3)}
+          </div>
+          <div class="bento-col-4">
+            ${createCardHtml(photosChunk[0], currentIndex)}
+            ${createCardHtml(photosChunk[1], currentIndex + 1)}
+            ${createCardHtml(photosChunk[2], currentIndex + 2)}
+          </div>
+        `;
+      }
+    } else if (chunkSize === 3) {
+      // Макет 1 / 2 / 3 (2 кадра слева + 1 акцентный справа)
+      if (!isMirrored) {
+        row.innerHTML = `
+          <div class="bento-col-4">
+            ${createCardHtml(photosChunk[0], currentIndex)}
+            ${createCardHtml(photosChunk[1], currentIndex + 1)}
+          </div>
+          <div class="bento-col-8">
+            ${createCardHtml(photosChunk[2], currentIndex + 2)}
+          </div>
+        `;
+      } else {
+        // Зеркальный вариант (1 акцентный слева + 2 справа)
+        row.innerHTML = `
+          <div class="bento-col-8">
+            ${createCardHtml(photosChunk[2], currentIndex + 2)}
+          </div>
+          <div class="bento-col-4">
+            ${createCardHtml(photosChunk[0], currentIndex)}
+            ${createCardHtml(photosChunk[1], currentIndex + 1)}
+          </div>
+        `;
+      }
+    } else {
+      // Остаток (1-2 кадра в конце альбома)
+      photosChunk.forEach((file, idx) => {
+        const col = document.createElement('div');
+        col.className = chunkSize === 1 ? 'bento-col-8' : 'bento-col-6';
+        col.innerHTML = createCardHtml(file, currentIndex + idx);
+        row.appendChild(col);
+      });
+    }
+
+    fragment.appendChild(row);
+    currentIndex += chunkSize;
+    isMirrored = !isMirrored; // Переворачиваем зеркало для следующей секции
   }
+
+  container.appendChild(fragment);
+
+  // Инициализируем лайтбокс после рендера
+  if (typeof initLightboxEvents === 'function') {
+    initLightboxEvents();
+  }
+}
+
+// Вспомогательная функция генерации HTML одной карточки
+function createCardHtml(fileItem, index) {
+  const fileName = typeof fileItem === 'string' ? fileItem : fileItem.name;
+  const cleanFileName = fileName.normalize('NFC');
+  const photoUrl = `${RAW_BASE_URL}${encodeURIComponent(cleanFileName)}`;
+
+  return `
+    <div class="gallery-card" onclick="openLightbox(${index})">
+      <img 
+        src="${photoUrl}" 
+        alt="Кадр ${index + 1}" 
+        class="gallery-img"
+        loading="lazy"
+        decoding="async"
+        onerror="this.closest('.gallery-card').style.display='none';"
+      />
+    </div>
+  `;
+}
+
+// Вспомогательная функция сборки карточки
+function createCardHtml(fileItem, index) {
+  const fileName = typeof fileItem === 'string' ? fileItem : fileItem.name;
+  const cleanFileName = fileName.normalize('NFC');
+  const photoUrl = `${RAW_BASE_URL}${encodeURIComponent(cleanFileName)}`;
+
+  return `
+    <div class="gallery-card" onclick="openLightbox(${index})">
+      <img 
+        src="${photoUrl}" 
+        alt="Кадр ${index + 1}" 
+        class="gallery-img"
+        loading="lazy"
+        decoding="async"
+        onerror="this.closest('.gallery-card').style.display='none';"
+      />
+    </div>
+  `;
 }
 
 // 3. Менеджер состояний (Роутер)

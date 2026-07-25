@@ -4,15 +4,62 @@
 
 @import url('/Frontend/Component_Based_Design/focus_component/galerey/slider/Lightbox_Slider_Modal.css');
 
-/* Контейнер галереи — 12-колоночная модульная сетка */
+/* ==========================================================================
+   ОСНОВНОЙ КОНТЕЙНЕР И СЕКЦИИ
+   ========================================================================== */
+
+/* Главный контейнер альбома */
 .gallery-grid {
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  grid-auto-rows: 160px; /* Уменьшаем базовый шаг (модуль) для более гибкой сборки */
-  grid-auto-flow: dense;  /* Умная упаковка без дыр */
-  gap: var(--grid-gap, 20px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--grid-gap, 24px);
   width: 100%;
 }
+
+/* Ряд-секция (12-колоночная сетка) */
+.bento-row {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: var(--grid-gap, 24px);
+  width: 100%;
+}
+
+/* ==========================================================================
+   КОЛОНКИ (Блоки 4/12 и 8/12)
+   ========================================================================== */
+
+/* Узкая колонка (4 колонки из 12) — под 2 или 3 кадра */
+.bento-col-4 {
+  grid-column: span 4;
+  display: flex;
+  flex-direction: column;
+  gap: var(--grid-gap, 24px);
+}
+
+/* Широкая колонка (8 колонок из 12) — под доминирующий кадр */
+.bento-col-8 {
+  grid-column: span 8;
+  display: flex;
+  flex-direction: column;
+  gap: var(--grid-gap, 24px);
+}
+
+/* Ряд на 2 равные части (если нужно 6 и 6 колонок) */
+.bento-col-6 {
+  grid-column: span 6;
+  display: flex;
+  flex-direction: column;
+  gap: var(--grid-gap, 24px);
+}
+
+/* Большой акцентный кадр диктует высоту всей секции */
+.bento-col-8 .gallery-card {
+  aspect-ratio: 4 / 3; 
+}
+
+/* ==========================================================================
+   КАРТОЧКА И ИЗОБРАЖЕНИЕ
+   ========================================================================== */
 
 .gallery-card {
   position: relative;
@@ -21,12 +68,14 @@
   border-radius: 20px;
   overflow: hidden;
   background-color: #1a1a1a;
+  flex: 1; /* Равномерно делит высоту между элементами в колонке */
+  cursor: pointer;
 }
 
 .gallery-img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: cover; /* Сохраняет аккуратные края без искажения пропорций */
   display: block;
   transition: transform 0.3s ease;
 }
@@ -36,49 +85,27 @@
 }
 
 /* ==========================================================================
-   КЛАССЫ ОРИЕНТАЦИИ И РАЗМЕРОВ (Для JS/HTML)
-   ========================================================================== */
-
-.gallery-card.portrait {
-  grid-column: span 4;
-  grid-row: span 3; /* Больше высоты, чтобы не резать вертикалку */
-}
-
-/* Широкий панорамный кадр — 8 колонок, 2 яруса высоты */
-.gallery-card.landscape {
-  grid-column: span 8;
-  grid-row: span 2; /* Теперь широкие кадры НЕ сплюснуты! */
-}
-
-/* Стандартный/квадратный кадр — 4 колонки, 2 яруса высоты */
-.gallery-card.medium {
-  grid-column: span 4;
-  grid-row: span 2;
-}
-
-/* ==========================================================================
-   АДАПТИВ (Мобилки)
+   АДАПТИВ (Мобильные устройства)
    ========================================================================== */
 @media (max-width: 768px) {
   .gallery-grid {
-    grid-template-columns: 1fr;
-    grid-auto-rows: auto;
+    gap: 16px;
   }
 
-  .gallery-card.portrait,
-  .gallery-card.landscape,
-  .gallery-card.medium {
-    grid-column: span 1;
-    grid-row: span 1;
-    height: auto;
+  .bento-row {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
   }
 
-  .gallery-card.landscape,
-  .gallery-card.medium {
+  .bento-col-4,
+  .bento-col-8,
+  .bento-col-6 {
+    width: 100%;
+  }
+
+  /* На мобилках задаем фиксированный аспект, чтобы фотки не схлопывались */
+  .gallery-card {
     aspect-ratio: 3 / 2;
-  }
-
-  .gallery-card.portrait {
-    aspect-ratio: 2 / 3;
   }
 }
