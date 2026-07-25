@@ -45,6 +45,8 @@ const RAW_BASE_URL = "https://raw.githubusercontent.com/rusyk96/ne_spont/main/we
 let globalPhotoFiles = [];
 let currentIndex = 0;
 
+// --- 1. ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ---
+
 async function includeComponent(slotId, filePath) {
   const slot = document.getElementById(slotId);
   if (!slot) return; 
@@ -90,6 +92,9 @@ function createCardHtml(fileItem, index) {
     </div>
   `;
 }
+
+// --- 2. РЕНДЕР СЕТКИ BENTO ---
+
 async function renderAlbumGallery(fallbackCount = 371) {
   const container = document.getElementById('album-gallery-container');
   if (!container) return;
@@ -127,9 +132,54 @@ function buildSmartBentoGallery(photos) {
 
   while (landscapes.length > 0 || portraits.length > 0) {
     const row = document.createElement('div');
-    row.className = 'bento-row';
 
-    if (landscapes.length >= 2 && portraits.length >= 1) {
+    // СЦЕНАРИЙ 1 (Макет с референса): 3 горизонтали + 1 портрет
+    if (landscapes.length >= 3 && portraits.length >= 1) {
+      row.className = 'bento-pattern-row';
+
+      const h1 = landscapes.shift(); // Левый верхний
+      const h2 = landscapes.shift(); // Левый нижний
+      const v1 = portraits.shift();  // Правый портрет
+      const h3 = landscapes.shift(); // Нижний широкий кадр
+
+      if (!isMirrored) {
+        row.innerHTML = `
+          <div class="bento-top-group">
+            <div class="bento-left-col">
+              ${createCardHtml(h1.fileItem, h1.originalIndex)}
+              ${createCardHtml(h2.fileItem, h2.originalIndex)}
+            </div>
+            <div class="bento-right-col">
+              ${createCardHtml(v1.fileItem, v1.originalIndex)}
+            </div>
+          </div>
+          <div class="bento-bottom-full">
+            ${createCardHtml(h3.fileItem, h3.originalIndex)}
+          </div>
+        `;
+      } else {
+        // Зеркальный вариатив
+        row.innerHTML = `
+          <div class="bento-top-group">
+            <div class="bento-right-col">
+              ${createCardHtml(v1.fileItem, v1.originalIndex)}
+            </div>
+            <div class="bento-left-col">
+              ${createCardHtml(h1.fileItem, h1.originalIndex)}
+              ${createCardHtml(h2.fileItem, h2.originalIndex)}
+            </div>
+          </div>
+          <div class="bento-bottom-full">
+            ${createCardHtml(h3.fileItem, h3.originalIndex)}
+          </div>
+        `;
+      }
+      isMirrored = !isMirrored;
+    } 
+    // СЦЕНАРИЙ 2: 2 горизонтали + 1 портрет (Классический Bento)
+    else if (landscapes.length >= 2 && portraits.length >= 1) {
+      row.className = 'bento-row';
+
       const h1 = landscapes.shift();
       const v1 = portraits.shift();
       const h2 = landscapes.shift();
@@ -157,7 +207,10 @@ function buildSmartBentoGallery(photos) {
       }
       isMirrored = !isMirrored;
     } 
+    // СЦЕНАРИЙ 3: 3 вертикали подряд
     else if (portraits.length >= 3) {
+      row.className = 'bento-row';
+
       const v1 = portraits.shift();
       const v2 = portraits.shift();
       const v3 = portraits.shift();
@@ -168,7 +221,10 @@ function buildSmartBentoGallery(photos) {
         <div class="bento-col-4">${createCardHtml(v3.fileItem, v3.originalIndex)}</div>
       `;
     }
+    // СЦЕНАРИЙ 4: 2 горизонтали (50/50)
     else if (landscapes.length >= 2) {
+      row.className = 'bento-row';
+
       const h1 = landscapes.shift();
       const h2 = landscapes.shift();
 
@@ -177,7 +233,10 @@ function buildSmartBentoGallery(photos) {
         <div class="bento-col-6">${createCardHtml(h2.fileItem, h2.originalIndex)}</div>
       `;
     }
+    // ОСТАТОК
     else {
+      row.className = 'bento-row';
+
       const remaining = [...landscapes, ...portraits];
       landscapes = [];
       portraits = [];
@@ -192,58 +251,12 @@ function buildSmartBentoGallery(photos) {
 
     fragment.appendChild(row);
   }
-  // Сценарий для макета с картинки: 3 горизонтали + 1 вертикаль
-if (landscapes.length >= 3 && portraits.length >= 1) {
-  const h1 = landscapes.shift(); // Левый верхний
-  const h2 = landscapes.shift(); // Левый нижний
-  const v1 = portraits.shift();  // Правый портрет
-  const h3 = landscapes.shift(); // Нижняя широкая полоса
 
-  if (!isMirrored) {
-    row.innerHTML = `
-      <div class="bento-pattern-row">
-        <div class="bento-top-group">
-          <div class="bento-left-col">
-            ${createCardHtml(h1.fileItem, h1.originalIndex)}
-            ${createCardHtml(h2.fileItem, h2.originalIndex)}
-          </div>
-          <div class="bento-right-col">
-            ${createCardHtml(v1.fileItem, v1.originalIndex)}
-          </div>
-        </div>
-        <div class="bento-bottom-full">
-          ${createCardHtml(h3.fileItem, h3.originalIndex)}
-        </div>
-      </div>
-    `;
-  } else {
-    // Зеркальный вариант (портрет слева, две горизонтали справа)
-    row.innerHTML = `
-      <div class="bento-pattern-row">
-        <div class="bento-top-group">
-          <div class="bento-right-col">
-            ${createCardHtml(v1.fileItem, v1.originalIndex)}
-          </div>
-          <div class="bento-left-col">
-            ${createCardHtml(h1.fileItem, h1.originalIndex)}
-            ${createCardHtml(h2.fileItem, h2.originalIndex)}
-          </div>
-        </div>
-        <div class="bento-bottom-full">
-          ${createCardHtml(h3.fileItem, h3.originalIndex)}
-        </div>
-      </div>
-    `;
-  }
-  isMirrored = !isMirrored;
-}
   container.appendChild(fragment);
 
-  // Инициализируем события лайтбокса после сборки DOM
+  // Инициализируем клики лайтбокса
   initLightboxEvents();
 }
-
-/// --- 3. ЛОГИКА ЛАЙТБОКСА ---
 
 // --- 3. УПРАВЛЕНИЕ ЛАЙТБОКСОМ ---
 
@@ -314,34 +327,40 @@ function initLightboxEvents() {
   };
 }
 
+// --- 4. РОУТЕР И ЕДИНАЯ ИНИЦИАЛИЗАЦИЯ ---
+
+async function openAlbumPage() {
+  await includeComponent('focus-slot', 'Frontend/Global_frames/focus_zone/focus-album-gallery.html');
+  await renderAlbumGallery();
+}
+
+async function openCatalogPage() {
+  await includeComponent('focus-slot', 'Frontend/Global_frames/focus_zone/focus_catalog.html');
+}
+
 async function initRouter() {
   const urlParams = new URLSearchParams(window.location.search);
   const currentAlbum = urlParams.get('album');
 
   if (currentAlbum === 'ne_spont') {
-    await includeComponent('focus-slot', 'Frontend/Global_frames/focus_zone/focus-album-gallery.html');
-    await renderAlbumGallery();
+    await openAlbumPage();
   } else {
-    await includeComponent('focus-slot', 'Frontend/Global_frames/focus_zone/focus_catalog.html');
+    await openCatalogPage();
   }
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  // Подгружаем шапку и футер
   await includeComponent('header-slot', 'Frontend/Global_frames/heder_and_footer/heder.html');
   await includeComponent('footer-slot', 'Frontend/Global_frames/heder_and_footer/footer.html');
 
-  // Запускаем роутер
   await initRouter();
 
-  // Глобальный клик-сенсор для переключения страниц без перезагрузки
   document.addEventListener('click', async (e) => {
     const concertCard = e.target.closest('#concert-card');
     if (concertCard) {
       e.preventDefault();
       history.pushState({ album: 'ne_spont' }, '', '?album=ne_spont');
-      await includeComponent('focus-slot', 'Frontend/Global_frames/focus_zone/focus-album-gallery.html');
-      await renderAlbumGallery();
+      await openAlbumPage();
       return;
     }
 
@@ -349,7 +368,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (backLink) {
       e.preventDefault();
       history.pushState({}, '', window.location.pathname);
-      await includeComponent('focus-slot', 'Frontend/Global_frames/focus_zone/focus_catalog.html');
+      await openCatalogPage();
       return;
     }
   });
