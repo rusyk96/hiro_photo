@@ -180,6 +180,25 @@ function buildSmartBentoGallery(photos) {
   }
 }
 
+function createCardHtml(fileItem, index) {
+  const fileName = typeof fileItem === 'string' ? fileItem : fileItem.name;
+  const cleanFileName = fileName.normalize('NFC');
+  const photoUrl = `${RAW_BASE_URL}${encodeURIComponent(cleanFileName)}`;
+
+  return `
+    <div class="gallery-card" onclick="openLightbox(${index})">
+      <img 
+        src="${photoUrl}" 
+        alt="Кадр ${index + 1}" 
+        class="gallery-img"
+        loading="lazy"
+        decoding="async"
+        onerror="this.closest('.gallery-card').style.display='none';"
+      />
+    </div>
+  `;
+}
+
 // 4. Менеджер состояний (Роутер)
 async function initRouter() {
   const urlParams = new URLSearchParams(window.location.search);
