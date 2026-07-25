@@ -1,13 +1,39 @@
 import { includeComponent } from './api.js';
 import { renderAlbumGallery } from './bento.js';
+import { mountLoader, hideLoader } from './loader.js';
+
+// Вспомогательная задержка для красоты анимации переходов
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export async function openAlbumPage() {
-  await includeComponent('focus-slot', 'Frontend/Global_frames/focus_zone/focus-album-gallery.html');
-  await renderAlbumGallery();
+  mountLoader();
+  try {
+    await Promise.all([
+      (async () => {
+        await includeComponent('focus-slot', 'Frontend/Global_frames/focus_zone/focus-album-gallery.html');
+        await renderAlbumGallery();
+      })(),
+      delay(600) // Минимальное время показа лоудера при переходе
+    ]);
+  } catch (error) {
+    console.error('Ошибка при открытии альбома:', error);
+  } finally {
+    hideLoader();
+  }
 }
 
 export async function openCatalogPage() {
-  await includeComponent('focus-slot', 'Frontend/Global_frames/focus_zone/focus_catalog.html');
+  mountLoader();
+  try {
+    await Promise.all([
+      includeComponent('focus-slot', 'Frontend/Global_frames/focus_zone/focus_catalog.html'),
+      delay(500)
+    ]);
+  } catch (error) {
+    console.error('Ошибка при открытии каталога:', error);
+  } finally {
+    hideLoader();
+  }
 }
 
 export async function initRouter() {
