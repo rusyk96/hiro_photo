@@ -44,43 +44,26 @@ const RAW_BASE_URL = "https://raw.githubusercontent.com/rusyk96/ne_spont/main/we
 
 let globalPhotoFiles = [];
 
-// 1. Быстрый скан с сохранением ИСХОДНОГО индекса (originalIndex)
-async function preloadImageDimensions(photoList) {
-  const promises = photoList.map((fileItem, index) => {
-    return new Promise((resolve) => {
-      const fileName = typeof fileItem === 'string' ? fileItem : fileItem.name;
-      const cleanFileName = fileName.normalize('NFC');
-      const img = new Image();
-      img.src = `${RAW_BASE_URL}${encodeURIComponent(cleanFileName)}`;
-      
-      img.onload = () => {
-        const ratio = img.naturalWidth / img.naturalHeight;
-        resolve({
-          fileItem,
-          originalIndex: index, // Сохраняем реальный порядковый номер!
-          isPortrait: ratio < 0.95
-        });
-      };
-      
-      img.onerror = () => {
-        resolve({
-          fileItem,
-          originalIndex: index,
-          isPortrait: false 
-        });
-      };
-    });
-  });
+// 1. Быстрый парсер манифеста (без запросов к картинкам!)
+function parsePhotosList(manifestData) {
+  return manifestData.map((fileItem, index) => {
+    const fileName = typeof fileItem === 'string' ? fileItem : fileItem.name;
+    
+    // Читаем "type", который наш Python-скрипт заботливо записал в manifest.json
+    const isPortrait = typeof fileItem === 'object' && fileItem.type === 'portrait';
 
-  return Promise.all(promises);
+    return {
+      fileItem,
+      originalIndex: index, // Сохраняем исходный индекс для Lightbox
+      isPortrait
+    };
+  });
 }
 
 // 2. Главная функция загрузки
 async function renderAlbumGallery(fallbackCount = 371) {
   const container = document.getElementById('album-gallery-container');
   if (!container) return;
-
-  container.innerHTML = '<div class="loading-state">Сборка сетки...</div>';
 
   try {
     const response = await fetch(`${RAW_BASE_URL}manifest.json?t=${Date.now()}`);
@@ -93,18 +76,18 @@ async function renderAlbumGallery(fallbackCount = 371) {
     console.warn('Работаем по резервному списку:', err.message);
     globalPhotoFiles = [];
     for (let i = 1; i <= fallbackCount; i++) {
-      globalPhotoFiles.push(`НЕ спонтанный концерт -${i}.webp`);
+      globalPhotoFiles.push({ name: `НЕ спонтанный концерт -${i}.webp`, type: 'landscape' });
     }
   }
 
-  // Сканируем геометрию кадров
-  const analyzedPhotos = await preloadImageDimensions(globalPhotoFiles);
+  // Мгновенно формируем массив объектов
+  const analyzedPhotos = parsePhotosList(globalPhotoFiles);
   
-  // Строим сетку
+  // Строим сетку за миллисекунду
   buildSmartBentoGallery(analyzedPhotos);
 }
 
-// 3. Умный сборщик композиций
+// 3. Умный сборщик композиций Bento
 function buildSmartBentoGallery(photos) {
   const container = document.getElementById('album-gallery-container');
   if (!container) return;
@@ -122,7 +105,7 @@ function buildSmartBentoGallery(photos) {
     const row = document.createElement('div');
     row.className = 'bento-row';
 
-    // Сценарий 1: 2 горизонтали + 1 вертикаль (Идеальный Bento-макет)
+    // Сценарий 1: Узкая колонка (1 горизонталь + 1 вертикаль) | Широкий акцент (1 горизонталь)
     if (landscapes.length >= 2 && portraits.length >= 1) {
       const h1 = landscapes.shift();
       const v1 = portraits.shift();
