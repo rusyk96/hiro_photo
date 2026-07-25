@@ -6,39 +6,23 @@
 
 /* Контейнер галереи */
 .gallery-grid {
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  gap: var(--grid-gap, 20px);
+  column-count: 3; /* 3 колонки на десктопе */
+  column-gap: 20px;
   width: 100%;
-}
-
-/* Десктопные спаны колонок */
-.gallery-card.col-4 {
-  grid-column: span 4;
-}
-
-.gallery-card.col-8 {
-  grid-column: span 8;
 }
 
 /* Базовые стили карточки */
 .gallery-card {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 16 / 10; /* Кинематографичные пропорции 16:10 */
+  break-inside: avoid; /* Запрещаем разрыв карточки между колонками */
+  margin-bottom: 20px;
   border-radius: 20px;
   overflow: hidden;
-  background-color: #b0b0b0;
-  border: 0px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Картинка внутри карточки */
 .gallery-img {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto; /* Картинка диктует высоту сама */
   display: block;
-  transition: transform 0.3s ease;
 }
 
 /* Ховер-эффект */
@@ -50,8 +34,7 @@
    АДАПТИВ (Мобильные устройства)
    ========================================================================== */
 @media (max-width: 768px) {
-  .gallery-card.col-4,
-  .gallery-card.col-8 {
-    grid-column: span 12; /* На телефонах все кадры встают друг под друга */
+  .gallery-grid {
+    column-count: 1; /* На мобилке в 1 колонку */
   }
 }
