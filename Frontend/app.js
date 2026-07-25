@@ -43,14 +43,44 @@ document.addEventListener('DOMContentLoaded', () => {
 const RAW_BASE_URL = "https://raw.githubusercontent.com/rusyk96/ne_spont/main/webp/";
 
 let globalPhotoFiles = [];
-let currentIndex = 0;
 
-// 1. Загрузка данных и запуск сборщика Bento-сетки
+// 1. Быстрый скан с сохранением ИСХОДНОГО индекса (originalIndex)
+async function preloadImageDimensions(photoList) {
+  const promises = photoList.map((fileItem, index) => {
+    return new Promise((resolve) => {
+      const fileName = typeof fileItem === 'string' ? fileItem : fileItem.name;
+      const cleanFileName = fileName.normalize('NFC');
+      const img = new Image();
+      img.src = `${RAW_BASE_URL}${encodeURIComponent(cleanFileName)}`;
+      
+      img.onload = () => {
+        const ratio = img.naturalWidth / img.naturalHeight;
+        resolve({
+          fileItem,
+          originalIndex: index, // Сохраняем реальный порядковый номер!
+          isPortrait: ratio < 0.95
+        });
+      };
+      
+      img.onerror = () => {
+        resolve({
+          fileItem,
+          originalIndex: index,
+          isPortrait: false 
+        });
+      };
+    });
+  });
+
+  return Promise.all(promises);
+}
+
+// 2. Главная функция загрузки
 async function renderAlbumGallery(fallbackCount = 371) {
   const container = document.getElementById('album-gallery-container');
   if (!container) return;
 
-  container.innerHTML = '';
+  container.innerHTML = '<div class="loading-state">Сборка сетки...</div>';
 
   try {
     const response = await fetch(`${RAW_BASE_URL}manifest.json?t=${Date.now()}`);
@@ -67,68 +97,97 @@ async function renderAlbumGallery(fallbackCount = 371) {
     }
   }
 
-  // Запускаем сборку блочной Bento-галереи по макетам 1-5!
-  buildBentoGallery(globalPhotoFiles);
+  // Сканируем геометрию кадров
+  const analyzedPhotos = await preloadImageDimensions(globalPhotoFiles);
+  
+  // Строим сетку
+  buildSmartBentoGallery(analyzedPhotos);
 }
 
-// 2. Основная функция сборки галереи по секциям (макеты 1-5)
-// Основная функция сборки галереи по секциям (макеты: горизонт + вертикаль | акцент)
-function buildBentoGallery(photoList) {
+// 3. Умный сборщик композиций
+function buildSmartBentoGallery(photos) {
   const container = document.getElementById('album-gallery-container');
   if (!container) return;
 
   container.innerHTML = '';
   const fragment = document.createDocumentFragment();
 
-  let currentIndex = 0;
-  let isMirrored = false; // Переключатель для зеркалирования
+  // Разделяем фотографии по пулам ориентации
+  let landscapes = photos.filter(p => !p.isPortrait);
+  let portraits = photos.filter(p => p.isPortrait);
 
-  while (currentIndex < photoList.length) {
-    const remaining = photoList.length - currentIndex;
+  let isMirrored = false;
+
+  while (landscapes.length > 0 || portraits.length > 0) {
     const row = document.createElement('div');
     row.className = 'bento-row';
 
-    // Берем по 3 кадра на одну секцию (2 в узкую колонку, 1 в широкую)
-    const chunkSize = Math.min(remaining >= 3 ? 3 : remaining, 3);
-    const photosChunk = photoList.slice(currentIndex, currentIndex + chunkSize);
+    // Сценарий 1: 2 горизонтали + 1 вертикаль (Идеальный Bento-макет)
+    if (landscapes.length >= 2 && portraits.length >= 1) {
+      const h1 = landscapes.shift();
+      const v1 = portraits.shift();
+      const h2 = landscapes.shift();
 
-    if (chunkSize === 3) {
-      // Макет: Узкая колонка (1 горизонталь сверху + 1 вертикаль снизу) + Широкий акцент
       if (!isMirrored) {
         row.innerHTML = `
           <div class="bento-col-4">
-            ${createCardHtml(photosChunk[0], currentIndex)}
-            ${createCardHtml(photosChunk[1], currentIndex + 1)}
+            ${createCardHtml(h1.fileItem, h1.originalIndex)}
+            ${createCardHtml(v1.fileItem, v1.originalIndex)}
           </div>
           <div class="bento-col-8">
-            ${createCardHtml(photosChunk[2], currentIndex + 2)}
+            ${createCardHtml(h2.fileItem, h2.originalIndex)}
           </div>
         `;
       } else {
-        // Зеркальный вариант (Широкий акцент слева + 1 горизонталь и 1 вертикаль справа)
         row.innerHTML = `
           <div class="bento-col-8">
-            ${createCardHtml(photosChunk[2], currentIndex + 2)}
+            ${createCardHtml(h2.fileItem, h2.originalIndex)}
           </div>
           <div class="bento-col-4">
-            ${createCardHtml(photosChunk[0], currentIndex)}
-            ${createCardHtml(photosChunk[1], currentIndex + 1)}
+            ${createCardHtml(h1.fileItem, h1.originalIndex)}
+            ${createCardHtml(v1.fileItem, v1.originalIndex)}
           </div>
         `;
       }
-    } else {
-      // Остаток в самом конце альбома (1-2 кадра)
-      photosChunk.forEach((file, idx) => {
+      isMirrored = !isMirrored;
+    } 
+    // Сценарий 2: Много вертикалей подряд (3 в ряд)
+    else if (portraits.length >= 3) {
+      const v1 = portraits.shift();
+      const v2 = portraits.shift();
+      const v3 = portraits.shift();
+
+      row.innerHTML = `
+        <div class="bento-col-4">${createCardHtml(v1.fileItem, v1.originalIndex)}</div>
+        <div class="bento-col-4">${createCardHtml(v2.fileItem, v2.originalIndex)}</div>
+        <div class="bento-col-4">${createCardHtml(v3.fileItem, v3.originalIndex)}</div>
+      `;
+    }
+    // Сценарий 3: Остались только горизонтали (6 + 6)
+    else if (landscapes.length >= 2) {
+      const h1 = landscapes.shift();
+      const h2 = landscapes.shift();
+
+      row.innerHTML = `
+        <div class="bento-col-6">${createCardHtml(h1.fileItem, h1.originalIndex)}</div>
+        <div class="bento-col-6">${createCardHtml(h2.fileItem, h2.originalIndex)}</div>
+      `;
+    }
+    // Хвост альбома
+    else {
+      const remaining = [...landscapes, ...portraits];
+      landscapes = [];
+      portraits = [];
+
+      remaining.forEach(item => {
         const col = document.createElement('div');
-        col.className = chunkSize === 1 ? 'bento-col-8' : 'bento-col-6';
-        col.innerHTML = createCardHtml(file, currentIndex + idx);
+        col.className = 'bento-col-6';
+        col.innerHTML = createCardHtml(item.fileItem, item.originalIndex);
         row.appendChild(col);
       });
     }
 
     fragment.appendChild(row);
-    currentIndex += chunkSize;
-    isMirrored = !isMirrored; // Зеркалируем следующий блок
   }
 
   container.appendChild(fragment);
@@ -136,26 +195,6 @@ function buildBentoGallery(photoList) {
   if (typeof initLightboxEvents === 'function') {
     initLightboxEvents();
   }
-}
-
-// 3. Вспомогательная функция сборки HTML одной карточки
-function createCardHtml(fileItem, index) {
-  const fileName = typeof fileItem === 'string' ? fileItem : fileItem.name;
-  const cleanFileName = fileName.normalize('NFC');
-  const photoUrl = `${RAW_BASE_URL}${encodeURIComponent(cleanFileName)}`;
-
-  return `
-    <div class="gallery-card" onclick="openLightbox(${index})">
-      <img 
-        src="${photoUrl}" 
-        alt="Кадр ${index + 1}" 
-        class="gallery-img"
-        loading="lazy"
-        decoding="async"
-        onerror="this.closest('.gallery-card').style.display='none';"
-      />
-    </div>
-  `;
 }
 
 // 4. Менеджер состояний (Роутер)
