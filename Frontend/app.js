@@ -248,33 +248,29 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 });
 
+let currentIndex = 0;
+
 // --- LIGHTBOX LOGIC ---
 function openLightbox(index) {
   currentIndex = index;
   updateLightboxImage();
-  document.getElementById('lightbox').classList.add('active');
-  document.body.style.overflow = 'hidden'; // Блокируем скролл страницы
-}
-
-function closeLightbox() {
-  document.getElementById('lightbox').classList.remove('active');
-  document.body.style.overflow = ''; // Возвращаем скролл
+  const lightbox = document.getElementById('lightbox');
+  if (lightbox) {
+    lightbox.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
 }
 
 function updateLightboxImage() {
   const imgElement = document.getElementById('lightbox-img');
-  const fileName = globalPhotoFiles[currentIndex].normalize('NFC');
-  imgElement.src = `${RAW_BASE_URL}${encodeURIComponent(fileName)}`;
-}
+  if (!imgElement || !globalPhotoFiles[currentIndex]) return;
 
-function nextSlide() {
-  currentIndex = (currentIndex + 1) % globalPhotoFiles.length;
-  updateLightboxImage();
-}
+  const rawItem = globalPhotoFiles[currentIndex];
+  // Защита: проверяем, объект это или строка
+  const fileName = typeof rawItem === 'string' ? rawItem : rawItem.name;
+  const cleanFileName = fileName.normalize('NFC');
 
-function prevSlide() {
-  currentIndex = (currentIndex - 1 + globalPhotoFiles.length) % globalPhotoFiles.length;
-  updateLightboxImage();
+  imgElement.src = `${RAW_BASE_URL}${encodeURIComponent(cleanFileName)}`;
 }
 
 function initLightboxEvents() {
