@@ -8,23 +8,21 @@
 .gallery-grid {
   display: grid;
   grid-template-columns: repeat(12, 1fr);
-  grid-auto-rows: 240px; /* Базовая высота одной строки-модуля */
-  grid-auto-flow: dense;  /* Магия: браузер сам забивает дыры в сетке */
+  grid-auto-rows: 160px; /* Уменьшаем базовый шаг (модуль) для более гибкой сборки */
+  grid-auto-flow: dense;  /* Умная упаковка без дыр */
   gap: var(--grid-gap, 20px);
   width: 100%;
 }
 
-/* Базовые стили карточки */
 .gallery-card {
   position: relative;
   width: 100%;
   height: 100%;
   border-radius: 20px;
   overflow: hidden;
-  background-color: #b0b0b0;
+  background-color: #1a1a1a;
 }
 
-/* Картинка внутри фрейма */
 .gallery-img {
   width: 100%;
   height: 100%;
@@ -41,20 +39,19 @@
    КЛАССЫ ОРИЕНТАЦИИ И РАЗМЕРОВ (Для JS/HTML)
    ========================================================================== */
 
-/* Горизонтальный кадр (широкий) */
+.gallery-card.portrait {
+  grid-column: span 4;
+  grid-row: span 3; /* Больше высоты, чтобы не резать вертикалку */
+}
+
+/* Широкий панорамный кадр — 8 колонок, 2 яруса высоты */
 .gallery-card.landscape {
   grid-column: span 8;
-  grid-row: span 1;
+  grid-row: span 2; /* Теперь широкие кадры НЕ сплюснуты! */
 }
 
-/* Стандартный/средний кадр */
+/* Стандартный/квадратный кадр — 4 колонки, 2 яруса высоты */
 .gallery-card.medium {
-  grid-column: span 4;
-  grid-row: span 1;
-}
-
-/* Вертикальный портрет (занимает 2 яруса по высоте!) */
-.gallery-card.portrait {
   grid-column: span 4;
   grid-row: span 2;
 }
@@ -68,11 +65,20 @@
     grid-auto-rows: auto;
   }
 
+  .gallery-card.portrait,
   .gallery-card.landscape,
-  .gallery-card.medium,
-  .gallery-card.portrait {
+  .gallery-card.medium {
     grid-column: span 1;
     grid-row: span 1;
-    aspect-ratio: auto;
+    height: auto;
+  }
+
+  .gallery-card.landscape,
+  .gallery-card.medium {
+    aspect-ratio: 3 / 2;
+  }
+
+  .gallery-card.portrait {
+    aspect-ratio: 2 / 3;
   }
 }
