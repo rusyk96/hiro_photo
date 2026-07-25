@@ -15,5 +15,5 @@ export function hideLoader() {
   // Ждём 800ms (время transition из CSS) и удаляем из DOM
   setTimeout(() => {
     loader.remove();
-  }, 1400);
+  }, 300);
 }
