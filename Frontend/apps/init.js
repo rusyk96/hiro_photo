@@ -7,7 +7,7 @@ export async function bootstrapApp() {
   mountLoader();
 
   try {
-    // 2. Параллельно или последовательно подгружаем компоненты
+    // 2. Параллельно подгружаем шапку и подвал
     await Promise.all([
       includeComponent('header-slot', 'Frontend/Global_frames/heder_and_footer/heder.html'),
       includeComponent('footer-slot', 'Frontend/Global_frames/heder_and_footer/footer.html')

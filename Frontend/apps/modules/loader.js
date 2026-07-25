@@ -1,4 +1,4 @@
-import { loaderTemplate } from './loader_HTML'; // или твой путь к шаблону
+import { loaderTemplate } from './loader_HTML.js'; // Добавили .js
 
 export function mountLoader() {
   if (document.getElementById('loader')) return;
@@ -9,10 +9,10 @@ export function hideLoader() {
   const loader = document.getElementById('loader');
   if (!loader) return;
 
-  // Плавное угасание через CSS transition (0.8s)
-  loader.style.opacity = '0';
-  loader.style.pointerEvents = 'none';
+  // Вешаем класс для плавного CSS-затухания
+  loader.classList.add('is-hidden');
 
+  // Ждём 800ms (время transition из CSS) и удаляем из DOM
   setTimeout(() => {
     loader.remove();
   }, 800);
