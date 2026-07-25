@@ -67,39 +67,59 @@ async function renderAlbumGallery(fallbackCount = 371) {
     }
   }
 
-  let htmlContent = '';
+  // Используем фрагмент, чтобы не дергать DOM на каждой из 371 карточек
+  const fragment = document.createDocumentFragment();
 
-  globalPhotoFiles.forEach((fileName, index) => {
-  const i = index + 1;
-  const cleanFileName = fileName.normalize('NFC');
-  const photoUrl = `${RAW_BASE_URL}${encodeURIComponent(cleanFileName)}`;
+  globalPhotoFiles.forEach((fileItem, index) => {
+    const i = index + 1;
+    const fileName = typeof fileItem === 'string' ? fileItem : fileItem.name;
+    const cleanFileName = fileName.normalize('NFC');
+    const photoUrl = `${RAW_BASE_URL}${encodeURIComponent(cleanFileName)}`;
 
-  // Создаем карточку
-  const card = document.createElement('div');
-  card.className = 'gallery-card medium'; // По умолчанию даем средний размер
-  card.onclick = () => openLightbox(index);
+    // Создаем карточку
+    const card = document.createElement('div');
+    card.className = 'gallery-card medium'; // Дефолтный размер до загрузки
+    card.onclick = () => openLightbox(index);
 
-  card.innerHTML = `
-    <img 
-      src="${photoUrl}" 
-      alt="НЕ спонтанный концерт — кадр ${i}" 
-      class="gallery-img"
-      loading="lazy"
-      decoding="async"
-      onload="adjustBentoCard(this)"
-      onerror="this.closest('.gallery-card').style.display='none';"
-    />
-  `;
+    const img = document.createElement('img');
+    img.src = photoUrl;
+    img.alt = `НЕ спонтанный концерт — кадр ${i}`;
+    img.className = 'gallery-img';
+    img.loading = 'lazy';
+    img.decoding = 'async';
 
-  container.appendChild(card);
-});
+    // Подстраиваем класс при загрузке
+    img.onload = function() {
+      adjustBentoCard(this);
+    };
 
-  container.innerHTML = htmlContent;
-  initLightboxEvents();
+    // Если картинка отвалилась
+    img.onerror = function() {
+      const parentCard = this.closest('.gallery-card');
+      if (parentCard) parentCard.style.display = 'none';
+    };
+
+    card.appendChild(img);
+    fragment.appendChild(card);
+
+    // Если картинка УЖЕ закеширована браузером, вызываем проверку вручную
+    if (img.complete && img.naturalWidth !== 0) {
+      adjustBentoCard(img);
+    }
+  });
+
+  // Вставляем все 371 карточки одним махом!
+  container.appendChild(fragment);
+
+  if (typeof initLightboxEvents === 'function') {
+    initLightboxEvents();
+  }
 }
 
 // Функция подстраивает Bento-класс карточки в момент загрузки файла
 function adjustBentoCard(img) {
+  if (!img || img.naturalWidth === 0) return;
+  
   const card = img.closest('.gallery-card');
   if (!card) return;
 
