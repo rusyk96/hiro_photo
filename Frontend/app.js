@@ -125,14 +125,21 @@ function adjustBentoCard(img) {
 
   const ratio = img.naturalWidth / img.naturalHeight;
 
-  card.classList.remove('medium', 'portrait', 'landscape');
+  // Сбрасываем старые классы
+  card.classList.remove('portrait', 'landscape-wide', 'landscape-std', 'square');
 
   if (ratio < 0.85) {
-    card.classList.add('portrait');   // Вертикальный кадр
-  } else if (ratio > 1.3) {
-    card.classList.add('landscape');  // Широкий кадр
+    // Вертикальный портрет (2:3 / 3:4)
+    card.classList.add('portrait');
+  } else if (ratio > 1.55) {
+    // Панорамный / кино-кадр (16:9)
+    card.classList.add('landscape-wide');
+  } else if (ratio > 1.1) {
+    // Классический фото-горизонт (3:2)
+    card.classList.add('landscape-std');
   } else {
-    card.classList.add('medium');     // Обычный кадр
+    // Квадрат / околоквадрат
+    card.classList.add('square');
   }
 }
 
