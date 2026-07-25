@@ -43,48 +43,33 @@ document.addEventListener('DOMContentLoaded', () => {
 const RAW_BASE_URL = "https://raw.githubusercontent.com/rusyk96/ne_spont/main/webp/";
 
 let globalPhotoFiles = [];
+let currentIndex = 0;
 
-// 1. Быстрый парсер манифеста (без запросов к картинкам!)
+async function includeComponent(slotId, filePath) {
+  const slot = document.getElementById(slotId);
+  if (!slot) return; 
+
+  try {
+    const response = await fetch(filePath);
+    if (!response.ok) throw new Error(`Статус: ${response.status}`);
+    const html = await response.text();
+    slot.innerHTML = html;
+  } catch (error) {
+    console.error(`Ошибка загрузки [${filePath}]:`, error);
+  }
+}
+
 function parsePhotosList(manifestData) {
   return manifestData.map((fileItem, index) => {
     const fileName = typeof fileItem === 'string' ? fileItem : fileItem.name;
-    
-    // Читаем "type", который наш Python-скрипт заботливо записал в manifest.json
     const isPortrait = typeof fileItem === 'object' && fileItem.type === 'portrait';
 
     return {
       fileItem,
-      originalIndex: index, // Сохраняем исходный индекс для Lightbox
+      originalIndex: index,
       isPortrait
     };
   });
-}
-
-// 2. Главная функция загрузки
-async function renderAlbumGallery(fallbackCount = 371) {
-  const container = document.getElementById('album-gallery-container');
-  if (!container) return;
-
-  try {
-    const response = await fetch(`${RAW_BASE_URL}manifest.json?t=${Date.now()}`);
-    if (response.ok) {
-      globalPhotoFiles = await response.json();
-    } else {
-      throw new Error(`Манифест не найден (${response.status})`);
-    }
-  } catch (err) {
-    console.warn('Работаем по резервному списку:', err.message);
-    globalPhotoFiles = [];
-    for (let i = 1; i <= fallbackCount; i++) {
-      globalPhotoFiles.push({ name: `НЕ спонтанный концерт -${i}.webp`, type: 'landscape' });
-    }
-  }
-
-  // Мгновенно формируем массив объектов
-  const analyzedPhotos = parsePhotosList(globalPhotoFiles);
-  
-  // Строим сетку за миллисекунду
-  buildSmartBentoGallery(analyzedPhotos);
 }
 
 function createCardHtml(fileItem, index) {
@@ -105,8 +90,29 @@ function createCardHtml(fileItem, index) {
     </div>
   `;
 }
+async function renderAlbumGallery(fallbackCount = 371) {
+  const container = document.getElementById('album-gallery-container');
+  if (!container) return;
 
-// 3. Умный сборщик композиций Bento
+  try {
+    const response = await fetch(`${RAW_BASE_URL}manifest.json?t=${Date.now()}`);
+    if (response.ok) {
+      globalPhotoFiles = await response.json();
+    } else {
+      throw new Error(`Манифест не найден (${response.status})`);
+    }
+  } catch (err) {
+    console.warn('Работаем по резервному списку:', err.message);
+    globalPhotoFiles = [];
+    for (let i = 1; i <= fallbackCount; i++) {
+      globalPhotoFiles.push({ name: `НЕ спонтанный концерт -${i}.webp`, type: 'landscape' });
+    }
+  }
+
+  const analyzedPhotos = parsePhotosList(globalPhotoFiles);
+  buildSmartBentoGallery(analyzedPhotos);
+}
+
 function buildSmartBentoGallery(photos) {
   const container = document.getElementById('album-gallery-container');
   if (!container) return;
@@ -114,7 +120,6 @@ function buildSmartBentoGallery(photos) {
   container.innerHTML = '';
   const fragment = document.createDocumentFragment();
 
-  // Разделяем фотографии по пулам ориентации
   let landscapes = photos.filter(p => !p.isPortrait);
   let portraits = photos.filter(p => p.isPortrait);
 
@@ -124,7 +129,6 @@ function buildSmartBentoGallery(photos) {
     const row = document.createElement('div');
     row.className = 'bento-row';
 
-    // Сценарий 1: Узкая колонка (1 горизонталь + 1 вертикаль) | Широкий акцент (1 горизонталь)
     if (landscapes.length >= 2 && portraits.length >= 1) {
       const h1 = landscapes.shift();
       const v1 = portraits.shift();
@@ -153,7 +157,6 @@ function buildSmartBentoGallery(photos) {
       }
       isMirrored = !isMirrored;
     } 
-    // Сценарий 2: Много вертикалей подряд (3 в ряд)
     else if (portraits.length >= 3) {
       const v1 = portraits.shift();
       const v2 = portraits.shift();
@@ -165,7 +168,6 @@ function buildSmartBentoGallery(photos) {
         <div class="bento-col-4">${createCardHtml(v3.fileItem, v3.originalIndex)}</div>
       `;
     }
-    // Сценарий 3: Остались только горизонтали (6 + 6)
     else if (landscapes.length >= 2) {
       const h1 = landscapes.shift();
       const h2 = landscapes.shift();
@@ -175,7 +177,6 @@ function buildSmartBentoGallery(photos) {
         <div class="bento-col-6">${createCardHtml(h2.fileItem, h2.originalIndex)}</div>
       `;
     }
-    // Хвост альбома
     else {
       const remaining = [...landscapes, ...portraits];
       landscapes = [];
@@ -194,12 +195,79 @@ function buildSmartBentoGallery(photos) {
 
   container.appendChild(fragment);
 
-  if (typeof initLightboxEvents === 'function') {
-    initLightboxEvents();
+  // Инициализируем события лайтбокса после сборки DOM
+  initLightboxEvents();
+}
+
+/// --- 3. ЛОГИКА ЛАЙТБОКСА ---
+
+function openLightbox(index) {
+  currentIndex = index;
+  updateLightboxImage();
+  const lightbox = document.getElementById('lightbox');
+  if (lightbox) {
+    lightbox.classList.add('active');
+    document.body.style.overflow = 'hidden';
   }
 }
 
-// 4. Менеджер состояний (Роутер)
+function closeLightbox() {
+  const lightbox = document.getElementById('lightbox');
+  if (lightbox) {
+    lightbox.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+}
+
+function updateLightboxImage() {
+  const imgElement = document.getElementById('lightbox-img');
+  if (!imgElement || !globalPhotoFiles[currentIndex]) return;
+
+  const rawItem = globalPhotoFiles[currentIndex];
+  const fileName = typeof rawItem === 'string' ? rawItem : rawItem.name;
+  const cleanFileName = fileName.normalize('NFC');
+
+  imgElement.src = `${RAW_BASE_URL}${encodeURIComponent(cleanFileName)}`;
+}
+
+function nextSlide() {
+  if (!globalPhotoFiles.length) return;
+  currentIndex = (currentIndex + 1) % globalPhotoFiles.length;
+  updateLightboxImage();
+}
+
+function prevSlide() {
+  if (!globalPhotoFiles.length) return;
+  currentIndex = (currentIndex - 1 + globalPhotoFiles.length) % globalPhotoFiles.length;
+  updateLightboxImage();
+}
+
+function initLightboxEvents() {
+  const lightbox = document.getElementById('lightbox');
+  if (!lightbox) return;
+
+  const closeBtn = document.getElementById('lightbox-close');
+  const prevBtn = document.getElementById('lightbox-prev');
+  const nextBtn = document.getElementById('lightbox-next');
+
+  if (closeBtn) closeBtn.onclick = closeLightbox;
+  if (nextBtn) nextBtn.onclick = (e) => { e.stopPropagation(); nextSlide(); };
+  if (prevBtn) prevBtn.onclick = (e) => { e.stopPropagation(); prevSlide(); };
+
+  lightbox.onclick = (e) => {
+    if (e.target === lightbox || e.target.classList.contains('lightbox-content')) {
+      closeLightbox();
+    }
+  };
+
+  window.onkeydown = (e) => {
+    if (!lightbox.classList.contains('active')) return;
+    if (e.key === 'Escape') closeLightbox();
+    if (e.key === 'ArrowRight') nextSlide();
+    if (e.key === 'ArrowLeft') prevSlide();
+  };
+}
+
 async function initRouter() {
   const urlParams = new URLSearchParams(window.location.search);
   const currentAlbum = urlParams.get('album');
@@ -212,25 +280,22 @@ async function initRouter() {
   }
 }
 
-// 5. Инициализация кликов и событий DOM
 document.addEventListener('DOMContentLoaded', async () => {
-  // Загружаем базовые шапку и подвал
-  if (typeof includeComponent === 'function') {
-    await includeComponent('header-slot', 'Frontend/Global_frames/heder_and_footer/heder.html');
-    await includeComponent('footer-slot', 'Frontend/Global_frames/heder_and_footer/footer.html');
-  }
+  // Подгружаем шапку и футер
+  await includeComponent('header-slot', 'Frontend/Global_frames/heder_and_footer/heder.html');
+  await includeComponent('footer-slot', 'Frontend/Global_frames/heder_and_footer/footer.html');
 
-  // Запускаем роутинг при старте
+  // Запускаем роутер
   await initRouter();
 
-  // Слушаем клики по всему документу для навигации
+  // Глобальный клик-сенсор для переключения страниц без перезагрузки
   document.addEventListener('click', async (e) => {
     const concertCard = e.target.closest('#concert-card');
     if (concertCard) {
       e.preventDefault();
       history.pushState({ album: 'ne_spont' }, '', '?album=ne_spont');
       await includeComponent('focus-slot', 'Frontend/Global_frames/focus_zone/focus-album-gallery.html');
-      await renderAlbumGallery(); // Обязательно вызываем рендер после подгрузки DOM!
+      await renderAlbumGallery();
       return;
     }
 
@@ -247,56 +312,3 @@ document.addEventListener('DOMContentLoaded', async () => {
     initRouter();
   });
 });
-
-let currentIndex = 0;
-
-// --- LIGHTBOX LOGIC ---
-function openLightbox(index) {
-  currentIndex = index;
-  updateLightboxImage();
-  const lightbox = document.getElementById('lightbox');
-  if (lightbox) {
-    lightbox.classList.add('active');
-    document.body.style.overflow = 'hidden';
-  }
-}
-
-function updateLightboxImage() {
-  const imgElement = document.getElementById('lightbox-img');
-  if (!imgElement || !globalPhotoFiles[currentIndex]) return;
-
-  const rawItem = globalPhotoFiles[currentIndex];
-  // Защита: проверяем, объект это или строка
-  const fileName = typeof rawItem === 'string' ? rawItem : rawItem.name;
-  const cleanFileName = fileName.normalize('NFC');
-
-  imgElement.src = `${RAW_BASE_URL}${encodeURIComponent(cleanFileName)}`;
-}
-
-function initLightboxEvents() {
-  const lightbox = document.getElementById('lightbox');
-  const closeBtn = document.getElementById('lightbox-close');
-  const prevBtn = document.getElementById('lightbox-prev');
-  const nextBtn = document.getElementById('lightbox-next');
-
-  if (!lightbox) return;
-
-  closeBtn.onclick = closeLightbox;
-  nextBtn.onclick = (e) => { e.stopPropagation(); nextSlide(); };
-  prevBtn.onclick = (e) => { e.stopPropagation(); prevSlide(); };
-
-  // Закрытие при клике на темный фон
-  lightbox.onclick = (e) => {
-    if (e.target === lightbox || e.target.classList.contains('lightbox-content')) {
-      closeLightbox();
-    }
-  };
-
-  // Управление с клавиатуры (стрелочки + Esc)
-  window.onkeydown = (e) => {
-    if (!lightbox.classList.contains('active')) return;
-    if (e.key === 'Escape') closeLightbox();
-    if (e.key === 'ArrowRight') nextSlide();
-    if (e.key === 'ArrowLeft') prevSlide();
-  };
-}
