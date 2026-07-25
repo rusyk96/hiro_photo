@@ -16,7 +16,7 @@
   width: 100%;
 }
 
-/* Ряд-секция (12-колоночная сетка) */
+/* Стандартный ряд (12-колоночная сетка) */
 .bento-row {
   display: grid;
   grid-template-columns: repeat(12, 1fr);
@@ -25,10 +25,9 @@
 }
 
 /* ==========================================================================
-   КОЛОНКИ (Блоки 4/12 и 8/12)
+   КОЛОНКИ (Десктоп 12-колоночный сет)
    ========================================================================== */
 
-/* Узкая колонка (4 колонки из 12) — под 2 или 3 кадра */
 .bento-col-4 {
   grid-column: span 4;
   display: flex;
@@ -36,7 +35,6 @@
   gap: var(--grid-gap, 24px);
 }
 
-/* Широкая колонка (8 колонок из 12) — под доминирующий кадр */
 .bento-col-8 {
   grid-column: span 8;
   display: flex;
@@ -44,7 +42,6 @@
   gap: var(--grid-gap, 24px);
 }
 
-/* Ряд на 2 равные части (если нужно 6 и 6 колонок) */
 .bento-col-6 {
   grid-column: span 6;
   display: flex;
@@ -52,9 +49,49 @@
   gap: var(--grid-gap, 24px);
 }
 
-/* Большой акцентный кадр диктует высоту всей секции */
 .bento-col-8 .gallery-card {
   aspect-ratio: 4 / 3; 
+}
+
+/* ==========================================================================
+   НОВЫЙ BENTO-ПАТТЕРН (2 горизонтали + 1 портрет + 1 широкая)
+   ========================================================================== */
+
+.bento-pattern-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--grid-gap, 24px);
+  width: 100%;
+}
+
+/* Верхняя группа: левая и правая стороны */
+.bento-top-group {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: var(--grid-gap, 24px);
+  width: 100%;
+}
+
+/* Колонки внутри верхнего блока */
+.bento-left-col,
+.bento-right-col {
+  grid-column: span 6;
+  display: flex;
+  flex-direction: column;
+  gap: var(--grid-gap, 24px);
+}
+
+/* Выравнивание высоты портрета под две левые горизонтали */
+.bento-right-col .gallery-card {
+  height: 100%;
+}
+
+.bento-bottom-full {
+  width: 100%;
+}
+
+.bento-bottom-full .gallery-card {
+  aspect-ratio: 16 / 9;
 }
 
 /* ==========================================================================
@@ -68,14 +105,14 @@
   border-radius: 20px;
   overflow: hidden;
   background-color: #1a1a1a;
-  flex: 1; /* Равномерно делит высоту между элементами в колонке */
+  flex: 1;
   cursor: pointer;
 }
 
 .gallery-img {
   width: 100%;
   height: 100%;
-  object-fit: cover; /* Сохраняет аккуратные края без искажения пропорций */
+  object-fit: cover;
   display: block;
   transition: transform 0.3s ease;
 }
@@ -87,15 +124,20 @@
 /* ==========================================================================
    АДАПТИВ (Мобильные устройства)
    ========================================================================== */
+
 @media (max-width: 768px) {
+  :root {
+    --grid-gap: 12px; /* Чуть ужимаем гэп для мобилок */
+  }
+
   .gallery-grid {
-    gap: 16px;
+    gap: 12px;
   }
 
   .bento-row {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
   }
 
   .bento-col-4,
@@ -104,8 +146,40 @@
     width: 100%;
   }
 
-  /* На мобилках задаем фиксированный аспект, чтобы фотки не схлопывались */
-  .gallery-card {
+  /* Для стандартных карточек в потоке */
+  .bento-row .gallery-card {
     aspect-ratio: 3 / 2;
+  }
+
+  /* --- Адаптация нового Bento-макета с картинки --- */
+  .bento-pattern-row {
+    gap: 12px;
+  }
+
+  .bento-top-group {
+    grid-template-columns: 1fr 1fr; /* 2 равные колонки */
+    gap: 12px;
+  }
+
+  .bento-left-col,
+  .bento-right-col {
+    grid-column: span 1;
+    gap: 12px;
+  }
+
+  /* Две горизонтали слева */
+  .bento-left-col .gallery-card {
+    aspect-ratio: 4 / 3;
+  }
+
+  /* Портрет справа растягивается во всю высоту */
+  .bento-right-col .gallery-card {
+    height: 100%;
+    aspect-ratio: unset; 
+  }
+
+  /* Нижний широкий кадр */
+  .bento-bottom-full .gallery-card {
+    aspect-ratio: 16 / 9;
   }
 }

@@ -192,7 +192,51 @@ function buildSmartBentoGallery(photos) {
 
     fragment.appendChild(row);
   }
+  // Сценарий для макета с картинки: 3 горизонтали + 1 вертикаль
+if (landscapes.length >= 3 && portraits.length >= 1) {
+  const h1 = landscapes.shift(); // Левый верхний
+  const h2 = landscapes.shift(); // Левый нижний
+  const v1 = portraits.shift();  // Правый портрет
+  const h3 = landscapes.shift(); // Нижняя широкая полоса
 
+  if (!isMirrored) {
+    row.innerHTML = `
+      <div class="bento-pattern-row">
+        <div class="bento-top-group">
+          <div class="bento-left-col">
+            ${createCardHtml(h1.fileItem, h1.originalIndex)}
+            ${createCardHtml(h2.fileItem, h2.originalIndex)}
+          </div>
+          <div class="bento-right-col">
+            ${createCardHtml(v1.fileItem, v1.originalIndex)}
+          </div>
+        </div>
+        <div class="bento-bottom-full">
+          ${createCardHtml(h3.fileItem, h3.originalIndex)}
+        </div>
+      </div>
+    `;
+  } else {
+    // Зеркальный вариант (портрет слева, две горизонтали справа)
+    row.innerHTML = `
+      <div class="bento-pattern-row">
+        <div class="bento-top-group">
+          <div class="bento-right-col">
+            ${createCardHtml(v1.fileItem, v1.originalIndex)}
+          </div>
+          <div class="bento-left-col">
+            ${createCardHtml(h1.fileItem, h1.originalIndex)}
+            ${createCardHtml(h2.fileItem, h2.originalIndex)}
+          </div>
+        </div>
+        <div class="bento-bottom-full">
+          ${createCardHtml(h3.fileItem, h3.originalIndex)}
+        </div>
+      </div>
+    `;
+  }
+  isMirrored = !isMirrored;
+}
   container.appendChild(fragment);
 
   // Инициализируем события лайтбокса после сборки DOM
