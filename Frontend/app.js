@@ -201,6 +201,8 @@ function buildSmartBentoGallery(photos) {
 
 /// --- 3. ЛОГИКА ЛАЙТБОКСА ---
 
+// --- 3. УПРАВЛЕНИЕ ЛАЙТБОКСОМ ---
+
 function openLightbox(index) {
   currentIndex = index;
   updateLightboxImage();
