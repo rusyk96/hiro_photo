@@ -72,6 +72,7 @@ async function renderAlbumGallery(fallbackCount = 371) {
 }
 
 // 2. Основная функция сборки галереи по секциям (макеты 1-5)
+// Основная функция сборки галереи по секциям (макеты: горизонт + вертикаль | акцент)
 function buildBentoGallery(photoList) {
   const container = document.getElementById('album-gallery-container');
   if (!container) return;
@@ -80,43 +81,19 @@ function buildBentoGallery(photoList) {
   const fragment = document.createDocumentFragment();
 
   let currentIndex = 0;
-  let isMirrored = false; // Переключатель для зеркалирования блоков
+  let isMirrored = false; // Переключатель для зеркалирования
 
   while (currentIndex < photoList.length) {
     const remaining = photoList.length - currentIndex;
     const row = document.createElement('div');
     row.className = 'bento-row';
 
-    const chunkSize = Math.min(remaining >= 4 ? 4 : remaining, 4);
+    // Берем по 3 кадра на одну секцию (2 в узкую колонку, 1 в широкую)
+    const chunkSize = Math.min(remaining >= 3 ? 3 : remaining, 3);
     const photosChunk = photoList.slice(currentIndex, currentIndex + chunkSize);
 
-    if (chunkSize === 4) {
-      // Макет 4 / 5 (3 небольших кадра + 1 акцентный)
-      if (!isMirrored) {
-        row.innerHTML = `
-          <div class="bento-col-4">
-            ${createCardHtml(photosChunk[0], currentIndex)}
-            ${createCardHtml(photosChunk[1], currentIndex + 1)}
-            ${createCardHtml(photosChunk[2], currentIndex + 2)}
-          </div>
-          <div class="bento-col-8">
-            ${createCardHtml(photosChunk[3], currentIndex + 3)}
-          </div>
-        `;
-      } else {
-        row.innerHTML = `
-          <div class="bento-col-8">
-            ${createCardHtml(photosChunk[3], currentIndex + 3)}
-          </div>
-          <div class="bento-col-4">
-            ${createCardHtml(photosChunk[0], currentIndex)}
-            ${createCardHtml(photosChunk[1], currentIndex + 1)}
-            ${createCardHtml(photosChunk[2], currentIndex + 2)}
-          </div>
-        `;
-      }
-    } else if (chunkSize === 3) {
-      // Макет 1 / 2 / 3 (2 кадра + 1 акцентный)
+    if (chunkSize === 3) {
+      // Макет: Узкая колонка (1 горизонталь сверху + 1 вертикаль снизу) + Широкий акцент
       if (!isMirrored) {
         row.innerHTML = `
           <div class="bento-col-4">
@@ -128,6 +105,7 @@ function buildBentoGallery(photoList) {
           </div>
         `;
       } else {
+        // Зеркальный вариант (Широкий акцент слева + 1 горизонталь и 1 вертикаль справа)
         row.innerHTML = `
           <div class="bento-col-8">
             ${createCardHtml(photosChunk[2], currentIndex + 2)}
@@ -139,7 +117,7 @@ function buildBentoGallery(photoList) {
         `;
       }
     } else {
-      // Хвост альбома (1-2 кадра)
+      // Остаток в самом конце альбома (1-2 кадра)
       photosChunk.forEach((file, idx) => {
         const col = document.createElement('div');
         col.className = chunkSize === 1 ? 'bento-col-8' : 'bento-col-6';
@@ -150,7 +128,7 @@ function buildBentoGallery(photoList) {
 
     fragment.appendChild(row);
     currentIndex += chunkSize;
-    isMirrored = !isMirrored;
+    isMirrored = !isMirrored; // Зеркалируем следующий блок
   }
 
   container.appendChild(fragment);
