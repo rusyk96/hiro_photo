@@ -18,17 +18,15 @@ export class GridEngine {
   }
 
   buildNextDesktopRow(landscapes, portraits) {
-    // Если вообще ничего не осталось — выходим
     if (landscapes.length === 0 && portraits.length === 0) {
       return null;
     }
 
-    const total = landscapes.length + portraits.length;
-    const step = this.patternStep % 5;
+    const step = this.patternStep % 4;
 
-    // --- 1. ПРИОРИТЕТНЫЕ БОЛЬШИЕ ПАТТЕРНЫ (когда кадров много) ---
+    // --- 1. ПОЛНОЦЕННЫЕ BENTO-ПАТТЕРНЫ ---
 
-    // Паттерн 4 / 6: Крупный акцент + 3 мелких
+    // Паттерн 4 / 6 (1 акцент + 3 мелких)
     if (landscapes.length >= 1 && portraits.length >= 3) {
       this.patternStep++;
       return (step % 2 === 0)
@@ -36,36 +34,48 @@ export class GridEngine {
         : renderPattern6(landscapes.shift(), portraits.shift(), portraits.shift(), portraits.shift());
     }
 
-    // Паттерн 1: 2 портрета + 2 горизонтали
+    // Паттерн 1 (2 портрета + 2 горизонтали)
     if (portraits.length >= 2 && landscapes.length >= 2) {
       this.patternStep++;
       return renderPattern1(portraits.shift(), landscapes.shift(), landscapes.shift(), portraits.shift());
     }
 
-    // Паттерн 8: Акцент + 2 мелких
+    // Паттерн 8 (1 акцент + 2 мелких)
     if (landscapes.length >= 1 && portraits.length >= 2) {
       this.patternStep++;
       return renderPattern8(landscapes.shift(), portraits.shift(), portraits.shift());
     }
 
-    // --- 2. МЯГКИЙ ФОЛЛБЭК (когда один из типов фото заканчивается) ---
+    // --- 2. МЯГКАЯ ДЕГРАДАЦИЯ ДЛЯ ХВОСТОВ (аккуратное закрытие сетки) ---
 
-    // Если остались только портреты (собираем парами)
-    if (portraits.length >= 2) {
+    // Если есть 3+ одинаковых кадра
+    if (portraits.length >= 3) {
       return renderPattern8(portraits.shift(), portraits.shift(), portraits.shift());
     }
-
-    // Если остались только горизонтали (собираем парами)
-    if (landscapes.length >= 2) {
-      return renderPattern1(landscapes.shift(), landscapes.shift(), landscapes.shift(), landscapes.shift());
+    if (landscapes.length >= 3) {
+      return renderPattern8(landscapes.shift(), landscapes.shift(), landscapes.shift());
     }
 
-    // --- 3. ПОСЛЕДНИЙ КАДР (забираем одиночные остатки) ---
-    if (landscapes.length > 0) {
-      return renderMobilePattern(landscapes.shift());
+    // Если осталось 2 кадра — рендерим их аккуратной парой в 2 колонки
+    if (portraits.length + landscapes.length === 2) {
+      const p1 = landscapes.shift() || portraits.shift();
+      const p2 = landscapes.shift() || portraits.shift();
+      return `
+        <div class="bento-row bento-tail-2">
+          <div class="bento-col-6">${renderMobilePattern(p1)}</div>
+          <div class="bento-col-6">${renderMobilePattern(p2)}</div>
+        </div>
+      `;
     }
-    if (portraits.length > 0) {
-      return renderMobilePattern(portraits.shift());
+
+    // --- 3. ПОСЛЕДНИЙ 1 КАДР ---
+    const lastPhoto = landscapes.shift() || portraits.shift();
+    if (lastPhoto) {
+      return `
+        <div class="bento-row bento-tail-1">
+          <div class="bento-col-8">${renderMobilePattern(lastPhoto)}</div>
+        </div>
+      `;
     }
 
     return null;

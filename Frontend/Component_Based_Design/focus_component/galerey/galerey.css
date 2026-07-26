@@ -101,6 +101,10 @@
    ДЕСКТОП СЕТКА BENTO (от 768px и выше)
    ========================================================================== */
 
+/* ==========================================================================
+   ДЕСКТОП СЕТКА BENTO (от 768px и выше)
+   ========================================================================== */
+
 @media (min-width: 768px) {
 
   /* Базовый ряд 12-колоночного Bento */
@@ -109,6 +113,20 @@
     grid-template-columns: repeat(12, 1fr) !important;
     gap: 16px !important;
     width: 100% !important;
+  }
+
+  /* Хвосты в конце альбома (чтобы не растягивались на весь экран) */
+  .bento-tail-1 {
+    justify-content: center;
+  }
+  .bento-tail-1 .bento-col-8 {
+    grid-column: span 8;
+    margin: 0 auto;
+    max-height: 480px;
+  }
+  .bento-tail-2 .bento-col-6 {
+    grid-column: span 6;
+    max-height: 420px;
   }
 
   /* ------------------------------------------------------------------------
@@ -134,13 +152,9 @@
   }
 
   /* ------------------------------------------------------------------------
-     СТОПКИ И АКЦЕНТЫ (Sub-stacks & Accents)
+     СТОПКИ И АКЦЕНТЫ (Компактные пропорции)
      ------------------------------------------------------------------------ */
   .main-accent {
-    height: 100%;
-  }
-
-  .main-accent .gallery-card {
     height: 100%;
   }
 
@@ -164,55 +178,37 @@
   }
 
   /* ------------------------------------------------------------------------
-     ПРОПОРЦИИ ДЛЯ КАЖДОГО ПАТТЕРНА (Aspect Ratios)
+     ПРОПОРЦИИ (Уменьшаем высоту блокировки)
      ------------------------------------------------------------------------ */
 
-  /* Паттерны 1, 2, 3 (Комбинированные верх/низ) */
+  /* Паттерны 1, 2, 3 */
   .pattern-1 .bento-top .col-left .gallery-card,
   .pattern-1 .bento-bottom .col-right .gallery-card {
-    aspect-ratio: 3 / 4; /* Портреты */
+    aspect-ratio: 4 / 3;
   }
 
   .pattern-1 .bento-top .col-right .gallery-card,
   .pattern-1 .bento-bottom .col-left .gallery-card {
-    aspect-ratio: 16 / 10; /* Пейзажи */
-  }
-
-  .pattern-2 .sub-stack .gallery-card,
-  .pattern-3 .sub-stack .gallery-card {
     aspect-ratio: 16 / 9;
   }
 
-  /* Паттерны 4 и 5 (Стопка слева + Большой акцент справа) */
-  .pattern-4 .col-left,
-  .pattern-5 .col-left {
-    grid-column: span 5;
+  /* Паттерны 4, 5, 6, 7, 8 (Ширина 6 на 6 для сбалансированности) */
+  .pattern-4 .col-left, .pattern-5 .col-left,
+  .pattern-6 .col-left, .pattern-7 .col-left, .pattern-8 .col-left {
+    grid-column: span 6;
   }
 
-  .pattern-4 .col-right,
-  .pattern-5 .col-right {
-    grid-column: span 7;
+  .pattern-4 .col-right, .pattern-5 .col-right,
+  .pattern-6 .col-right, .pattern-7 .col-right, .pattern-8 .col-right {
+    grid-column: span 6;
   }
 
-  /* Паттерны 6, 7, 8 (Большой акцент слева + Стопка справа) */
-  .pattern-6 .col-left,
-  .pattern-7 .col-left,
-  .pattern-8 .col-left {
-    grid-column: span 7;
-  }
-
-  .pattern-6 .col-right,
-  .pattern-7 .col-right,
-  .pattern-8 .col-right {
-    grid-column: span 5;
-  }
-
-  /* Универсальные высоты пропорций для акцентов */
+  /* Компактный акцент: больше никаких 1:1 огромных лопухов */
   .pattern-4 .main-accent .gallery-card,
   .pattern-5 .main-accent .gallery-card,
   .pattern-6 .main-accent .gallery-card,
   .pattern-7 .main-accent .gallery-card,
   .pattern-8 .main-accent .gallery-card {
-    aspect-ratio: 1 / 1; /* Квадрат или большой формат для доминанты */
+    aspect-ratio: 16 / 11;
   }
 }
