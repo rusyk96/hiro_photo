@@ -1,6 +1,6 @@
 import { renderPattern1 
 
-} from '../../../../Component_Based_Design/focus_component/galerey/bento_grid/patterns/index_patterns'; 
+} from '../../../../Component_Based_Design/focus_component/galerey/bento_grid/patterns/index_patterns.js'; 
 // (или через абсолютный путь, смотря где лежит grid.js)
 
 export class GridEngine {
