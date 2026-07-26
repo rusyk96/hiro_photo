@@ -15,6 +15,11 @@ export class GridEngine {
   }
 
   buildNextDesktopRow(landscapes, portraits) {
+    // Безопасная проверка входных данных
+    if (!Array.isArray(landscapes) || !Array.isArray(portraits)) {
+      return null;
+    }
+
     const totalRemaining = landscapes.length + portraits.length;
     if (totalRemaining === 0) return null;
 
@@ -34,20 +39,28 @@ export class GridEngine {
       return this._renderSelectedPattern(selected, landscapes, portraits);
     }
 
-    // 🎯 2. ГИБКИЙ РЕЖИМ (Если идеальные паттерны не собрались, но фото еще МНОГО)
-    
-    // Если есть хотя бы 1 портрет и 2-3 горизонтали -> собираем Pattern 1, дублируя горизонталь в стек
+    // 🎯 2. СПАСАТЕЛЬНЫЙ РЕЖИМ ДЛЯ ПОРТРЕТОВ (если кончились горизонтали)
+    if (portraits.length >= 3) {
+      const pGroup = portraits.splice(0, 3);
+      const cardsHtml = pGroup.map(p => `
+        <div class="bento-portrait-item">
+          ${createCardHtml(p)}
+        </div>
+      `).join('');
+      return `<div class="bento-row bento-portrait-grid">${cardsHtml}</div>`;
+    }
+
+    // 🎯 3. ГИБКИЙ РЕЖИМ (если остался 1 портрет и пара горизонталей)
     if (portraits.length >= 1 && landscapes.length >= 2) {
       const p1 = portraits.splice(0, 1)[0];
       const h1 = landscapes.splice(0, 1)[0];
       const h2 = landscapes.splice(0, 1)[0];
-      // Если 3-й горизонтали нет, берем h2 как вторую в стек, чтобы HTML не ломался
       const h3_second = landscapes.length > 0 ? landscapes.splice(0, 1)[0] : h2; 
       this.lastPatternIndex = 1;
       return renderPattern1(p1, h1, h2, [h2, h3_second]);
     }
 
-    // Если портретов нет, но горизонталей от 3 до 5 -> делаем адаптивную сборку Pattern 2
+    // 🎯 4. СПАСАТЕЛЬНЫЙ РЕЖИМ ДЛЯ ГОРИЗОНТАЛЕЙ (если кончились портреты)
     if (landscapes.length >= 3) {
       const h_top = [landscapes.splice(0, 1)[0], landscapes.splice(0, 1)[0]];
       const h_big1 = landscapes.splice(0, 1)[0];
@@ -60,7 +73,7 @@ export class GridEngine {
       return renderPattern2(h_top, h_big1, h_big2, h_bot);
     }
 
-    // 🎯 3. СТРОГИЙ ФОЛЛБЭК (Срабатывает ТОЛЬКО на финише, когда осталось 1-2 фото)
+    // 🎯 5. ФОЛЛБЭК ХВОСТА (Вызывается строго на финише, когда осталось 1-2 фото)
     return this._renderTail(landscapes, portraits);
   }
 
