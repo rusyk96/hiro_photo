@@ -29,9 +29,11 @@ export async function renderAlbumGallery() {
   // 3. Собираем Bento-сетку
   buildSmartBentoGallery(indexedPhotos);
 
-  // 4. Запускаем виртуализатор
+  // 4. Запускаем виртуализатор с гарантией DOM-layout
   requestAnimationFrame(() => {
-    initChunkVirtualizer('album-gallery-container');
+    setTimeout(() => {
+      initChunkVirtualizer('album-gallery-container');
+    }, 0);
   });
 }
 
@@ -43,8 +45,9 @@ function buildSmartBentoGallery(photos) {
   const fragment = document.createDocumentFragment();
   const gridEngine = new GridEngine();
 
-  let landscapes = photos.filter(p => !p.isPortrait);
-  let portraits = photos.filter(p => p.isPortrait);
+  // Клонируем элементы массивов
+  let landscapes = photos.filter(p => !p.isPortrait).map(p => ({ ...p }));
+  let portraits = photos.filter(p => p.isPortrait).map(p => ({ ...p }));
 
   // 1. МОБИЛКА
   if (!isDesktop()) {
@@ -56,10 +59,15 @@ function buildSmartBentoGallery(photos) {
       }
     });
   } 
-  // 2. ДЕСКТОП (Сборка через Pattern 1)
+  // 2. ДЕСКТОП (Сборка через Bento Patterns)
   else {
-    while (landscapes.length > 0 || portraits.length > 0) {
+    let safetyIterator = 0;
+    const MAX_ITERATIONS = photos.length;
+
+    while ((landscapes.length > 0 || portraits.length > 0) && safetyIterator < MAX_ITERATIONS) {
+      const prevTotal = landscapes.length + portraits.length;
       const rowHtml = gridEngine.buildNextDesktopRow(landscapes, portraits);
+
       if (!rowHtml) break;
 
       const rowWrapper = document.createElement('div');
@@ -68,6 +76,14 @@ function buildSmartBentoGallery(photos) {
       if (rowWrapper.firstElementChild) {
         fragment.appendChild(rowWrapper.firstElementChild);
       }
+
+      // Страховка от зависания цикла
+      if (landscapes.length + portraits.length === prevTotal) {
+        console.warn('[Bento Engine] Внимание: Длина массивов не изменилась. Завершаем сборку.');
+        break;
+      }
+
+      safetyIterator++;
     }
   }
 

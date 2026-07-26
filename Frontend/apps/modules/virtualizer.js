@@ -12,7 +12,6 @@ const VELOCITY_THRESHOLD = 2.0;
 
 const EMPTY_PIXEL = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
 
-// 🎯 СНИЗИЛИ БУФЕР: грузим только то, что почти на экране (~1 чанк про запас)
 const OBSERVER_OPTIONS = {
   root: null,
   rootMargin: '250px 0px 250px 0px', 
@@ -23,8 +22,14 @@ export function initChunkVirtualizer(containerId = 'album-gallery-container') {
   const container = document.getElementById(containerId);
   if (!container) return;
 
-  // Ищем и bento-row, и bento-pattern-row, и любые паттерны
-  const chunkRows = container.querySelectorAll('.bento-pattern-row, .bento-row, [class*="pattern-"]');
+  // 🎯 1. Ищем паттерны/ряды
+  let chunkRows = container.querySelectorAll('.bento-pattern-row, .bento-row, [class*="pattern-"]');
+  
+  // 🎯 2. Если рядов нет (фоллбэк) — работаем прямо с карточками!
+  if (!chunkRows.length) {
+    chunkRows = container.querySelectorAll('.gallery-card');
+  }
+
   if (!chunkRows.length) return;
 
   if (!isScrollListenerAttached) {
@@ -39,12 +44,10 @@ export function initChunkVirtualizer(containerId = 'album-gallery-container') {
       if (entry.isIntersecting) {
         chunk.dataset.inView = 'true';
 
-        // Если скроллим с нормальной скоростью — монтируем сразу
         if (!isFastScrolling) {
           mountImagesInChunk(chunk);
         }
       } else {
-        // Чанк ушел из видимости — МГНОВЕННО сжигаем VRAM
         chunk.dataset.inView = 'false';
         unmountImagesFromChunk(chunk);
       }
@@ -52,7 +55,8 @@ export function initChunkVirtualizer(containerId = 'album-gallery-container') {
   }, OBSERVER_OPTIONS);
 
   chunkRows.forEach((chunk) => {
-    const imgs = chunk.querySelectorAll('img');
+    // Подхватываем картинку независимо от того, чанк это или одиночный .gallery-card
+    const imgs = chunk.tagName === 'IMG' ? [chunk] : chunk.querySelectorAll('img');
     imgs.forEach((img) => {
       if (!img.dataset.originalSrc) {
         img.dataset.originalSrc = img.getAttribute('data-original-src') || img.src;
@@ -64,9 +68,6 @@ export function initChunkVirtualizer(containerId = 'album-gallery-container') {
   });
 }
 
-/**
- * Детектор скорости прокрутки
- */
 function handleScrollVelocity() {
   const now = Date.now();
   const currentScrollTop = window.scrollY;
@@ -81,7 +82,6 @@ function handleScrollVelocity() {
   lastScrollTime = now;
   lastScrollTop = currentScrollTop;
 
-  // Когда скролл остановился — вгружаем ТОЛЬКО те чанки, которые СЕЙЧАС перед глазами
   clearTimeout(scrollTimeout);
   scrollTimeout = setTimeout(() => {
     isFastScrolling = false;
@@ -89,9 +89,6 @@ function handleScrollVelocity() {
   }, 80);
 }
 
-/**
- * Вгружает ТОЛЬКО те чанки, которые реально находятся в текущем viewport
- */
 function mountVisibleChunksOnly() {
   const visibleChunks = document.querySelectorAll('[data-in-view="true"]');
   visibleChunks.forEach((chunk) => {
@@ -99,15 +96,12 @@ function mountVisibleChunksOnly() {
   });
 }
 
-/**
- * Вгружает реальные изображения в VRAM
- */
 function mountImagesInChunk(chunk) {
   if (chunk.dataset.isMounted === 'true') return;
 
   chunk.dataset.isMounted = 'true';
 
-  const imgs = chunk.querySelectorAll('img');
+  const imgs = chunk.tagName === 'IMG' ? [chunk] : chunk.querySelectorAll('img');
   imgs.forEach((img) => {
     const originalSrc = img.dataset.originalSrc;
     if (!originalSrc) return;
@@ -131,13 +125,10 @@ function mountImagesInChunk(chunk) {
   });
 }
 
-/**
- * Выгружает картинки из VRAM
- */
 function unmountImagesFromChunk(chunk) {
   chunk.dataset.isMounted = 'false';
 
-  const imgs = chunk.querySelectorAll('img');
+  const imgs = chunk.tagName === 'IMG' ? [chunk] : chunk.querySelectorAll('img');
   imgs.forEach((img) => {
     img.src = EMPTY_PIXEL;
     img.removeAttribute('src'); 
