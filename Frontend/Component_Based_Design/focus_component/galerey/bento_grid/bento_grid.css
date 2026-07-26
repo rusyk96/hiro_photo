@@ -1,51 +1,42 @@
-/* Базовый блок-атом */
+/* Основной контейнер сетки */
 .bento-atom-grid {
   display: grid;
   grid-template-columns: repeat(12, 1fr);
-  gap: var(--grid-gap, 16px);
+  gap: var(--grid-gap, 20px);
   width: 100%;
   box-sizing: border-box;
 }
 
-/* 🎯 Ряд из 4 вертикалок (4 Portrait Row) */
-.mode-4-portraits .atom-item {
-  grid-column: span 3;
-}
-.mode-4-portraits .gallery-card {
-  aspect-ratio: 3 / 4;
-}
+/* 🎯 4 СТРОГО ФИКСИРОВАННЫХ АТОМА */
 
-/* 🎯 Ряд из 3 горизонталок (3 Landscape Row) */
-.mode-3-landscapes .atom-item {
-  grid-column: span 4;
-}
-.mode-3-landscapes .gallery-card {
-  aspect-ratio: 16 / 10;
-}
-
-/* 🎯 Комбо: 1 Ландшафт слева (span 8) + 2 Портрета справа (span 2 + span 2) */
-.mode-combo-hero-l {
-  align-items: stretch;
-}
-.mode-combo-hero-l .atom-hero {
+/* 1. HL (Horizontal Large) — 8 колонок */
+.atom-hl {
   grid-column: span 8;
-}
-.mode-combo-hero-l .atom-hero .gallery-card {
-  height: 100%;
   aspect-ratio: 16 / 10;
 }
-.mode-combo-hero-l .atom-sub {
-  grid-column: span 2;
+
+/* 2. HS (Horizontal Small) — 4 колонки */
+.atom-hs {
+  grid-column: span 4;
+  aspect-ratio: 16 / 10;
 }
-.mode-combo-hero-l .atom-sub .gallery-card {
-  height: 100%;
+
+/* 3. VL (Vertical Large) — 6 колонок */
+.atom-vl {
+  grid-column: span 6;
   aspect-ratio: 3 / 4;
 }
 
-/* Изоляция карточек внутри атомов */
+/* 4. VS (Vertical Small) — 3 колонки */
+.atom-vs {
+  grid-column: span 3;
+  aspect-ratio: 3 / 4;
+}
+
+/* Фиксация внутри карточек */
 .bento-atom-grid .gallery-card {
   width: 100%;
-  position: relative;
-  overflow: hidden;
+  height: 100%;
+  object-fit: cover;
   border-radius: 16px;
 }
