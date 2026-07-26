@@ -199,3 +199,8 @@ export function waitForFirstImages(count = 4) {
 
   return Promise.all(loadPromises);
 }
+
+import { VramMonitor } from './vram-hud.js';
+
+// Запускаем монитор в режиме разработки
+new VramMonitor();
