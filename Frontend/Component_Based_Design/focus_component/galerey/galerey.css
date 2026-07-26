@@ -1,24 +1,20 @@
 /* ==========================================================================
-   ГАЛЕРЕЯ АЛЬБОМА (Bento Grid - Swiss & Minimalist)
+   ГАЛЕРЕЯ АЛЬБОМА (Bento Grid)
    ========================================================================== */
 
 @import url('/Frontend/Component_Based_Design/focus_component/galerey/slider/Lightbox_Slider_Modal.css');
 
-/* ==========================================================================
-   ОСНОВНОЙ КОНТЕЙНЕР
-   ========================================================================== */
-
+/* ОСНОВНОЙ КОНТЕЙНЕР */
+#album-gallery-container,
 .gallery-grid {
   display: flex;
   flex-direction: column;
   gap: 16px;
   width: 100%;
+  box-sizing: border-box;
 }
 
-/* ==========================================================================
-   КАРТОЧКА И СКЕЛЕТОН
-   ========================================================================== */
-
+/* КАРТОЧКА И СКЕЛЕТОН */
 .gallery-card {
   position: relative;
   width: 100%;
@@ -26,7 +22,7 @@
   overflow: hidden;
   background-color: #121212;
   cursor: pointer;
-  min-height: 120px;
+  min-height: 100px;
 }
 
 .gallery-img {
@@ -34,7 +30,7 @@
   height: 100%;
   object-fit: cover;
   display: block;
-  opacity: 1; /* 🎯 ФИКС: Прозрачность убрана, картинка сразу видна */
+  opacity: 1;
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   min-width: 0;
   min-height: 0;
@@ -44,7 +40,7 @@
   transform: scale(1.02);
 }
 
-/* === Скелетон Шиммер (пока нет src в виртуализаторе) === */
+/* Скелетон Шиммер для виртуализатора */
 .gallery-img:not([src]),
 .gallery-img[src=""] {
   opacity: 0;
@@ -73,17 +69,18 @@
 }
 
 /* ==========================================================================
-   МОБИЛЬНАЯ ВЕРСТКА (до 767px) — Все в 1 колонку для скорости скролла
+   МОБИЛЬНАЯ ВЕРСТКА (до 767px включительно)
    ========================================================================== */
 
 @media (max-width: 767px) {
   .bento-row, 
   .bento-pattern-row,
-  .bento-top-group {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    width: 100%;
+  .bento-top-group,
+  .bento-remainder-row {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    width: 100% !important;
   }
 
   .bento-col-4, 
@@ -97,43 +94,43 @@
   }
 
   .gallery-card {
-    aspect-ratio: 4 / 3; /* Единственная пропорция для мобилок */
+    aspect-ratio: 4 / 3;
   }
 }
 
 /* ==========================================================================
-   ДЕСКТОП СЕТКА (от 768px) — Полноценный 12-колоночный Grid
+   ДЕСКТОП СЕТКА (от 768px и выше)
    ========================================================================== */
 
 @media (min-width: 768px) {
 
-  /* Базовый ряды */
-  .bento-row {
-    display: grid;
-    grid-template-columns: repeat(12, 1fr);
-    gap: 16px;
-    width: 100%;
-    margin-bottom: 16px;
+  /* Общие ряды Grid */
+  .bento-row,
+  .bento-remainder-row {
+    display: grid !important;
+    grid-template-columns: repeat(12, 1fr) !important;
+    gap: 16px !important;
+    width: 100% !important;
   }
 
-  .bento-col-4 { grid-column: span 4; }
-  .bento-col-6 { grid-column: span 6; }
-  .bento-col-8 { grid-column: span 8; }
-  .bento-col-12 { grid-column: span 12; }
+  /* Колоночный сет */
+  .bento-col-4 { grid-column: span 4 !important; }
+  .bento-col-6 { grid-column: span 6 !important; }
+  .bento-col-8 { grid-column: span 8 !important; }
+  .bento-col-12 { grid-column: span 12 !important; }
 
-  /* Картинки в простых сетках */
-  .bento-col-4 .gallery-card,
-  .bento-col-6 .gallery-card { aspect-ratio: 4 / 3; }
-  .bento-col-8 .gallery-card { aspect-ratio: 16 / 10; }
+  /* Пропорции для простых рядов и остатка */
+  .bento-col-4 .gallery-card { aspect-ratio: 4 / 3; }
+  .bento-col-6 .gallery-card { aspect-ratio: 16 / 10; }
+  .bento-col-8 .gallery-card { aspect-ratio: 16 / 9; }
   .bento-col-12 .gallery-card { aspect-ratio: 21 / 9; }
 
-  /* Сложный Паттерн Bento (2 левые горизонтали + 1 правый портрет + 1 нижняя ширь) */
+  /* Сложный Паттерн Bento */
   .bento-pattern-row {
     display: flex;
     flex-direction: column;
     gap: 16px;
     width: 100%;
-    margin-bottom: 16px;
   }
 
   .bento-top-group {
