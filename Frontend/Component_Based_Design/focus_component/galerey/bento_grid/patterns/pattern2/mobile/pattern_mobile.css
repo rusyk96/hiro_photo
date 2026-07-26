@@ -1,0 +1,20 @@
+/* ==========================================================================
+   PATTERN 1 — MOBILE (Single Column Stack)
+   ========================================================================== */
+
+.pattern-1,
+.pattern-1 .bento-top,
+.pattern-1 .bento-bottom,
+.pattern-1 .col-left,
+.pattern-1 .col-right {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.pattern-1 .gallery-card {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  height: auto;
+}

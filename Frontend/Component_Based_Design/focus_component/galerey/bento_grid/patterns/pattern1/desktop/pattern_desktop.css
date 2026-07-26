@@ -1,47 +1,38 @@
 /* ==========================================================================
-   PATTERN 1 — SWISS BENTO (Использует глобальную .grid систему)
+   PATTERN 1 (1 P | 1 L / 1 L | 2 L) — 4 фото
    ========================================================================== */
 
-/* Корневая обёртка паттерна сама становится твоим 12-колоночным .grid */
 .pattern-1 {
   display: grid;
-  grid-template-columns: repeat(var(--grid-columns), 1fr);
-  gap: var(--grid-gap);
+  grid-template-columns: repeat(var(--grid-columns, 12), 1fr);[cite: 1, 2]
+  gap: var(--grid-gap, 20px);[cite: 1, 2]
   width: 100%;
 }
 
-/* 🎯 Убираем влияние промежуточных .bento-top и .bento-bottom на сетку */
 .pattern-1 .bento-top,
 .pattern-1 .bento-bottom {
-  display: contents; 
+  display: contents;
 }
 
-.pattern-1 .col-left,
-.pattern-1 .col-right {
+.pattern-1 .col-stack {
   display: flex;
+  flex-direction: column;
+  gap: var(--grid-gap, 20px);[cite: 1, 2]
   width: 100%;
 }
 
-/* Распределяем колонки по Swiss-пропорциям (5 + 7 = 12) */
-.pattern-1 .bento-top .col-left   { grid-column: span 5; } /* Портрет */
-.pattern-1 .bento-top .col-right  { grid-column: span 7; } /* Горизонталь */
+.pattern-1 .bento-top .col-left  { grid-column: span 5; }[cite: 4]
+.pattern-1 .bento-top .col-right { grid-column: span 7; }[cite: 4]
 
-.pattern-1 .bento-bottom .col-left  { grid-column: span 7; } /* Горизонталь */
-.pattern-1 .bento-bottom .col-right { grid-column: span 5; } /* Портрет */
+.pattern-1 .bento-bottom .col-left  { grid-column: span 7; }[cite: 4]
+.pattern-1 .bento-bottom .col-right { grid-column: span 5; }[cite: 4]
 
-/* Настройки карточки внутри колонок */
 .pattern-1 .gallery-card {
   width: 100%;
   height: 100%;
 }
 
-/* Пропорции для идеальной стыковки высот */
-.pattern-1 .bento-top .col-left .gallery-card,
-.pattern-1 .bento-bottom .col-right .gallery-card {
-  aspect-ratio: 3 / 4;
-}
-
-.pattern-1 .bento-top .col-right .gallery-card,
-.pattern-1 .bento-bottom .col-left .gallery-card {
-  aspect-ratio: 16 / 10;
-}
+.pattern-1 .bento-top .col-left .gallery-card  { aspect-ratio: 3 / 4; }
+.pattern-1 .bento-top .col-right .gallery-card { aspect-ratio: 16 / 10; }
+.pattern-1 .bento-bottom .col-left .gallery-card { aspect-ratio: 16 / 10; }
+.pattern-1 .col-stack .gallery-card { aspect-ratio: 16 / 9; }
