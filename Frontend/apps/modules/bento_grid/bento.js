@@ -2,7 +2,7 @@ import { fetchManifestPhotos } from '../api.js';
 import { setLightboxPhotos, initLightboxEvents } from '../lightbox.js';
 import { initChunkVirtualizer } from '../virtualizer.js';
 import { VramMonitor } from '../vram-hud.js';
-import { GridEngine } from './grids/grid.js';
+import { GridEngine } from './grid/grid.js';
 
 new VramMonitor();
 
