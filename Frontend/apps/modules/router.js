@@ -1,5 +1,5 @@
 import { includeComponent } from './api.js';
-import { renderAlbumGallery } from './bento.js';
+import { renderAlbumGallery } from './bento_grid/bento.js';
 import { mountLoader, hideLoader } from './loader.js';
 
 // Вспомогательная задержка для красоты анимации переходов
