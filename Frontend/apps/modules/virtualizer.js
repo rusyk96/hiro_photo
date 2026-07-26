@@ -1,11 +1,13 @@
 /**
- * Модуль нативной виртуализации Bento-сетки для защиты VRAM в Safari
+ * Модуль нативной виртуализации VRAM
+ * Сохраняет DOM-структуру, но управляет ресурсами картинок (src)
  */
 
-// Буфер в 600px сверху и снизу: кадры грузятся ДО того, как пользователь до них доскроллит
+// Увеличиваем буфер до 1200px (это ~2 экрана вверху и внизу), 
+// чтобы картинки гарантированно успевали вгружаться ДО появления на экране.
 const OBSERVER_OPTIONS = {
   root: null,
-  rootMargin: '600px 0px 600px 0px',
+  rootMargin: '1200px 0px 1200px 0px',
   threshold: 0
 };
 
@@ -13,7 +15,6 @@ export function initChunkVirtualizer(containerId = 'album-gallery-container') {
   const container = document.getElementById(containerId);
   if (!container) return;
 
-  // Находим все логические блоки / ряды вашей Bento-сетки
   const chunkRows = container.querySelectorAll('.bento-pattern-row, .bento-row');
   if (!chunkRows.length) return;
 
@@ -22,68 +23,64 @@ export function initChunkVirtualizer(containerId = 'album-gallery-container') {
       const chunk = entry.target;
 
       if (entry.isIntersecting) {
-        mountChunk(chunk);
+        // Чанк вошёл в буферную зону (40% - 100%) -> Загружаем картинки в VRAM
+        mountImagesInChunk(chunk);
       } else {
-        unmountChunk(chunk);
+        // Чанк ушёл далеко (0%) -> Выгружаем тяжелые текстуры из VRAM
+        unmountImagesFromChunk(chunk);
       }
     });
   }, OBSERVER_OPTIONS);
 
   chunkRows.forEach((chunk) => {
-    // 1. Сохраняем исходный HTML блока
-    if (!chunk.dataset.rawHtml) {
-      chunk.dataset.rawHtml = chunk.innerHTML;
-    }
-
-    // 2. Фиксируем реальную высоту, чтобы сетка и скролл не «прыгали»
-    const initialHeight = chunk.getBoundingClientRect().height;
-    if (initialHeight > 0) {
-      chunk.style.minHeight = `${initialHeight}px`;
-    }
-
-    chunk.dataset.isMounted = 'true';
-    setupAsyncImages(chunk);
+    // Сохраняем исходный URL для каждой картинки один раз при инициализации
+    const imgs = chunk.querySelectorAll('img');
+    imgs.forEach((img) => {
+      if (!img.dataset.originalSrc) {
+        img.dataset.originalSrc = img.src;
+      }
+      img.setAttribute('decoding', 'async');
+    });
 
     observer.observe(chunk);
   });
 }
 
 /**
- * Вгружает картинки обратно при приближении к экрану
+ * Вгружает реальные изображения в VRAM
  */
-function mountChunk(chunk) {
+function mountImagesInChunk(chunk) {
   if (chunk.dataset.isMounted === 'true') return;
 
-  if (chunk.dataset.rawHtml) {
-    chunk.innerHTML = chunk.dataset.rawHtml;
-    chunk.dataset.isMounted = 'true';
-    setupAsyncImages(chunk);
-  }
+  const imgs = chunk.querySelectorAll('img');
+  imgs.forEach((img) => {
+    const originalSrc = img.dataset.originalSrc;
+    if (originalSrc && img.src !== originalSrc) {
+      img.src = originalSrc;
+      
+      if (img.complete) {
+        img.classList.add('is-loaded');
+      } else {
+        img.addEventListener('load', () => img.classList.add('is-loaded'), { once: true });
+      }
+    }
+  });
+
+  chunk.dataset.isMounted = 'true';
 }
 
 /**
- * Полностью чистит DOM выгруженного блока, освобождая видеопамять GPU
+ * Выгружает тяжелые текстуры из GPU, сохраняя DOM и размеры блоков
  */
-function unmountChunk(chunk) {
+function unmountImagesFromChunk(chunk) {
   if (chunk.dataset.isMounted === 'false') return;
 
-  // Обновляем текущую высоту перед очисткой
-  const currentHeight = chunk.getBoundingClientRect().height;
-  if (currentHeight > 0) {
-    chunk.style.minHeight = `${currentHeight}px`;
-  }
-
-  // Очищаем DOM (Safari моментально высвобождает VRAM)
-  chunk.innerHTML = '';
-  chunk.dataset.isMounted = 'false';
-}
-
-/**
- * Включает асинхронное декодирование для предотвращения фризов
- */
-function setupAsyncImages(container) {
-  const imgs = container.querySelectorAll('img');
+  const imgs = chunk.querySelectorAll('img');
   imgs.forEach((img) => {
-    img.setAttribute('decoding', 'async');
+    // Очищаем src, чтобы Safari высвободил мегабайты декодированного кадра из VRAM
+    img.removeAttribute('src'); 
+    img.classList.remove('is-loaded');
   });
+
+  chunk.dataset.isMounted = 'false';
 }
