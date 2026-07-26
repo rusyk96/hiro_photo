@@ -19,6 +19,9 @@ const OBSERVER_OPTIONS = {
   threshold: 0
 };
 
+// virtualizer.js
+const chunkRows = container.querySelectorAll('.bento-pattern-row, .bento-row, [class*="pattern-"]');
+
 export function initChunkVirtualizer(containerId = 'album-gallery-container') {
   const container = document.getElementById(containerId);
   if (!container) return;
