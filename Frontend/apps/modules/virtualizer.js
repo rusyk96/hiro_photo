@@ -109,20 +109,24 @@ function mountImagesInChunk(chunk) {
     const originalSrc = img.dataset.originalSrc;
     if (!originalSrc || img.getAttribute('src') === originalSrc) return;
 
-    // 1. Создаем фоновый объект картинки для упреждающего декодирования
+    // Своевременно подгружаем WebP
     const tempImg = new Image();
     tempImg.src = originalSrc;
 
-    // 2. Декодируем растр в фоновом потоке, не блокируя UI
-    tempImg.decode().then(() => {
-      // Картинка полностью готова! Присваиваем src и проявляем мгновенно
-      img.src = originalSrc;
-      img.classList.add('is-loaded');
-    }).catch(() => {
-      // Фолбэк на случай, если decode() не поддерживается или произошла ошибка
-      img.src = originalSrc;
-      img.classList.add('is-loaded');
-    });
+    // Асинхронно распаковываем WebP в фоновом потоке GPU
+    tempImg.decode()
+      .then(() => {
+        // Проверяем, не успел ли чанк уйти из видимости, пока декодировался WebP
+        if (chunk.dataset.pendingMount !== 'false') {
+          img.src = originalSrc;
+          img.classList.add('is-loaded');
+        }
+      })
+      .catch(() => {
+        // Если браузер сбросил поток или не успел — ставим нативно
+        img.src = originalSrc;
+        img.classList.add('is-loaded');
+      });
   });
 
   chunk.dataset.isMounted = 'true';
