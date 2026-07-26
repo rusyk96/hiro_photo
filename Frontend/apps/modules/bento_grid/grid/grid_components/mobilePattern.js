@@ -1,5 +1,5 @@
 // mobilePattern.js
-import { createCardHtml } from '../bento-helpers.js';
+import { createCardHtml } from '../bento-helpers.js'
 
 export function renderMobilePattern(photo) {
   return `

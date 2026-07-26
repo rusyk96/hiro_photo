@@ -1,7 +1,12 @@
-import { renderPattern1 } from './grid_pattern/pattern1.js';
-import { renderPattern2 } from './grid_pattern/pattern2.js';
-// ...импорты остальных паттернов
-import { renderMobilePattern } from './grid_pattern/mobilePattern.js';
+import { renderPattern1 } from './grid_components/pattern1.js';
+import { renderPattern2 } from './grid_components/pattern2.js';
+import { renderPattern3 } from './grid_components/pattern3.js';
+import { renderPattern4 } from './grid_components/pattern4.js';
+import { renderPattern5 } from './grid_components/pattern5.js';
+import { renderPattern6 } from './grid_components/pattern6.js';
+import { renderPattern7 } from './grid_components/pattern7.js';
+import { renderPattern8 } from './grid_components/pattern8.js';
+import { renderMobilePattern } from './grid_components/mobilePattern.js';
 
 export class GridEngine {
   constructor() {
