@@ -1,31 +1,21 @@
-import { THUMB_BASE_URL, fetchManifestPhotos } from './api.js';
+import { fetchManifestPhotos } from './api.js';
 import { setLightboxPhotos, initLightboxEvents } from './lightbox.js';
 import { initChunkVirtualizer } from './virtualizer.js';
 import { VramMonitor } from './vram-hud.js';
 
 new VramMonitor();
 
-function parsePhotosList(manifestData) {
-  return manifestData.map((fileItem, index) => {
-    const isPortrait = typeof fileItem === 'object' && fileItem.type === 'portrait';
-    return {
-      fileItem,
-      originalIndex: index,
-      isPortrait
-    };
-  });
-}
-
-function createCardHtml(fileItem, index) {
-  const fileName = typeof fileItem === 'string' ? fileItem : fileItem.name;
-  const cleanFileName = fileName.normalize('NFC');
-  const photoUrl = `${THUMB_BASE_URL}${encodeURIComponent(cleanFileName)}`;
+// 🎯 ВАЖНО: Используем готовый thumbUrl из api.js
+function createCardHtml(photoObj) {
+  // Защита: поддерживаем и объект, и случайную строку
+  const srcUrl = photoObj.thumbUrl || photoObj;
+  const originalIdx = photoObj.originalIndex ?? 0;
 
   return `
-    <div class="gallery-card" onclick="openLightbox(${index})">
+    <div class="gallery-card" onclick="openLightbox(${originalIdx})">
       <img 
-        data-original-src="${photoUrl}" 
-        alt="Кадр ${index + 1}" 
+        data-original-src="${srcUrl}" 
+        alt="Кадр ${originalIdx + 1}" 
         class="gallery-img"
         loading="lazy"
         decoding="async"
@@ -42,8 +32,14 @@ export async function renderAlbumGallery() {
   const rawPhotos = await fetchManifestPhotos();
   setLightboxPhotos(rawPhotos);
 
-  const analyzedPhotos = parsePhotosList(rawPhotos);
-  buildSmartBentoGallery(analyzedPhotos);
+  // Проставляем оригинальные индексы для Лайтбокса
+  const indexedPhotos = rawPhotos.map((item, index) => ({
+    ...item,
+    originalIndex: index,
+    isPortrait: item.type === 'portrait'
+  }));
+
+  buildSmartBentoGallery(indexedPhotos);
 
   requestAnimationFrame(() => {
     initChunkVirtualizer('album-gallery-container');
@@ -64,7 +60,7 @@ function buildSmartBentoGallery(photos) {
   while (landscapes.length > 0 || portraits.length > 0) {
     const row = document.createElement('div');
 
-    // Сценарий 1: 3 горизонтали + 1 портрет
+    // Сценарий 1: 3 горизонтали + 1 портрет (Большой Bento)
     if (landscapes.length >= 3 && portraits.length >= 1) {
       row.className = 'bento-pattern-row';
       const h1 = landscapes.shift();
@@ -72,37 +68,26 @@ function buildSmartBentoGallery(photos) {
       const v1 = portraits.shift();
       const h3 = landscapes.shift();
 
-      if (!isMirrored) {
-        row.innerHTML = `
-          <div class="bento-top-group">
-            <div class="bento-left-col">
-              ${createCardHtml(h1.fileItem, h1.originalIndex)}
-              ${createCardHtml(h2.fileItem, h2.originalIndex)}
-            </div>
-            <div class="bento-right-col">
-              ${createCardHtml(v1.fileItem, v1.originalIndex)}
-            </div>
-          </div>
-          <div class="bento-bottom-full">
-            ${createCardHtml(h3.fileItem, h3.originalIndex)}
-          </div>
-        `;
-      } else {
-        row.innerHTML = `
-          <div class="bento-top-group">
-            <div class="bento-right-col">
-              ${createCardHtml(v1.fileItem, v1.originalIndex)}
-            </div>
-            <div class="bento-left-col">
-              ${createCardHtml(h1.fileItem, h1.originalIndex)}
-              ${createCardHtml(h2.fileItem, h2.originalIndex)}
-            </div>
-          </div>
-          <div class="bento-bottom-full">
-            ${createCardHtml(h3.fileItem, h3.originalIndex)}
-          </div>
-        `;
-      }
+      const leftHtml = `
+        <div class="bento-left-col">
+          ${createCardHtml(h1)}
+          ${createCardHtml(h2)}
+        </div>
+      `;
+      const rightHtml = `
+        <div class="bento-right-col">
+          ${createCardHtml(v1)}
+        </div>
+      `;
+
+      row.innerHTML = `
+        <div class="bento-top-group">
+          ${!isMirrored ? leftHtml + rightHtml : rightHtml + leftHtml}
+        </div>
+        <div class="bento-bottom-full">
+          ${createCardHtml(h3)}
+        </div>
+      `;
       isMirrored = !isMirrored;
     } 
     // Сценарий 2: 2 горизонтали + 1 портрет
@@ -115,27 +100,27 @@ function buildSmartBentoGallery(photos) {
       if (!isMirrored) {
         row.innerHTML = `
           <div class="bento-col-4">
-            ${createCardHtml(h1.fileItem, h1.originalIndex)}
-            ${createCardHtml(v1.fileItem, v1.originalIndex)}
+            ${createCardHtml(h1)}
+            ${createCardHtml(v1)}
           </div>
           <div class="bento-col-8">
-            ${createCardHtml(h2.fileItem, h2.originalIndex)}
+            ${createCardHtml(h2)}
           </div>
         `;
       } else {
         row.innerHTML = `
           <div class="bento-col-8">
-            ${createCardHtml(h2.fileItem, h2.originalIndex)}
+            ${createCardHtml(h2)}
           </div>
           <div class="bento-col-4">
-            ${createCardHtml(h1.fileItem, h1.originalIndex)}
-            ${createCardHtml(v1.fileItem, v1.originalIndex)}
+            ${createCardHtml(h1)}
+            ${createCardHtml(v1)}
           </div>
         `;
       }
       isMirrored = !isMirrored;
     } 
-    // Сценарий 3: 3 вертикали
+    // Сценарий 3: 3 вертикали подряд
     else if (portraits.length >= 3) {
       row.className = 'bento-row';
       const v1 = portraits.shift();
@@ -143,23 +128,45 @@ function buildSmartBentoGallery(photos) {
       const v3 = portraits.shift();
 
       row.innerHTML = `
-        <div class="bento-col-4">${createCardHtml(v1.fileItem, v1.originalIndex)}</div>
-        <div class="bento-col-4">${createCardHtml(v2.fileItem, v2.originalIndex)}</div>
-        <div class="bento-col-4">${createCardHtml(v3.fileItem, v3.originalIndex)}</div>
+        <div class="bento-col-4">${createCardHtml(v1)}</div>
+        <div class="bento-col-4">${createCardHtml(v2)}</div>
+        <div class="bento-col-4">${createCardHtml(v3)}</div>
       `;
     }
-    // Сценарий 4: 2 горизонтали (50/50)
+    // Сценарий 4: Остались только горизонтали (чередуем 3 в ряд и 2 в ряд)
+    else if (landscapes.length >= 3 && portraits.length === 0) {
+      row.className = 'bento-row';
+      if (isMirrored) {
+        const h1 = landscapes.shift();
+        const h2 = landscapes.shift();
+        const h3 = landscapes.shift();
+        row.innerHTML = `
+          <div class="bento-col-4">${createCardHtml(h1)}</div>
+          <div class="bento-col-4">${createCardHtml(h2)}</div>
+          <div class="bento-col-4">${createCardHtml(h3)}</div>
+        `;
+      } else {
+        const h1 = landscapes.shift();
+        const h2 = landscapes.shift();
+        row.innerHTML = `
+          <div class="bento-col-6">${createCardHtml(h1)}</div>
+          <div class="bento-col-6">${createCardHtml(h2)}</div>
+        `;
+      }
+      isMirrored = !isMirrored;
+    }
+    // Сценарий 5: 2 горизонтали (50/50)
     else if (landscapes.length >= 2) {
       row.className = 'bento-row';
       const h1 = landscapes.shift();
       const h2 = landscapes.shift();
 
       row.innerHTML = `
-        <div class="bento-col-6">${createCardHtml(h1.fileItem, h1.originalIndex)}</div>
-        <div class="bento-col-6">${createCardHtml(h2.fileItem, h2.originalIndex)}</div>
+        <div class="bento-col-6">${createCardHtml(h1)}</div>
+        <div class="bento-col-6">${createCardHtml(h2)}</div>
       `;
     }
-    // 🎯 УМНАЯ ОБРАБОТКА ОСТАТКА (Фикс сброса сетки в конце)
+    // 🎯 ПОСЛЕДНИЙ ОСТАТОК (Финал альбома)
     else {
       row.className = 'bento-row bento-remainder-row';
       const remaining = [...landscapes, ...portraits];
@@ -167,20 +174,17 @@ function buildSmartBentoGallery(photos) {
       portraits = [];
 
       if (remaining.length === 1) {
-        // Одинокий кадр растягиваем на всю ширину
-        row.innerHTML = `<div class="bento-col-12">${createCardHtml(remaining[0].fileItem, remaining[0].originalIndex)}</div>`;
+        row.innerHTML = `<div class="bento-col-12">${createCardHtml(remaining[0])}</div>`;
       } else if (remaining.length === 2) {
-        // 2 кадра отдаем по 50%
         row.innerHTML = `
-          <div class="bento-col-6">${createCardHtml(remaining[0].fileItem, remaining[0].originalIndex)}</div>
-          <div class="bento-col-6">${createCardHtml(remaining[1].fileItem, remaining[1].originalIndex)}</div>
+          <div class="bento-col-6">${createCardHtml(remaining[0])}</div>
+          <div class="bento-col-6">${createCardHtml(remaining[1])}</div>
         `;
       } else {
-        // 3+ остатка делим поровну по 33%
         remaining.forEach(item => {
           const col = document.createElement('div');
           col.className = 'bento-col-4';
-          col.innerHTML = createCardHtml(item.fileItem, item.originalIndex);
+          col.innerHTML = createCardHtml(item);
           row.appendChild(col);
         });
       }
