@@ -98,21 +98,31 @@ function processPendingChunks() {
   });
 }
 
+/**
+ * Вгружает реальные изображения в VRAM с предварительным асинхронным декодированием
+ */
 function mountImagesInChunk(chunk) {
   if (chunk.dataset.isMounted === 'true') return;
 
   const imgs = chunk.querySelectorAll('img');
   imgs.forEach((img) => {
     const originalSrc = img.dataset.originalSrc;
-    if (originalSrc && img.getAttribute('src') !== originalSrc) {
+    if (!originalSrc || img.getAttribute('src') === originalSrc) return;
+
+    // 1. Создаем фоновый объект картинки для упреждающего декодирования
+    const tempImg = new Image();
+    tempImg.src = originalSrc;
+
+    // 2. Декодируем растр в фоновом потоке, не блокируя UI
+    tempImg.decode().then(() => {
+      // Картинка полностью готова! Присваиваем src и проявляем мгновенно
       img.src = originalSrc;
-      
-      if (img.complete) {
-        img.classList.add('is-loaded');
-      } else {
-        img.addEventListener('load', () => img.classList.add('is-loaded'), { once: true });
-      }
-    }
+      img.classList.add('is-loaded');
+    }).catch(() => {
+      // Фолбэк на случай, если decode() не поддерживается или произошла ошибка
+      img.src = originalSrc;
+      img.classList.add('is-loaded');
+    });
   });
 
   chunk.dataset.isMounted = 'true';

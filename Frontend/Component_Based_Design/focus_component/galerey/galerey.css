@@ -119,7 +119,8 @@
   height: 100%;
   object-fit: cover;
   display: block;
-  transition: transform 0.3s ease, opacity 0.25s ease-in-out;
+  opacity: 0; /* Изначально прозрачная */
+  transition: opacity 0.2s ease-out, transform 0.3s ease;
   
   /* Фикс для Chrome: явное указание предсказуемого сжатия */
   min-width: 0;
@@ -152,6 +153,10 @@
 @keyframes bento-shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
+}
+
+.gallery-img.is-loaded {
+  opacity: 1;
 }
 
 .gallery-card:hover .gallery-img {
