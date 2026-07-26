@@ -1,13 +1,18 @@
 /**
- * Модуль нативной виртуализации VRAM
- * Сохраняет DOM-структуру, но управляет ресурсами картинок (src)
+ * Нативный виртуализатор VRAM с детектором скорости скролла (Scroll Velocity Detection)
  */
 
-// Увеличиваем буфер до 1200px (это ~2 экрана вверху и внизу), 
-// чтобы картинки гарантированно успевали вгружаться ДО появления на экране.
+let isFastScrolling = false;
+let scrollTimeout = null;
+let lastScrollTop = window.scrollY;
+let lastScrollTime = Date.now();
+
+// Порог скорости (пикселей в миллисекунду). Если скроллим быстрее — это "пролёт"
+const VELOCITY_THRESHOLD = 2.5; 
+
 const OBSERVER_OPTIONS = {
   root: null,
-  rootMargin: '1200px 0px 1200px 0px',
+  rootMargin: '800px 0px 800px 0px',
   threshold: 0
 };
 
@@ -18,22 +23,31 @@ export function initChunkVirtualizer(containerId = 'album-gallery-container') {
   const chunkRows = container.querySelectorAll('.bento-pattern-row, .bento-row');
   if (!chunkRows.length) return;
 
+  // 1. Отслеживаем скорость скролла окна
+  window.addEventListener('scroll', handleScrollVelocity, { passive: true });
+
+  // 2. Инициализируем Observer
   const observer = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
       const chunk = entry.target;
 
       if (entry.isIntersecting) {
-        // Чанк вошёл в буферную зону (40% - 100%) -> Загружаем картинки в VRAM
-        mountImagesInChunk(chunk);
+        // Если летим на бешеной скорости — НЕ вгружаем VRAM на пролёте
+        if (!isFastScrolling) {
+          mountImagesInChunk(chunk);
+        } else {
+          // Помечаем, что этот чанк должен монтироваться, как только скролл замедлится
+          chunk.dataset.pendingMount = 'true';
+        }
       } else {
-        // Чанк ушёл далеко (0%) -> Выгружаем тяжелые текстуры из VRAM
+        // Выгружаем ВСЕГДА и БЕЗ ЗАДЕРЖЕК, чтобы освобождать VRAM на лету
         unmountImagesFromChunk(chunk);
+        chunk.dataset.pendingMount = 'false';
       }
     });
   }, OBSERVER_OPTIONS);
 
   chunkRows.forEach((chunk) => {
-    // Сохраняем исходный URL для каждой картинки один раз при инициализации
     const imgs = chunk.querySelectorAll('img');
     imgs.forEach((img) => {
       if (!img.dataset.originalSrc) {
@@ -47,15 +61,50 @@ export function initChunkVirtualizer(containerId = 'album-gallery-container') {
 }
 
 /**
- * Вгружает реальные изображения в VRAM
+ * Детектор скорости прокрутки
  */
+function handleScrollVelocity() {
+  const now = Date.now();
+  const currentScrollTop = window.scrollY;
+  const deltaTime = now - lastScrollTime;
+  const deltaScroll = Math.abs(currentScrollTop - lastScrollTop);
+
+  if (deltaTime > 0) {
+    const velocity = deltaScroll / deltaTime;
+
+    // Если скорость выше порога — включаем режим быстрых пролётов
+    isFastScrolling = velocity > VELOCITY_THRESHOLD;
+  }
+
+  lastScrollTime = now;
+  lastScrollTop = currentScrollTop;
+
+  // Когда скролл останавливается или замедляется — догружаем видимые чанки
+  clearTimeout(scrollTimeout);
+  scrollTimeout = setTimeout(() => {
+    isFastScrolling = false;
+    processPendingChunks();
+  }, 150); // 150мс паузы означает, что скролл замедлился/остановился
+}
+
+/**
+ * Вгружает чанки, которые были пропущены во время быстрого пролёта
+ */
+function processPendingChunks() {
+  const pendingChunks = document.querySelectorAll('[data-pending-mount="true"]');
+  pendingChunks.forEach((chunk) => {
+    mountImagesInChunk(chunk);
+    chunk.dataset.pendingMount = 'false';
+  });
+}
+
 function mountImagesInChunk(chunk) {
   if (chunk.dataset.isMounted === 'true') return;
 
   const imgs = chunk.querySelectorAll('img');
   imgs.forEach((img) => {
     const originalSrc = img.dataset.originalSrc;
-    if (originalSrc && img.src !== originalSrc) {
+    if (originalSrc && img.getAttribute('src') !== originalSrc) {
       img.src = originalSrc;
       
       if (img.complete) {
@@ -69,15 +118,10 @@ function mountImagesInChunk(chunk) {
   chunk.dataset.isMounted = 'true';
 }
 
-/**
- * Выгружает тяжелые текстуры из GPU, сохраняя DOM и размеры блоков
- */
 function unmountImagesFromChunk(chunk) {
-  if (chunk.dataset.isMounted === 'false') return;
-
+  // Важно: выгрузка происходит моментально при скролле в любую сторону
   const imgs = chunk.querySelectorAll('img');
   imgs.forEach((img) => {
-    // Очищаем src, чтобы Safari высвободил мегабайты декодированного кадра из VRAM
     img.removeAttribute('src'); 
     img.classList.remove('is-loaded');
   });
