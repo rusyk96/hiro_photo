@@ -10,11 +10,12 @@ let isScrollListenerAttached = false;
 
 const VELOCITY_THRESHOLD = 2.0; 
 
+// Прозрачный 1x1 GIF для освобождения декодированной памяти VRAM
 const EMPTY_PIXEL = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
 
 const OBSERVER_OPTIONS = {
   root: null,
-  rootMargin: '250px 0px 250px 0px', 
+  rootMargin: '350px 0px 350px 0px', // Небольшой буфер для плавного скролла
   threshold: 0
 };
 
@@ -22,15 +23,9 @@ export function initChunkVirtualizer(containerId = 'album-gallery-container') {
   const container = document.getElementById(containerId);
   if (!container) return;
 
-  // 🎯 1. Ищем паттерны/ряды
-  let chunkRows = container.querySelectorAll('.bento-pattern-row, .bento-row, [class*="pattern-"]');
-  
-  // 🎯 2. Если рядов нет (фоллбэк) — работаем прямо с карточками!
-  if (!chunkRows.length) {
-    chunkRows = container.querySelectorAll('.gallery-card');
-  }
-
-  if (!chunkRows.length) return;
+  // 🎯 Наблюдаем строго за .gallery-card, так как у них есть физический DOM-box (aspect-ratio)
+  const cards = container.querySelectorAll('.gallery-card');
+  if (!cards.length) return;
 
   if (!isScrollListenerAttached) {
     window.addEventListener('scroll', handleScrollVelocity, { passive: true });
@@ -39,32 +34,31 @@ export function initChunkVirtualizer(containerId = 'album-gallery-container') {
 
   const observer = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
-      const chunk = entry.target;
+      const card = entry.target;
 
       if (entry.isIntersecting) {
-        chunk.dataset.inView = 'true';
+        card.dataset.inView = 'true';
 
         if (!isFastScrolling) {
-          mountImagesInChunk(chunk);
+          mountImagesInCard(card);
         }
       } else {
-        chunk.dataset.inView = 'false';
-        unmountImagesFromChunk(chunk);
+        card.dataset.inView = 'false';
+        unmountImagesFromCard(card); // 💥 Жёсткая выгрузка при выходе из viewport
       }
     });
   }, OBSERVER_OPTIONS);
 
-  chunkRows.forEach((chunk) => {
-    // Подхватываем картинку независимо от того, чанк это или одиночный .gallery-card
-    const imgs = chunk.tagName === 'IMG' ? [chunk] : chunk.querySelectorAll('img');
-    imgs.forEach((img) => {
+  cards.forEach((card) => {
+    const img = card.querySelector('img');
+    if (img) {
       if (!img.dataset.originalSrc) {
         img.dataset.originalSrc = img.getAttribute('data-original-src') || img.src;
       }
       img.setAttribute('decoding', 'async');
-    });
+    }
 
-    observer.observe(chunk);
+    observer.observe(card);
   });
 }
 
@@ -85,53 +79,62 @@ function handleScrollVelocity() {
   clearTimeout(scrollTimeout);
   scrollTimeout = setTimeout(() => {
     isFastScrolling = false;
-    mountVisibleChunksOnly();
+    mountVisibleCardsOnly();
   }, 80);
 }
 
-function mountVisibleChunksOnly() {
-  const visibleChunks = document.querySelectorAll('[data-in-view="true"]');
-  visibleChunks.forEach((chunk) => {
-    mountImagesInChunk(chunk);
+function mountVisibleCardsOnly() {
+  const visibleCards = document.querySelectorAll('.gallery-card[data-in-view="true"]');
+  visibleCards.forEach((card) => {
+    mountImagesInCard(card);
   });
 }
 
-function mountImagesInChunk(chunk) {
-  if (chunk.dataset.isMounted === 'true') return;
+function mountImagesInCard(card) {
+  // Если уже смонтировано — пропускаем
+  if (card.dataset.isMounted === 'true') return;
 
-  chunk.dataset.isMounted = 'true';
+  const img = card.querySelector('img');
+  if (!img) return;
 
-  const imgs = chunk.tagName === 'IMG' ? [chunk] : chunk.querySelectorAll('img');
-  imgs.forEach((img) => {
-    const originalSrc = img.dataset.originalSrc;
-    if (!originalSrc) return;
+  const originalSrc = img.dataset.originalSrc;
+  if (!originalSrc) return;
 
-    const tempImg = new Image();
-    tempImg.src = originalSrc;
+  card.dataset.isMounted = 'true';
 
-    tempImg.decode()
-      .then(() => {
-        if (chunk.dataset.inView === 'true' && chunk.dataset.isMounted === 'true') {
-          img.src = originalSrc;
-          img.classList.add('is-loaded');
-        }
-      })
-      .catch(() => {
-        if (chunk.dataset.inView === 'true' && chunk.dataset.isMounted === 'true') {
-          img.src = originalSrc;
-          img.classList.add('is-loaded');
-        }
-      });
-  });
+  const tempImg = new Image();
+  tempImg.src = originalSrc;
+
+  tempImg.decode()
+    .then(() => {
+      // 🛑 Двойная проверка: монтируем ТОЛЬКО если карточка ДО СИХ ПОР видима!
+      if (card.dataset.inView === 'true') {
+        img.src = originalSrc;
+        img.classList.add('is-loaded');
+      } else {
+        // Если пока декодировалось, юзер уже ускроллил — сбрасываем статус
+        card.dataset.isMounted = 'false';
+      }
+    })
+    .catch(() => {
+      if (card.dataset.inView === 'true') {
+        img.src = originalSrc;
+        img.classList.add('is-loaded');
+      } else {
+        card.dataset.isMounted = 'false';
+      }
+    });
 }
 
-function unmountImagesFromChunk(chunk) {
-  chunk.dataset.isMounted = 'false';
+function unmountImagesFromCard(card) {
+  card.dataset.isMounted = 'false';
 
-  const imgs = chunk.tagName === 'IMG' ? [chunk] : chunk.querySelectorAll('img');
-  imgs.forEach((img) => {
-    img.src = EMPTY_PIXEL;
-    img.removeAttribute('src'); 
-    img.classList.remove('is-loaded');
-  });
+  const img = card.querySelector('img');
+  if (!img) return;
+
+  // 1. Ставим чистый пиксель
+  img.src = EMPTY_PIXEL;
+  // 2. Полностью удаляем атрибут src для гарантированного высвобождения памяти браком
+  img.removeAttribute('src'); 
+  img.classList.remove('is-loaded');
 }
