@@ -118,11 +118,15 @@ function mountImagesInChunk(chunk) {
   chunk.dataset.isMounted = 'true';
 }
 
+// Микроскопический прозрачный 1x1 пиксель (занимает 0 байт VRAM)
+const EMPTY_PIXEL = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+
 function unmountImagesFromChunk(chunk) {
-  // Важно: выгрузка происходит моментально при скролле в любую сторону
   const imgs = chunk.querySelectorAll('img');
   imgs.forEach((img) => {
-    img.removeAttribute('src'); 
+    // Принудительно сбрасываем ссылку на прозрачный пиксель
+    img.src = EMPTY_PIXEL; 
+    img.removeAttribute('src'); // Полностью чистим
     img.classList.remove('is-loaded');
   });
 

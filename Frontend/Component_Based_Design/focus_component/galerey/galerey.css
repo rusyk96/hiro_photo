@@ -105,9 +105,10 @@
   overflow: hidden;
   background-color: #1a1a1a;
   cursor: pointer;
-  /* Убрали flex: 1 и height: 100% по умолчанию, чтобы не ломать Blink */
+  
+  /* Фикс высоты для отображения скелетона при отсутствии src */
+  min-height: 100px; 
 }
-
 /* Кастомный фикс для выравнивания высоты внутри левой колонки */
 .bento-left-col .gallery-card {
   aspect-ratio: 4 / 3;
@@ -118,11 +119,43 @@
   height: 100%;
   object-fit: cover;
   display: block;
-  transition: transform 0.3s ease;
+  transition: transform 0.3s ease, opacity 0.25s ease-in-out;
   
   /* Фикс для Chrome: явное указание предсказуемого сжатия */
   min-width: 0;
   min-height: 0;
+}
+
+/* 2. Когда картинка ВЫГРУЖЕНА из VRAM (нет src или пустой пиксель) */
+.gallery-img:not([src]),
+.gallery-img[src=""] {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.gallery-card:has(.gallery-img:not([src]))::after,
+.gallery-card:has(.gallery-img[src=""])::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg, 
+    rgba(255, 255, 255, 0.02) 0%, 
+    rgba(255, 255, 255, 0.06) 50%, 
+    rgba(255, 255, 255, 0.02) 100%
+  );
+  background-size: 200% 100%;
+  animation: bento-shimmer 1.8s infinite;
+  pointer-events: none;
+}
+
+@keyframes bento-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.gallery-card:hover .gallery-img {
+  transform: scale(1.02);
 }
 
 .gallery-card:hover .gallery-img {
