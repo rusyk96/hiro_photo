@@ -1,117 +1,32 @@
 /* ==========================================================================
-   ГАЛЕРЕЯ АЛЬБОМА (Bento Grid)
+   ГАЛЕРЕЯ АЛЬБОМА (Bento Grid - Swiss & Minimalist)
    ========================================================================== */
 
 @import url('/Frontend/Component_Based_Design/focus_component/galerey/slider/Lightbox_Slider_Modal.css');
 
 /* ==========================================================================
-   ОСНОВНОЙ КОНТЕЙНЕР И СЕКЦИИ
+   ОСНОВНОЙ КОНТЕЙНЕР
    ========================================================================== */
 
 .gallery-grid {
   display: flex;
   flex-direction: column;
-  gap: var(--grid-gap, 24px);
-  width: 100%;
-}
-
-.bento-row {
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  gap: var(--grid-gap, 24px);
+  gap: 16px;
   width: 100%;
 }
 
 /* ==========================================================================
-   КОЛОНКИ (Десктоп 12-колоночный сет)
-   ========================================================================== */
-
-.bento-col-4 {
-  grid-column: span 4;
-  display: flex;
-  flex-direction: column;
-  gap: var(--grid-gap, 24px);
-}
-
-.bento-col-8 {
-  grid-column: span 8;
-  display: flex;
-  flex-direction: column;
-  gap: var(--grid-gap, 24px);
-}
-
-.bento-col-6 {
-  grid-column: span 6;
-  display: flex;
-  flex-direction: column;
-  gap: var(--grid-gap, 24px);
-}
-
-.bento-col-8 .gallery-card {
-  aspect-ratio: 4 / 3; 
-}
-
-/* ==========================================================================
-   НОВЫЙ BENTO-ПАТТЕРН (2 горизонтали + 1 портрет + 1 широкая)
-   ========================================================================== */
-
-.bento-pattern-row {
-  display: flex;
-  flex-direction: column;
-  gap: var(--grid-gap, 24px);
-  width: 100%;
-}
-
-.bento-top-group {
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  gap: var(--grid-gap, 24px);
-  width: 100%;
-}
-
-.bento-left-col,
-.bento-right-col {
-  grid-column: span 6;
-  display: flex;
-  flex-direction: column;
-  gap: var(--grid-gap, 24px);
-}
-
-/* Фикс для правой колонки: заставляем портрет корректно растягиваться в Grid */
-.bento-right-col {
-  height: 100%;
-}
-
-.bento-right-col .gallery-card {
-  height: 100%;
-}
-
-.bento-bottom-full {
-  width: 100%;
-}
-
-.bento-bottom-full .gallery-card {
-  aspect-ratio: 16 / 9;
-}
-
-/* ==========================================================================
-   КАРТОЧКА И ИЗОБРАЖЕНИЕ
+   КАРТОЧКА И СКЕЛЕТОН
    ========================================================================== */
 
 .gallery-card {
   position: relative;
   width: 100%;
-  border-radius: 20px;
+  border-radius: 16px;
   overflow: hidden;
-  background-color: #1a1a1a;
+  background-color: #121212;
   cursor: pointer;
-  
-  /* Фикс высоты для отображения скелетона при отсутствии src */
-  min-height: 100px; 
-}
-/* Кастомный фикс для выравнивания высоты внутри левой колонки */
-.bento-left-col .gallery-card {
-  aspect-ratio: 4 / 3;
+  min-height: 120px;
 }
 
 .gallery-img {
@@ -119,15 +34,17 @@
   height: 100%;
   object-fit: cover;
   display: block;
-  opacity: 0; /* Изначально прозрачная */
-  transition: opacity 0.2s ease-out, transform 0.3s ease;
-  
-  /* Фикс для Chrome: явное указание предсказуемого сжатия */
+  opacity: 1; /* 🎯 ФИКС: Прозрачность убрана, картинка сразу видна */
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   min-width: 0;
   min-height: 0;
 }
 
-/* 2. Когда картинка ВЫГРУЖЕНА из VRAM (нет src или пустой пиксель) */
+.gallery-card:hover .gallery-img {
+  transform: scale(1.02);
+}
+
+/* === Скелетон Шиммер (пока нет src в виртуализаторе) === */
 .gallery-img:not([src]),
 .gallery-img[src=""] {
   opacity: 0;
@@ -155,17 +72,10 @@
   100% { background-position: 200% 0; }
 }
 
+/* ==========================================================================
+   МОБИЛЬНАЯ ВЕРСТКА (до 767px) — Все в 1 колонку для скорости скролла
+   ========================================================================== */
 
-
-.gallery-card:hover .gallery-img {
-  transform: scale(1.02);
-}
-
-.gallery-card:hover .gallery-img {
-  transform: scale(1.02);
-}
-
-/* === МОБИЛЬНЫЕ СТИЛИ (до 768px) === */
 @media (max-width: 767px) {
   .bento-row, 
   .bento-pattern-row,
@@ -173,6 +83,7 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
+    width: 100%;
   }
 
   .bento-col-4, 
@@ -184,47 +95,80 @@
   .bento-bottom-full {
     width: 100% !important;
   }
+
+  .gallery-card {
+    aspect-ratio: 4 / 3; /* Единственная пропорция для мобилок */
+  }
 }
 
-/* === ДЕСКТОП СТИЛИ (от 768px) === */
+/* ==========================================================================
+   ДЕСКТОП СЕТКА (от 768px) — Полноценный 12-колоночный Grid
+   ========================================================================== */
+
 @media (min-width: 768px) {
+
+  /* Базовый ряды */
   .bento-row {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
     gap: 16px;
+    width: 100%;
     margin-bottom: 16px;
   }
 
-  .bento-col-4 { width: 33.333%; }
-  .bento-col-6 { width: 50%; }
-  .bento-col-8 { width: 66.666%; }
-  .bento-col-12 { width: 100%; }
+  .bento-col-4 { grid-column: span 4; }
+  .bento-col-6 { grid-column: span 6; }
+  .bento-col-8 { grid-column: span 8; }
+  .bento-col-12 { grid-column: span 12; }
 
+  /* Картинки в простых сетках */
+  .bento-col-4 .gallery-card,
+  .bento-col-6 .gallery-card { aspect-ratio: 4 / 3; }
+  .bento-col-8 .gallery-card { aspect-ratio: 16 / 10; }
+  .bento-col-12 .gallery-card { aspect-ratio: 21 / 9; }
+
+  /* Сложный Паттерн Bento (2 левые горизонтали + 1 правый портрет + 1 нижняя ширь) */
   .bento-pattern-row {
     display: flex;
     flex-direction: column;
     gap: 16px;
+    width: 100%;
     margin-bottom: 16px;
   }
 
   .bento-top-group {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
     gap: 16px;
+    width: 100%;
   }
 
   .bento-left-col {
+    grid-column: span 6;
     display: flex;
     flex-direction: column;
     gap: 16px;
-    width: 50%;
+  }
+
+  .bento-left-col .gallery-card {
+    aspect-ratio: 4 / 3;
   }
 
   .bento-right-col {
-    width: 50%;
+    grid-column: span 6;
+    height: 100%;
   }
 
-  .bento-right-col .gallery-card,
-  .bento-right-col .gallery-img {
+  .bento-right-col .gallery-card {
     height: 100%;
-    object-fit: cover;
+    min-height: 100%;
+  }
+
+  .bento-bottom-full {
+    width: 100%;
+  }
+
+  .bento-bottom-full .gallery-card {
+    aspect-ratio: 16 / 9;
   }
 }
