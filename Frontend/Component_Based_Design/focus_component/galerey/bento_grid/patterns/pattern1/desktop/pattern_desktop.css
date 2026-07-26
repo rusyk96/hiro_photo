@@ -1,41 +1,46 @@
 /* ==========================================================================
-   PATTERN 1 — DESKTOP (Grid 12 Columns)
+   PATTERN 1 — SWISS BENTO (Использует глобальную .grid систему)
    ========================================================================== */
 
+/* Корневая обёртка паттерна сама становится твоим 12-колоночным .grid */
 .pattern-1 {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+  display: grid;
+  grid-template-columns: repeat(var(--grid-columns), 1fr);
+  gap: var(--grid-gap);
   width: 100%;
 }
 
+/* 🎯 Убираем влияние промежуточных .bento-top и .bento-bottom на сетку */
 .pattern-1 .bento-top,
 .pattern-1 .bento-bottom {
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  gap: 16px;
-  width: 100%;
+  display: contents; 
 }
 
 .pattern-1 .col-left,
 .pattern-1 .col-right {
-  grid-column: span 6;
+  display: flex;
   width: 100%;
 }
 
-/* Пропорции карточек */
+/* Распределяем колонки по Swiss-пропорциям (5 + 7 = 12) */
+.pattern-1 .bento-top .col-left   { grid-column: span 5; } /* Портрет */
+.pattern-1 .bento-top .col-right  { grid-column: span 7; } /* Горизонталь */
+
+.pattern-1 .bento-bottom .col-left  { grid-column: span 7; } /* Горизонталь */
+.pattern-1 .bento-bottom .col-right { grid-column: span 5; } /* Портрет */
+
+/* Настройки карточки внутри колонок */
 .pattern-1 .gallery-card {
   width: 100%;
-  height: auto;
+  height: 100%;
 }
 
-/* Портреты */
+/* Пропорции для идеальной стыковки высот */
 .pattern-1 .bento-top .col-left .gallery-card,
 .pattern-1 .bento-bottom .col-right .gallery-card {
   aspect-ratio: 3 / 4;
 }
 
-/* Горизонтали */
 .pattern-1 .bento-top .col-right .gallery-card,
 .pattern-1 .bento-bottom .col-left .gallery-card {
   aspect-ratio: 16 / 10;
