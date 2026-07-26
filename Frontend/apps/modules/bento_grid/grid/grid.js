@@ -10,7 +10,7 @@ import { renderMobilePattern } from './grid_components/mobilePattern.js';
 
 export class GridEngine {
   constructor() {
-    this.patternStep = 0; // Для красивой очерёдности паттернов
+    this.patternStep = 0;
   }
 
   renderMobile(photo) {
@@ -18,49 +18,49 @@ export class GridEngine {
   }
 
   buildNextDesktopRow(landscapes, portraits) {
-    // Выбираем паттерны по циклу, чтобы динамика радовала глаз
-    const step = this.patternStep % 6;
-
-    // 1. Паттерн 4 (3 мелких слева + 1 крупный акцент справа)
-    if (step === 0 && portraits.length >= 3 && landscapes.length >= 1) {
-      this.patternStep++;
-      return renderPattern4(portraits.shift(), portraits.shift(), portraits.shift(), landscapes.shift());
+    // Если вообще ничего не осталось — выходим
+    if (landscapes.length === 0 && portraits.length === 0) {
+      return null;
     }
 
-    // 2. Паттерн 6 (1 крупный акцент слева + 3 мелких справа)
-    if (step === 1 && landscapes.length >= 1 && portraits.length >= 3) {
+    const total = landscapes.length + portraits.length;
+    const step = this.patternStep % 5;
+
+    // --- 1. ПРИОРИТЕТНЫЕ БОЛЬШИЕ ПАТТЕРНЫ (когда кадров много) ---
+
+    // Паттерн 4 / 6: Крупный акцент + 3 мелких
+    if (landscapes.length >= 1 && portraits.length >= 3) {
       this.patternStep++;
-      return renderPattern6(landscapes.shift(), portraits.shift(), portraits.shift(), portraits.shift());
+      return (step % 2 === 0)
+        ? renderPattern4(portraits.shift(), portraits.shift(), portraits.shift(), landscapes.shift())
+        : renderPattern6(landscapes.shift(), portraits.shift(), portraits.shift(), portraits.shift());
     }
 
-    // 3. Паттерн 1 (2 портрета + 2 горизонтали)
-    if (step === 2 && portraits.length >= 2 && landscapes.length >= 2) {
+    // Паттерн 1: 2 портрета + 2 горизонтали
+    if (portraits.length >= 2 && landscapes.length >= 2) {
       this.patternStep++;
       return renderPattern1(portraits.shift(), landscapes.shift(), landscapes.shift(), portraits.shift());
     }
 
-    // 4. Паттерн 8 (Большой акцент слева + 2 равных справа)
-    if (step === 3 && landscapes.length >= 1 && portraits.length >= 2) {
-      this.patternStep++;
-      return renderPattern8(landscapes.shift(), portraits.shift(), portraits.shift());
-    }
-
-    // 5. Паттерн 3 (2 слева + 1 горизонталь справа / 1 горизонталь + 1 портрет)
-    if (step === 4 && portraits.length >= 3 && landscapes.length >= 2) {
-      this.patternStep++;
-      return renderPattern3(portraits.shift(), portraits.shift(), landscapes.shift(), landscapes.shift(), portraits.shift());
-    }
-
-    // 6. Паттерн 2 (2 мелких + горизонталь / горизонталь + 2 мелких)
-    if (step === 5 && portraits.length >= 4 && landscapes.length >= 2) {
-      this.patternStep++;
-      return renderPattern2(portraits.shift(), portraits.shift(), landscapes.shift(), landscapes.shift(), portraits.shift(), portraits.shift());
-    }
-
-    // --- ФОЛЛБЭК (если остатки кадров не подходят под строгий паттерн) ---
+    // Паттерн 8: Акцент + 2 мелких
     if (landscapes.length >= 1 && portraits.length >= 2) {
+      this.patternStep++;
       return renderPattern8(landscapes.shift(), portraits.shift(), portraits.shift());
     }
+
+    // --- 2. МЯГКИЙ ФОЛЛБЭК (когда один из типов фото заканчивается) ---
+
+    // Если остались только портреты (собираем парами)
+    if (portraits.length >= 2) {
+      return renderPattern8(portraits.shift(), portraits.shift(), portraits.shift());
+    }
+
+    // Если остались только горизонтали (собираем парами)
+    if (landscapes.length >= 2) {
+      return renderPattern1(landscapes.shift(), landscapes.shift(), landscapes.shift(), landscapes.shift());
+    }
+
+    // --- 3. ПОСЛЕДНИЙ КАДР (забираем одиночные остатки) ---
     if (landscapes.length > 0) {
       return renderMobilePattern(landscapes.shift());
     }
