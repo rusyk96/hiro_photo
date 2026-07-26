@@ -1,3 +1,4 @@
+
 import { createCardHtml } from './bento-helpers.js';
 
 export class GridEngine {
@@ -5,11 +6,10 @@ export class GridEngine {
     this.lastPreset = null;
   }
 
-  renderMobile(photo) {
-    return createCardHtml(photo);
-  }
-
-  buildNextDesktopRow(landscapes, portraits) {
+  /**
+   * Единый билдер Bento-рядов для десктопа и мобилки
+   */
+  buildNextRow(landscapes, portraits) {
     const total = landscapes.length + portraits.length;
     if (total === 0) return null;
 
@@ -42,7 +42,7 @@ export class GridEngine {
       return this._renderPreset(selected, landscapes, portraits);
     }
 
-    // Если фоток осталось меньше, чем нужно для целого блока (1-2 кадра)
+    // Если фоток осталось меньше, чем нужно для целого блока — забираем хвост
     return this._renderTail(landscapes, portraits);
   }
 
@@ -69,7 +69,7 @@ export class GridEngine {
           </div>`;
       }
 
-      // --- Стопка 2 HS + Большая HL (Слева 2 малых стопкой, справа большая) ---
+      // --- Стопка 2 HS + Большая HL ---
       case 'STACK2HS_HL': {
         const hs1 = landscapes.splice(0, 1)[0];
         const hs2 = landscapes.splice(0, 1)[0];
@@ -84,7 +84,7 @@ export class GridEngine {
           </div>`;
       }
 
-      // --- ЗЕРКАЛО: Большая HL + Стопка 2 HS (Слева большая, справа 2 малых стопкой) ---
+      // --- ЗЕРКАЛО: Большая HL + Стопка 2 HS ---
       case 'HL_STACK2HS': {
         const hl = landscapes.splice(0, 1)[0];
         const hs1 = landscapes.splice(0, 1)[0];
@@ -144,9 +144,8 @@ export class GridEngine {
 
     if (remain.length === 0) return null;
 
-    // Если остался финальный хвост в 1-2 кадра, отколеруем их аккуратно по сетке
     const cards = remain.map(item => `
-      <div class="${item.isPortrait ? 'atom-vs' : 'atom-hs'}">
+      <div class="${item.isPortrait ? 'atom-vs' : 'atom-hl'}">
         ${createCardHtml(item)}
       </div>
     `).join('');

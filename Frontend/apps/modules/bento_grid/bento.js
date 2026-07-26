@@ -3,13 +3,11 @@ import { setLightboxPhotos, initLightboxEvents } from '../lightbox.js';
 import { initChunkVirtualizer } from '../virtualizer.js';
 import { VramMonitor } from '../vram-hud.js';
 import { GridEngine } from './grid/grid.js';
-import { MobileGridEngine } from './grid/grid_mobile.js';
 
 new VramMonitor();
 
-function isDesktop() {
-  return window.innerWidth >= 768;
-}
+// Кэш текущих фото для корректной пересборки при resize
+let cachedPhotos = [];
 
 // 🎯 ГЛАВНЫЙ ЭКСПОРТ ДЛЯ РОУТЕРА
 export async function renderAlbumGallery() {
@@ -21,14 +19,14 @@ export async function renderAlbumGallery() {
   setLightboxPhotos(rawPhotos);
 
   // 2. Индексируем кадры
-  const indexedPhotos = rawPhotos.map((item, index) => ({
+  cachedPhotos = rawPhotos.map((item, index) => ({
     ...item,
     originalIndex: index,
     isPortrait: item.type === 'portrait'
   }));
 
   // 3. Собираем Bento-сетку
-  buildSmartBentoGallery(indexedPhotos);
+  buildSmartBentoGallery(cachedPhotos);
 
   // 4. Запускаем виртуализатор с гарантией DOM-layout
   requestAnimationFrame(() => {
@@ -40,7 +38,7 @@ export async function renderAlbumGallery() {
 
 function buildSmartBentoGallery(photos) {
   const container = document.getElementById('album-gallery-container');
-  if (!container) return;
+  if (!container || !photos || photos.length === 0) return;
 
   container.innerHTML = '';
   const fragment = document.createDocumentFragment();
@@ -50,59 +48,30 @@ function buildSmartBentoGallery(photos) {
   let landscapes = photos.filter(p => !p.isPortrait).map(p => ({ ...p }));
   let portraits = photos.filter(p => p.isPortrait).map(p => ({ ...p }));
 
-  // 1. МОБИЛКА (2-колоночный Bento)
-  if (!isDesktop()) {
-    const mobileEngine = new MobileGridEngine();
-    let safetyIterator = 0;
-    const MAX_ITERATIONS = photos.length;
+  let safetyIterator = 0;
+  const MAX_ITERATIONS = photos.length;
 
-    while ((landscapes.length > 0 || portraits.length > 0) && safetyIterator < MAX_ITERATIONS) {
-      const prevTotal = landscapes.length + portraits.length;
-      const rowHtml = mobileEngine.buildNextRow(landscapes, portraits);
+  // Единый цикл сборки Bento (и для десктопа, и для мобилки)
+  while ((landscapes.length > 0 || portraits.length > 0) && safetyIterator < MAX_ITERATIONS) {
+    const prevTotal = landscapes.length + portraits.length;
+    const rowHtml = gridEngine.buildNextRow(landscapes, portraits);
 
-      if (!rowHtml) break;
+    if (!rowHtml) break;
 
-      const rowWrapper = document.createElement('div');
-      rowWrapper.innerHTML = rowHtml;
+    const rowWrapper = document.createElement('div');
+    rowWrapper.innerHTML = rowHtml;
 
-      if (rowWrapper.firstElementChild) {
-        fragment.appendChild(rowWrapper.firstElementChild);
-      }
-
-      if (landscapes.length + portraits.length === prevTotal) {
-        console.warn('[Bento Mobile Engine] Внимание: Длина массивов не изменилась. Завершаем сборку.');
-        break;
-      }
-
-      safetyIterator++;
+    if (rowWrapper.firstElementChild) {
+      fragment.appendChild(rowWrapper.firstElementChild);
     }
-  }
-  // 2. ДЕСКТОП (Сборка через Bento Patterns)
-  else {
-    let safetyIterator = 0;
-    const MAX_ITERATIONS = photos.length;
 
-    while ((landscapes.length > 0 || portraits.length > 0) && safetyIterator < MAX_ITERATIONS) {
-      const prevTotal = landscapes.length + portraits.length;
-      const rowHtml = gridEngine.buildNextDesktopRow(landscapes, portraits);
-
-      if (!rowHtml) break;
-
-      const rowWrapper = document.createElement('div');
-      rowWrapper.innerHTML = rowHtml;
-
-      if (rowWrapper.firstElementChild) {
-        fragment.appendChild(rowWrapper.firstElementChild);
-      }
-
-      // Страховка от зависания цикла
-      if (landscapes.length + portraits.length === prevTotal) {
-        console.warn('[Bento Engine] Внимание: Длина массивов не изменилась. Завершаем сборку.');
-        break;
-      }
-
-      safetyIterator++;
+    // Страховка от зависания цикла
+    if (landscapes.length + portraits.length === prevTotal) {
+      console.warn('[Bento Engine] Внимание: Длина массивов не изменилась. Завершаем сборку.');
+      break;
     }
+
+    safetyIterator++;
   }
 
   container.appendChild(fragment);
@@ -127,3 +96,15 @@ export function waitForFirstImages(count = 4) {
 
   return Promise.all(loadPromises);
 }
+
+// 🎯 Автоматический сброс и пересборка сетки при resize (с debounce)
+let resizeTimeout;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimeout);
+  resizeTimeout = setTimeout(() => {
+    if (cachedPhotos.length > 0) {
+      buildSmartBentoGallery(cachedPhotos);
+      initChunkVirtualizer('album-gallery-container');
+    }
+  }, 150);
+});
