@@ -63,3 +63,11 @@
 .mode-tail {
   justify-content: center;
 }
+
+/* 🎯 Новое правило: 1 Большой (HL: 6 col) + 2 Малых (VS: 3 col + VS: 3 col) */
+.mode-hl-2vs .atom-hl {
+  grid-column: span 6;
+}
+.mode-hl-2vs .atom-vs {
+  grid-column: span 3;
+}

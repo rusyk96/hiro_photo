@@ -2,7 +2,7 @@ import { createCardHtml } from './bento-helpers.js';
 
 export class GridEngine {
   constructor() {
-    this.history = []; // История последних сыгравших пресетов
+    this.history = [];
   }
 
   renderMobile(photo) {
@@ -13,35 +13,26 @@ export class GridEngine {
     const total = landscapes.length + portraits.length;
     if (total === 0) return null;
 
-    // 🎯 Собираем список допустимых комбинаций на основе доступных фото
     const possiblePresets = [];
 
-    // Пресет A: [HL] + [VS] + [VS]  (18/10 + две вертикалки 3/4) -> (8 col + 3 col + 3 col = не влазит, верный счет: 8 + 2 + 2... ой, у нас VS = 3 col)
-    // Корректная математика на 12 колонок:
-    // Combo 1: HL (8 col) + VS (3 col) -- нужен баланс 12 col. 
-    // Давай составим идеальные пресеты ровно на 12 колонок из наших 4 атомов:
+    // 🎯 ПРАВИЛО 1: 1 Большой + 1 Малый (HL + HS = 8 + 4 col)
+    if (landscapes.length >= 2) {
+      possiblePresets.push('HL_HS', 'HS_HL');
+    }
 
-    // 1. [HL + HS] -> (8 + 4 = 12 col) | Нужно: 2 Landscapes
-    if (landscapes.length >= 2) possiblePresets.push('HL_HS');
+    // 🎯 ПРАВИЛО 2: 1 Большой + 2 Малых (HL + VS + VS = 6 + 3 + 3 col)
+    if (landscapes.length >= 1 && portraits.length >= 2) {
+      possiblePresets.push('HL_2VS', '2VS_HL');
+    }
 
-    // 2. [HS + HL] -> (4 + 8 = 12 col) | Нужно: 2 Landscapes
-    if (landscapes.length >= 2) possiblePresets.push('HS_HL');
+    // 🎯 Вспомогательные моно-блочные комбинации
+    if (portraits.length >= 4) possiblePresets.push('4_VS'); // 4 малых вертикали
+    if (portraits.length >= 2) possiblePresets.push('2_VL'); // 2 больших вертикали
+    if (landscapes.length >= 3) possiblePresets.push('3_HS'); // 3 малых горизонтали
 
-    // 3. [VS + VS + VS + VS] -> (3 + 3 + 3 + 3 = 12 col) | Нужно: 4 Portraits
-    if (portraits.length >= 4) possiblePresets.push('4_VS');
-
-    // 4. [VL + VL] -> (6 + 6 = 12 col) | Нужно: 2 Portraits
-    if (portraits.length >= 2) possiblePresets.push('2_VL');
-
-    // 5. [HS + HS + HS] -> (4 + 4 + 4 = 12 col) | Нужно: 3 Landscapes
-    if (landscapes.length >= 3) possiblePresets.push('3_HS');
-
-
-    // 🎯 Выбираем пресет с защитой от 3 повторов подряд
+    // Выбор пресета без 3 повторов подряд
     if (possiblePresets.length > 0) {
       let filtered = possiblePresets;
-
-      // Если последний пресет повторялся уже 2 раза — БЛОКИРУЕМ ЕГО
       const last = this.history[this.history.length - 1];
       const secondLast = this.history[this.history.length - 2];
 
@@ -49,26 +40,23 @@ export class GridEngine {
         filtered = possiblePresets.filter(p => p !== last);
       }
 
-      // Если после фильтрации ничего не осталось, возвращаем исходный выбор
       if (filtered.length === 0) filtered = possiblePresets;
 
-      // Берем случайный
       const selected = filtered[Math.floor(Math.random() * filtered.length)];
-      
-      // Пишем в историю (держим только последние 5)
+
       this.history.push(selected);
       if (this.history.length > 5) this.history.shift();
 
       return this._renderPreset(selected, landscapes, portraits);
     }
 
-    // 🎯 ФОЛЛБЭК ДЛЯ ОСТАТКОВ (хвост)
     return this._renderTail(landscapes, portraits);
   }
 
   _renderPreset(preset, landscapes, portraits) {
     switch (preset) {
-      case 'HL_HS': { // Большая L (8) + Малая L (4)
+      // --- ПРАВИЛО: 1 Большой + 1 Малый ---
+      case 'HL_HS': { // [Большой HL] + [Малый HS]
         const l1 = landscapes.splice(0, 1)[0];
         const l2 = landscapes.splice(0, 1)[0];
         return `
@@ -78,7 +66,7 @@ export class GridEngine {
           </div>`;
       }
 
-      case 'HS_HL': { // Малая L (4) + Большая L (8)
+      case 'HS_HL': { // [Малый HS] + [Большой HL]
         const l1 = landscapes.splice(0, 1)[0];
         const l2 = landscapes.splice(0, 1)[0];
         return `
@@ -88,7 +76,33 @@ export class GridEngine {
           </div>`;
       }
 
-      case '4_VS': { // 4 Малых Портрета (3+3+3+3)
+      // --- ПРАВИЛО: 1 Большой + 2 Малых ---
+      case 'HL_2VS': { // [Большой HL] + [Малый VS] + [Малый VS]
+        const l1 = landscapes.splice(0, 1)[0];
+        const p1 = portraits.splice(0, 1)[0];
+        const p2 = portraits.splice(0, 1)[0];
+        return `
+          <div class="bento-atom-grid mode-hl-2vs">
+            <div class="atom-hl">${createCardHtml(l1)}</div>
+            <div class="atom-vs">${createCardHtml(p1)}</div>
+            <div class="atom-vs">${createCardHtml(p2)}</div>
+          </div>`;
+      }
+
+      case '2VS_HL': { // [Малый VS] + [Малый VS] + [Большой HL]
+        const p1 = portraits.splice(0, 1)[0];
+        const p2 = portraits.splice(0, 1)[0];
+        const l1 = landscapes.splice(0, 1)[0];
+        return `
+          <div class="bento-atom-grid mode-hl-2vs">
+            <div class="atom-vs">${createCardHtml(p1)}</div>
+            <div class="atom-vs">${createCardHtml(p2)}</div>
+            <div class="atom-hl">${createCardHtml(l1)}</div>
+          </div>`;
+      }
+
+      // --- Остальные вспомогательные комбинации ---
+      case '4_VS': {
         const p = portraits.splice(0, 4);
         return `
           <div class="bento-atom-grid">
@@ -99,7 +113,7 @@ export class GridEngine {
           </div>`;
       }
 
-      case '2_VL': { // 2 Больших Портрета (6+6)
+      case '2_VL': {
         const p = portraits.splice(0, 2);
         return `
           <div class="bento-atom-grid">
@@ -108,7 +122,7 @@ export class GridEngine {
           </div>`;
       }
 
-      case '3_HS': { // 3 Малых Горизонтали (4+4+4)
+      case '3_HS': {
         const l = landscapes.splice(0, 3);
         return `
           <div class="bento-atom-grid">
