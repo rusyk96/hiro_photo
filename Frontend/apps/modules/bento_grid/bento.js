@@ -50,16 +50,33 @@ function buildSmartBentoGallery(photos) {
   let landscapes = photos.filter(p => !p.isPortrait).map(p => ({ ...p }));
   let portraits = photos.filter(p => p.isPortrait).map(p => ({ ...p }));
 
-  // 1. МОБИЛКА
+  // 1. МОБИЛКА (2-колоночный Bento)
   if (!isDesktop()) {
-    photos.forEach(photo => {
+    const mobileEngine = new MobileGridEngine();
+    let safetyIterator = 0;
+    const MAX_ITERATIONS = photos.length;
+
+    while ((landscapes.length > 0 || portraits.length > 0) && safetyIterator < MAX_ITERATIONS) {
+      const prevTotal = landscapes.length + portraits.length;
+      const rowHtml = mobileEngine.buildNextRow(landscapes, portraits);
+
+      if (!rowHtml) break;
+
       const rowWrapper = document.createElement('div');
-      rowWrapper.innerHTML = gridEngine.renderMobile(photo);
+      rowWrapper.innerHTML = rowHtml;
+
       if (rowWrapper.firstElementChild) {
         fragment.appendChild(rowWrapper.firstElementChild);
       }
-    });
-  } 
+
+      if (landscapes.length + portraits.length === prevTotal) {
+        console.warn('[Bento Mobile Engine] Внимание: Длина массивов не изменилась. Завершаем сборку.');
+        break;
+      }
+
+      safetyIterator++;
+    }
+  }
   // 2. ДЕСКТОП (Сборка через Bento Patterns)
   else {
     let safetyIterator = 0;
