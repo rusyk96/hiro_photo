@@ -92,55 +92,39 @@
    ========================================================================== */
 
 @media (max-width: 768px) {
-  /* 1. Прижимаем контейнер галереи к краям экрана */
-  #album-gallery-container,
-  .gallery-container,
-  .gallery-grid {
-    padding-left: 12px !important;
-    padding-right: 12px !important;
-    gap: 12px !important;
-    margin-bottom: 24px;
-  }
-
-  /* 2. Мобильный сетка-ряд (2 колонки) */
+  /* 1. Главный контейнер атома переводим в честные 2 колонки */
   .bento-atom-grid {
     display: grid !important;
     grid-template-columns: repeat(2, 1fr) !important;
     gap: 12px !important;
-    margin-bottom: 0 !important; /* Убираем двойной отступ */
-    width: 100%;
-    box-sizing: border-box;
-    align-items: stretch;
+    width: 100% !important;
+    margin-bottom: 12px !important;
   }
 
-  /* 3. Мобильная стопка (2 HS) */
-  .hs-stack {
+  /* 2. Горизонтальный большой кадр (HL) растягиваем на ВСЮ ширину (2 колонки) */
+  .atom-hl {
+    grid-column: span 2 !important;
+    width: 100% !important;
+  }
+
+  /* 3. Вертикальный кадр (VS) занимает ровно 1 колонку */
+  .atom-vs {
     grid-column: span 1 !important;
+    width: 100% !important;
+  }
+
+  /* 4. Лечитель стопки HS (которая на скрине сжалась в угол!) */
+  .hs-stack {
+    grid-column: span 1 !important; /* Стопка занимает 1 колонку */
     display: flex !important;
     flex-direction: column !important;
     gap: 12px !important;
-    height: 100%;
-    width: 100%;
+    width: 100% !important;
   }
 
-  .hs-stack .atom-hs {
-    flex: 1;
-    width: 100%;
-  }
-
-  /* 4. Атомы для 2 колонок */
-  .atom-hl {
-    grid-column: span 2 !important; /* Большая горизонталь во всю ширину */
-    width: 100%;
-  }
-
-  .atom-vs {
-    grid-column: span 1 !important; /* Вертикаль в 1 колонку */
-    width: 100%;
-  }
-
-  /* Скругление карточек на мобилке */
-  .gallery-card {
-    border-radius: 12px;
+  /* 5. Карточки внутри стопки заполняют всю ширину своей колонки */
+  .hs-stack .atom-hs,
+  .hs-stack .gallery-card {
+    width: 100% !important;
   }
 }
