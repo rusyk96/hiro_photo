@@ -10,11 +10,23 @@ import { renderMobilePattern } from './grid_components/mobilePattern.js';
 
 export class GridEngine {
   constructor() {
-    this.patternStep = 0;
+    this.cycleCount = 0; // Счётчик повторов (0..6)
+    this.pairIndex = 0;  // Индекс пары: 0 (1-2), 1 (3-4), 2 (5-6), 3 (7-8)
+    this.toggle = false; // Переключатель внутри пары (A или B)
   }
 
   renderMobile(photo) {
     return renderMobilePattern(photo);
+  }
+
+  // Вспомогательный забор нужных кадров
+  takePhotos(landscapes, portraits, needL, needP) {
+    if (landscapes.length >= needL && portraits.length >= needP) {
+      const l = landscapes.splice(0, needL);
+      const p = portraits.splice(0, needP);
+      return { l, p, success: true };
+    }
+    return { success: false };
   }
 
   buildNextDesktopRow(landscapes, portraits) {
@@ -22,60 +34,80 @@ export class GridEngine {
       return null;
     }
 
-    const step = this.patternStep % 4;
+    // Определяем текущую пару паттернов по алгоритму
+    // Пара 0: P1 / P2
+    // Пара 1: P3 / P4
+    // Пара 2: P5 / P6
+    // Пара 3: P7 / P8
+    const currentPair = this.pairIndex;
+    const isA = !this.toggle;
 
-    // --- 1. ПОЛНОЦЕННЫЕ BENTO-ПАТТЕРНЫ ---
+    let html = null;
 
-    // Паттерн 4 / 6 (1 акцент + 3 мелких)
-    if (landscapes.length >= 1 && portraits.length >= 3) {
-      this.patternStep++;
-      return (step % 2 === 0)
-        ? renderPattern4(portraits.shift(), portraits.shift(), portraits.shift(), landscapes.shift())
-        : renderPattern6(landscapes.shift(), portraits.shift(), portraits.shift(), portraits.shift());
+    // Пытаемся отрендерить паттерн согласно текущей фазе
+    if (currentPair === 0) {
+      // Пара 1-2
+      const res = this.takePhotos(landscapes, portraits, 2, 2);
+      if (res.success) {
+        html = isA 
+          ? renderPattern1(res.p[0], res.l[0], res.l[1], res.p[1])
+          : renderPattern2(res.p[0], res.p[1], res.l[0], res.l[1], res.p[0], res.p[1]);
+      }
+    } else if (currentPair === 1) {
+      // Пара 3-4
+      const res3 = this.takePhotos(landscapes, portraits, 2, 3);
+      const res4 = this.takePhotos(landscapes, portraits, 1, 3);
+      if (isA && res3.success) {
+        html = renderPattern3(res3.p[0], res3.p[1], res3.l[0], res3.l[1], res3.p[2]);
+      } else if (!isA && res4.success) {
+        html = renderPattern4(res4.p[0], res4.p[1], res4.p[2], res4.l[0]);
+      }
+    } else if (currentPair === 2) {
+      // Пара 5-6
+      const res = this.takePhotos(landscapes, portraits, 1, 3);
+      if (res.success) {
+        html = isA 
+          ? renderPattern5(res.p[0], res.p[1], res.p[2], res.l[0])
+          : renderPattern6(res.l[0], res.p[0], res.p[1], res.p[2]);
+      }
+    } else if (currentPair === 3) {
+      // Пара 7-8
+      const res7 = this.takePhotos(landscapes, portraits, 1, 3);
+      const res8 = this.takePhotos(landscapes, portraits, 1, 2);
+      if (isA && res7.success) {
+        html = renderPattern7(res7.l[0], res7.p[0], res7.p[1], res7.p[2]);
+      } else if (!isA && res8.success) {
+        html = renderPattern8(res8.l[0], res8.p[0], res8.p[1]);
+      }
     }
 
-    // Паттерн 1 (2 портрета + 2 горизонтали)
-    if (portraits.length >= 2 && landscapes.length >= 2) {
-      this.patternStep++;
-      return renderPattern1(portraits.shift(), landscapes.shift(), landscapes.shift(), portraits.shift());
+    // Управление шагом паттернов (6-7 повторов пары)
+    if (html) {
+      this.toggle = !this.toggle;
+      this.cycleCount++;
+      if (this.cycleCount >= 13) { // ~6.5 циклов (13 переключений A/B)
+        this.cycleCount = 0;
+        this.pairIndex = (this.pairIndex + 1) % 4; // Зацикливаем по 8 паттернам
+      }
+      return html;
     }
 
-    // Паттерн 8 (1 акцент + 2 мелких)
+    // --- ФОЛЛБЭК ДЛЯ ХВОСТА И НЕХВАТКИ КАДРОВ ---
     if (landscapes.length >= 1 && portraits.length >= 2) {
-      this.patternStep++;
-      return renderPattern8(landscapes.shift(), portraits.shift(), portraits.shift());
+      const l = landscapes.shift();
+      const p1 = portraits.shift();
+      const p2 = portraits.shift();
+      return renderPattern8(l, p1, p2);
     }
 
-    // --- 2. МЯГКАЯ ДЕГРАДАЦИЯ ДЛЯ ХВОСТОВ (аккуратное закрытие сетки) ---
+    // Закрываем хвост без наплыва на подвал
+    const remain = [...landscapes, ...portraits];
+    landscapes.length = 0;
+    portraits.length = 0;
 
-    // Если есть 3+ одинаковых кадра
-    if (portraits.length >= 3) {
-      return renderPattern8(portraits.shift(), portraits.shift(), portraits.shift());
-    }
-    if (landscapes.length >= 3) {
-      return renderPattern8(landscapes.shift(), landscapes.shift(), landscapes.shift());
-    }
-
-    // Если осталось 2 кадра — рендерим их аккуратной парой в 2 колонки
-    if (portraits.length + landscapes.length === 2) {
-      const p1 = landscapes.shift() || portraits.shift();
-      const p2 = landscapes.shift() || portraits.shift();
-      return `
-        <div class="bento-row bento-tail-2">
-          <div class="bento-col-6">${renderMobilePattern(p1)}</div>
-          <div class="bento-col-6">${renderMobilePattern(p2)}</div>
-        </div>
-      `;
-    }
-
-    // --- 3. ПОСЛЕДНИЙ 1 КАДР ---
-    const lastPhoto = landscapes.shift() || portraits.shift();
-    if (lastPhoto) {
-      return `
-        <div class="bento-row bento-tail-1">
-          <div class="bento-col-8">${renderMobilePattern(lastPhoto)}</div>
-        </div>
-      `;
+    if (remain.length > 0) {
+      const cardsHtml = remain.map(p => `<div class="bento-tail-item">${renderMobilePattern(p)}</div>`).join('');
+      return `<div class="bento-row bento-tail-wrapper">${cardsHtml}</div>`;
     }
 
     return null;
