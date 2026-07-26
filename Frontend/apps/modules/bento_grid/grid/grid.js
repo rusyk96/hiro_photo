@@ -13,22 +13,14 @@ export class GridEngine {
     this.patternHistory = [];
   }
 
-  // Определение: Мобилка или Десктоп
-  isMobile() {
-    return window.innerWidth < 768;
+  // 🎯 1. МЕТОД ДЛЯ МОБИЛКИ
+  renderMobile(photo) {
+    return renderMobilePattern(photo);
   }
 
-  // Главный метод сборки строки
-  buildNextRow(landscapes, portraits) {
-    if (this.isMobile()) {
-      // На мобилке забираем по 1 кадру подряд
-      const photo = landscapes.shift() || portraits.shift();
-      return photo ? renderMobilePattern(photo) : '';
-    }
-
-    // --- ДЕСКТОП: Умный выбор из 9 паттернов ---
-    
-    // Проверяем паттерн 1 (требует 2 портрета + 2 горизонтали)
+  // 🎯 2. МЕТОД ДЛЯ ДЕСКТОПА (именно его ищет bento.js!)
+  buildNextDesktopRow(landscapes, portraits) {
+    // Паттерн 1: требует 2 портрета + 2 горизонтали
     if (portraits.length >= 2 && landscapes.length >= 2) {
       return renderPattern1(
         portraits.shift(),
@@ -38,9 +30,8 @@ export class GridEngine {
       );
     }
 
-    // Проверяем паттерн 6/7/8 (требует 1 большой акцент + 2-3 мелких)
+    // Паттерн 6/7/8: 1 большая горизонталь + 2 портрета
     if (landscapes.length >= 1 && portraits.length >= 2) {
-      // Рандомизируем или чередуем паттерны 6, 7, 8 ради динамики
       return renderPattern6(
         landscapes.shift(),
         portraits.shift(),
@@ -48,7 +39,14 @@ export class GridEngine {
       );
     }
 
-    // Если кадров мало/заканчиваются — дефолтный фоллбэк
-    // ...
+    // Фоллбэк: если остатки кадров не подходят под строгие паттерны
+    if (landscapes.length > 0) {
+      return renderMobilePattern(landscapes.shift());
+    }
+    if (portraits.length > 0) {
+      return renderMobilePattern(portraits.shift());
+    }
+
+    return null;
   }
 }
