@@ -3,6 +3,7 @@ import { setLightboxPhotos, initLightboxEvents } from '../lightbox.js';
 import { initChunkVirtualizer } from '../virtualizer.js';
 import { VramMonitor } from '../vram-hud.js';
 import { GridEngine } from './grid/grid.js';
+import { MobileGridEngine } from './grid/grid_mobile.js';
 
 new VramMonitor();
 
