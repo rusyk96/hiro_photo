@@ -103,19 +103,22 @@
    ДЕСКТОП СЕТКА BENTO (от 768px и выше)
    ========================================================================== */
 
+/* ==========================================================================
+   ДЕСКТОП СЕТКА BENTO (от 768px и выше) — Поддержка всех 8 паттернов
+   ========================================================================== */
+
 @media (min-width: 768px) {
 
-  /* Ряд Бенто — жесткий выравниватель */
   .bento-row {
     display: grid !important;
     grid-template-columns: repeat(12, 1fr) !important;
     gap: 16px !important;
     width: 100% !important;
     height: auto !important;
-    align-items: start;
+    align-items: stretch;
   }
 
-  /* Составные контейнеры (Top / Bottom) */
+  /* Составные контейнеры (Паттерны 1, 2, 3) */
   .bento-top,
   .bento-bottom {
     grid-column: span 12;
@@ -125,7 +128,6 @@
     width: 100%;
   }
 
-  /* Колонки */
   .col-left,
   .col-right {
     grid-column: span 6;
@@ -135,54 +137,60 @@
     width: 100%;
   }
 
-  /* Стопки и акценты */
   .main-accent {
     grid-column: span 6;
     width: 100%;
+    height: 100%;
   }
 
   .sub-stack,
   .sub-stack-2,
   .sub-stack-3,
   .sub-stack-custom {
+    grid-column: span 6;
     display: flex;
     flex-direction: column;
     gap: 16px;
     width: 100%;
+    height: 100%;
   }
 
-  /* Фиксация высоты карточек через aspect-ratio */
-  .gallery-card {
-    width: 100%;
-    height: auto !important;
-  }
+  /* --- ПРОПОРЦИИ ДЛЯ КАЖДОГО ПАТТЕРНА --- */
 
-  /* Портретные карточки в сетке */
+  /* Паттерн 1 и 2 (Составная диагональ / шахматка) */
   .pattern-1 .bento-top .col-left .gallery-card,
-  .pattern-1 .bento-bottom .col-right .gallery-card {
+  .pattern-1 .bento-bottom .col-right .gallery-card,
+  .pattern-2 .bento-top .col-left .gallery-card,
+  .pattern-2 .bento-bottom .col-right .gallery-card {
     aspect-ratio: 3 / 4;
   }
 
-  /* Пейзажные карточки в сетке */
   .pattern-1 .bento-top .col-right .gallery-card,
-  .pattern-1 .bento-bottom .col-left .gallery-card {
+  .pattern-1 .bento-bottom .col-left .gallery-card,
+  .pattern-2 .bento-top .col-right .gallery-card,
+  .pattern-2 .bento-bottom .col-left .gallery-card {
     aspect-ratio: 16 / 10;
   }
 
-  /* Акценты в паттернах 4-8 */
+  /* Паттерны 3, 4, 5, 6, 7, 8 (Акцент + Стопки) */
+  .pattern-3 .main-accent .gallery-card,
   .pattern-4 .main-accent .gallery-card,
   .pattern-5 .main-accent .gallery-card,
   .pattern-6 .main-accent .gallery-card,
   .pattern-7 .main-accent .gallery-card,
   .pattern-8 .main-accent .gallery-card {
-    aspect-ratio: 4 / 3;
+    height: 100% !important;
+    min-height: 100%;
+    aspect-ratio: auto; /* Вписывается строго в высоту соседней стопки */
   }
 
-  /* Карточки в стопках (sub-stacks) */
+  /* Карточки внутри вертикальных стопок */
   .sub-stack .gallery-card,
   .sub-stack-2 .gallery-card,
-  .sub-stack-3 .gallery-card {
+  .sub-stack-3 .gallery-card,
+  .sub-stack-custom .gallery-card {
     aspect-ratio: 16 / 10;
+    height: auto;
   }
 
   /* Хвост альбома */

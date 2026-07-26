@@ -10,16 +10,15 @@ import { renderMobilePattern } from './grid_components/mobilePattern.js';
 
 export class GridEngine {
   constructor() {
-    this.cycleCount = 0; // Счётчик повторов (0..6)
-    this.pairIndex = 0;  // Индекс пары: 0 (1-2), 1 (3-4), 2 (5-6), 3 (7-8)
-    this.toggle = false; // Переключатель внутри пары (A или B)
+    this.cycleCount = 0; // Счётчик повторов
+    this.pairIndex = 0;  // Пара: 0 (1-2), 1 (3-4), 2 (5-6), 3 (7-8)
+    this.toggle = false; // A / B
   }
 
   renderMobile(photo) {
     return renderMobilePattern(photo);
   }
 
-  // Вспомогательный забор нужных кадров
   takePhotos(landscapes, portraits, needL, needP) {
     if (landscapes.length >= needL && portraits.length >= needP) {
       const l = landscapes.splice(0, needL);
@@ -34,24 +33,18 @@ export class GridEngine {
       return null;
     }
 
-    // Определяем текущую пару паттернов по алгоритму
-    // Пара 0: P1 / P2
-    // Пара 1: P3 / P4
-    // Пара 2: P5 / P6
-    // Пара 3: P7 / P8
     const currentPair = this.pairIndex;
     const isA = !this.toggle;
-
     let html = null;
 
-    // Пытаемся отрендерить паттерн согласно текущей фазе
+    // --- ОСНОВНОЙ ЦИКЛ ПАТТЕРНОВ ---
     if (currentPair === 0) {
-      // Пара 1-2
+      // Пара 1-2 (2 портрета, 2 горизонтали)
       const res = this.takePhotos(landscapes, portraits, 2, 2);
       if (res.success) {
         html = isA 
           ? renderPattern1(res.p[0], res.l[0], res.l[1], res.p[1])
-          : renderPattern2(res.p[0], res.p[1], res.l[0], res.l[1], res.p[0], res.p[1]);
+          : renderPattern2(res.p[0], res.p[1], res.l[0], res.l[1]); // Ровно 4 аргумента!
       }
     } else if (currentPair === 1) {
       // Пара 3-4
@@ -63,7 +56,7 @@ export class GridEngine {
         html = renderPattern4(res4.p[0], res4.p[1], res4.p[2], res4.l[0]);
       }
     } else if (currentPair === 2) {
-      // Пара 5-6
+      // Пара 5-6 (1 ландшафт, 3 портрета)
       const res = this.takePhotos(landscapes, portraits, 1, 3);
       if (res.success) {
         html = isA 
@@ -81,26 +74,23 @@ export class GridEngine {
       }
     }
 
-    // Управление шагом паттернов (6-7 повторов пары)
+    // Инкремент смены пар (ротация каждые 6-7 итераций)
     if (html) {
       this.toggle = !this.toggle;
       this.cycleCount++;
-      if (this.cycleCount >= 13) { // ~6.5 циклов (13 переключений A/B)
+      if (this.cycleCount >= 13) {
         this.cycleCount = 0;
-        this.pairIndex = (this.pairIndex + 1) % 4; // Зацикливаем по 8 паттернам
+        this.pairIndex = (this.pairIndex + 1) % 4;
       }
       return html;
     }
 
-    // --- ФОЛЛБЭК ДЛЯ ХВОСТА И НЕХВАТКИ КАДРОВ ---
+    // --- ФОЛЛБЭК, ЕСЛИ КАДРЫ В МАССИВАХ КАНЧИВАЮТСЯ НЕСБАЛАНСИРОВАННО ---
     if (landscapes.length >= 1 && portraits.length >= 2) {
-      const l = landscapes.shift();
-      const p1 = portraits.shift();
-      const p2 = portraits.shift();
-      return renderPattern8(l, p1, p2);
+      return renderPattern8(landscapes.shift(), portraits.shift(), portraits.shift());
     }
 
-    // Закрываем хвост без наплыва на подвал
+    // Хвост
     const remain = [...landscapes, ...portraits];
     landscapes.length = 0;
     portraits.length = 0;
