@@ -155,9 +155,7 @@
   100% { background-position: 200% 0; }
 }
 
-.gallery-img.is-loaded {
-  opacity: 1;
-}
+
 
 .gallery-card:hover .gallery-img {
   transform: scale(1.02);
@@ -167,72 +165,66 @@
   transform: scale(1.02);
 }
 
-/* ==========================================================================
-   АДАПТИВ (Мобильные устройства)
-   ========================================================================== */
-
-@media (max-width: 768px) {
-  :root {
-    --grid-gap: 12px;
-  }
-
-  .gallery-grid {
-    gap: 12px;
-  }
-
-  .bento-row {
+/* === МОБИЛЬНЫЕ СТИЛИ (до 768px) === */
+@media (max-width: 767px) {
+  .bento-row, 
+  .bento-pattern-row,
+  .bento-top-group {
     display: flex;
     flex-direction: column;
     gap: 12px;
   }
 
-  .bento-col-4,
-  .bento-col-8,
-  .bento-col-6 {
-    width: 100%;
+  .bento-col-4, 
+  .bento-col-6, 
+  .bento-col-8, 
+  .bento-col-12,
+  .bento-left-col,
+  .bento-right-col,
+  .bento-bottom-full {
+    width: 100% !important;
+  }
+}
+
+/* === ДЕСКТОП СТИЛИ (от 768px) === */
+@media (min-width: 768px) {
+  .bento-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
   }
 
-  .bento-row .gallery-card {
-    aspect-ratio: 3 / 2;
-  }
+  .bento-col-4 { width: 33.333%; }
+  .bento-col-6 { width: 50%; }
+  .bento-col-8 { width: 66.666%; }
+  .bento-col-12 { width: 100%; }
 
   .bento-pattern-row {
-    gap: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 16px;
   }
 
   .bento-top-group {
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
+    display: flex;
+    gap: 16px;
   }
 
-  .bento-left-col,
+  .bento-left-col {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 50%;
+  }
+
   .bento-right-col {
-    grid-column: span 1;
-    gap: 12px;
+    width: 50%;
   }
 
-  .bento-left-col .gallery-card {
-    aspect-ratio: 4 / 3;
-  }
-
-  .bento-right-col .gallery-card {
+  .bento-right-col .gallery-card,
+  .bento-right-col .gallery-img {
     height: 100%;
-    aspect-ratio: unset; 
+    object-fit: cover;
   }
-
-  .bento-bottom-full .gallery-card {
-    aspect-ratio: 16 / 9;
-  }
-}
-
-/* Фиксация высоты чанка, пока он выгружен из памяти */
-.bento-pattern-row,
-.bento-row {
-  box-sizing: border-box;
-  min-height: 250px; /* Защита от нулевой высоты */
-}
-
-.bento-pattern-row[data-is-mounted="false"],
-.bento-row[data-is-mounted="false"] {
-  background-color: rgba(255, 255, 255, 0.01);
 }

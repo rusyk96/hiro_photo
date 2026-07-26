@@ -3,7 +3,6 @@ import { setLightboxPhotos, initLightboxEvents } from './lightbox.js';
 import { initChunkVirtualizer } from './virtualizer.js';
 import { VramMonitor } from './vram-hud.js';
 
-// Запускаем монитор VRAM для тестов
 new VramMonitor();
 
 function parsePhotosList(manifestData) {
@@ -17,7 +16,6 @@ function parsePhotosList(manifestData) {
   });
 }
 
-// 🎯 ВАЖНО: Берём ссылки из THUMB_BASE_URL (папка webp_thumb)
 function createCardHtml(fileItem, index) {
   const fileName = typeof fileItem === 'string' ? fileItem : fileItem.name;
   const cleanFileName = fileName.normalize('NFC');
@@ -42,12 +40,11 @@ export async function renderAlbumGallery() {
   if (!container) return;
 
   const rawPhotos = await fetchManifestPhotos();
-  setLightboxPhotos(rawPhotos); // Передаем список картинок в Lightbox
+  setLightboxPhotos(rawPhotos);
 
   const analyzedPhotos = parsePhotosList(rawPhotos);
   buildSmartBentoGallery(analyzedPhotos);
 
-  // Ожидаем следующий кадр браузера, чтобы DOM точно сформировал высоты блоков
   requestAnimationFrame(() => {
     initChunkVirtualizer('album-gallery-container');
   });
@@ -67,7 +64,7 @@ function buildSmartBentoGallery(photos) {
   while (landscapes.length > 0 || portraits.length > 0) {
     const row = document.createElement('div');
 
-    // Сценарий 1 (Новый Bento с референса): 3 горизонтали + 1 портрет
+    // Сценарий 1: 3 горизонтали + 1 портрет
     if (landscapes.length >= 3 && portraits.length >= 1) {
       row.className = 'bento-pattern-row';
       const h1 = landscapes.shift();
@@ -162,19 +159,31 @@ function buildSmartBentoGallery(photos) {
         <div class="bento-col-6">${createCardHtml(h2.fileItem, h2.originalIndex)}</div>
       `;
     }
-    // Остаток
+    // 🎯 УМНАЯ ОБРАБОТКА ОСТАТКА (Фикс сброса сетки в конце)
     else {
-      row.className = 'bento-row';
+      row.className = 'bento-row bento-remainder-row';
       const remaining = [...landscapes, ...portraits];
       landscapes = [];
       portraits = [];
 
-      remaining.forEach(item => {
-        const col = document.createElement('div');
-        col.className = 'bento-col-6';
-        col.innerHTML = createCardHtml(item.fileItem, item.originalIndex);
-        row.appendChild(col);
-      });
+      if (remaining.length === 1) {
+        // Одинокий кадр растягиваем на всю ширину
+        row.innerHTML = `<div class="bento-col-12">${createCardHtml(remaining[0].fileItem, remaining[0].originalIndex)}</div>`;
+      } else if (remaining.length === 2) {
+        // 2 кадра отдаем по 50%
+        row.innerHTML = `
+          <div class="bento-col-6">${createCardHtml(remaining[0].fileItem, remaining[0].originalIndex)}</div>
+          <div class="bento-col-6">${createCardHtml(remaining[1].fileItem, remaining[1].originalIndex)}</div>
+        `;
+      } else {
+        // 3+ остатка делим поровну по 33%
+        remaining.forEach(item => {
+          const col = document.createElement('div');
+          col.className = 'bento-col-4';
+          col.innerHTML = createCardHtml(item.fileItem, item.originalIndex);
+          row.appendChild(col);
+        });
+      }
     }
 
     fragment.appendChild(row);
@@ -184,7 +193,6 @@ function buildSmartBentoGallery(photos) {
   initLightboxEvents();
 }
 
-// Вспомогательная функция: ждёт загрузки первых N картинок из контейнера
 export function waitForFirstImages(count = 4) {
   const container = document.getElementById('album-gallery-container');
   if (!container) return Promise.resolve();
