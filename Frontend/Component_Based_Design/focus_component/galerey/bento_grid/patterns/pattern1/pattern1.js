@@ -1,4 +1,4 @@
-import { createCardHtml } from '../fantome_helpers';
+import { createCardHtml } from '../fantome_helpers.js';
 export function renderPattern1(p1, h1, h2, p2) {
   return `
     <div class="bento-row pattern-1">
