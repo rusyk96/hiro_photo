@@ -1,5 +1,6 @@
 import { RAW_BASE_URL, fetchManifestPhotos } from './api.js';
 import { setLightboxPhotos, initLightboxEvents } from './lightbox.js';
+import { initChunkVirtualizer } from './virtualizer.js';
 
 function parsePhotosList(manifestData) {
   return manifestData.map((fileItem, index) => {
@@ -40,6 +41,9 @@ export async function renderAlbumGallery() {
 
   const analyzedPhotos = parsePhotosList(rawPhotos);
   buildSmartBentoGallery(analyzedPhotos);
+
+  // Инициализируем защиту VRAM после построения всей сетки
+  initChunkVirtualizer('album-gallery-container');
 }
 
 function buildSmartBentoGallery(photos) {
@@ -173,38 +177,21 @@ function buildSmartBentoGallery(photos) {
   initLightboxEvents();
 }
 
-import { initChunkVirtualizer } from './virtualizer.js';
-
-export async function renderAlbumGallery() {
-  // ... твой код отрисовки Bento-сетки ...
-
-  const container = document.getElementById('album-gallery-container');
-  if (container) {
-    container.innerHTML = htmlContent;
-
-    // Инициализируем защиту VRAM
-    initChunkVirtualizer('album-gallery-container');
-  }
-}
-
 // Вспомогательная функция: ждёт загрузки первых N картинок из контейнера
 export function waitForFirstImages(count = 4) {
   const container = document.getElementById('album-gallery-container');
   if (!container) return Promise.resolve();
 
-  // Находим первые N картинок
   const images = Array.from(container.querySelectorAll('img')).slice(0, count);
 
   if (images.length === 0) return Promise.resolve();
 
   const loadPromises = images.map((img) => {
-    // Если картинка уже успела закешироваться и загрузиться
     if (img.complete && img.naturalHeight !== 0) {
       return Promise.resolve();
     }
 
     return new Promise((resolve) => {
-      // Ждём успешной загрузки или ошибки (чтобы сайт не повис навсегда, если сеть сбойнула)
       img.addEventListener('load', resolve, { once: true });
       img.addEventListener('error', resolve, { once: true });
     });
