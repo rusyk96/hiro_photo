@@ -19,14 +19,12 @@ const OBSERVER_OPTIONS = {
   threshold: 0
 };
 
-// virtualizer.js
-const chunkRows = container.querySelectorAll('.bento-pattern-row, .bento-row, [class*="pattern-"]');
-
 export function initChunkVirtualizer(containerId = 'album-gallery-container') {
   const container = document.getElementById(containerId);
   if (!container) return;
 
-  const chunkRows = container.querySelectorAll('.bento-pattern-row, .bento-row');
+  // Ищем и bento-row, и bento-pattern-row, и любые паттерны
+  const chunkRows = container.querySelectorAll('.bento-pattern-row, .bento-row, [class*="pattern-"]');
   if (!chunkRows.length) return;
 
   if (!isScrollListenerAttached) {
@@ -88,7 +86,7 @@ function handleScrollVelocity() {
   scrollTimeout = setTimeout(() => {
     isFastScrolling = false;
     mountVisibleChunksOnly();
-  }, 80); // 80ms достаточно, чтобы понять, что палец остановился
+  }, 80);
 }
 
 /**
@@ -119,7 +117,6 @@ function mountImagesInChunk(chunk) {
 
     tempImg.decode()
       .then(() => {
-        // Проверяем: если пока декодировалось, юзер уже ускроллил — НЕ ставим src!
         if (chunk.dataset.inView === 'true' && chunk.dataset.isMounted === 'true') {
           img.src = originalSrc;
           img.classList.add('is-loaded');
