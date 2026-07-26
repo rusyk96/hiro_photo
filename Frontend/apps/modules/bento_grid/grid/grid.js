@@ -2,7 +2,7 @@ import { createCardHtml } from './bento-helpers.js';
 
 export class GridEngine {
   constructor() {
-    this.history = [];
+    this.lastPreset = null;
   }
 
   renderMobile(photo) {
@@ -15,120 +15,103 @@ export class GridEngine {
 
     const possiblePresets = [];
 
-    // 🎯 ПРАВИЛО 1: 1 Большой + 1 Малый (HL + HS = 8 + 4 col)
-    if (landscapes.length >= 2) {
-      possiblePresets.push('HL_HS', 'HS_HL');
+    // 🎯 СЦЕНАРИЙ 1: 1 Большая Горизонталь (8) + 1 Малая Вертикаль (4)
+    if (landscapes.length >= 1 && portraits.length >= 1) {
+      possiblePresets.push('HL_VS', 'VS_HL');
     }
 
-    // 🎯 ПРАВИЛО 2: 1 Большой + 2 Малых (HL + VS + VS = 6 + 3 + 3 col)
-    if (landscapes.length >= 1 && portraits.length >= 2) {
-      possiblePresets.push('HL_2VS', '2VS_HL');
+    // 🎯 СЦЕНАРИЙ 2: Стопка из 2-х Малых Горизонталей (4) + Большая Горизонталь (8)
+    if (landscapes.length >= 3) {
+      possiblePresets.push('STACK2HS_HL', 'HL_STACK2HS');
     }
 
-    // 🎯 Вспомогательные моно-блочные комбинации
-    if (portraits.length >= 4) possiblePresets.push('4_VS'); // 4 малых вертикали
-    if (portraits.length >= 2) possiblePresets.push('2_VL'); // 2 больших вертикали
-    if (landscapes.length >= 3) possiblePresets.push('3_HS'); // 3 малых горизонтали
+    // 🎯 СЦЕНАРИЙ 3: Стопка из 2-х Малых Горизонталей (4) + Большая Вертикаль (8 -> 2 VL)
+    if (landscapes.length >= 2 && portraits.length >= 2) {
+      possiblePresets.push('STACK2HS_2VL', '2VL_STACK2HS');
+    }
 
-    // Выбор пресета без 3 повторов подряд
-    if (possiblePresets.length > 0) {
-      let filtered = possiblePresets;
-      const last = this.history[this.history.length - 1];
-      const secondLast = this.history[this.history.length - 2];
+    // Фильтруем повторы
+    let candidates = possiblePresets;
+    if (candidates.length > 1 && this.lastPreset) {
+      candidates = candidates.filter(p => p !== this.lastPreset);
+    }
 
-      if (last && last === secondLast) {
-        filtered = possiblePresets.filter(p => p !== last);
-      }
-
-      if (filtered.length === 0) filtered = possiblePresets;
-
-      const selected = filtered[Math.floor(Math.random() * filtered.length)];
-
-      this.history.push(selected);
-      if (this.history.length > 5) this.history.shift();
-
+    if (candidates.length > 0) {
+      const selected = candidates[Math.floor(Math.random() * candidates.length)];
+      this.lastPreset = selected;
       return this._renderPreset(selected, landscapes, portraits);
     }
 
+    // Фоллбэк/хвост
     return this._renderTail(landscapes, portraits);
   }
 
   _renderPreset(preset, landscapes, portraits) {
     switch (preset) {
-      // --- ПРАВИЛО: 1 Большой + 1 Малый ---
-      case 'HL_HS': { // [Большой HL] + [Малый HS]
-        const l1 = landscapes.splice(0, 1)[0];
-        const l2 = landscapes.splice(0, 1)[0];
+      // --- 1 HL + 1 VS ---
+      case 'HL_VS': {
+        const l = landscapes.splice(0, 1)[0];
+        const p = portraits.splice(0, 1)[0];
         return `
           <div class="bento-atom-grid">
-            <div class="atom-hl">${createCardHtml(l1)}</div>
-            <div class="atom-hs">${createCardHtml(l2)}</div>
+            <div class="atom-hl">${createCardHtml(l)}</div>
+            <div class="atom-vs">${createCardHtml(p)}</div>
           </div>`;
       }
 
-      case 'HS_HL': { // [Малый HS] + [Большой HL]
-        const l1 = landscapes.splice(0, 1)[0];
-        const l2 = landscapes.splice(0, 1)[0];
+      case 'VS_HL': {
+        const p = portraits.splice(0, 1)[0];
+        const l = landscapes.splice(0, 1)[0];
         return `
           <div class="bento-atom-grid">
-            <div class="atom-hs">${createCardHtml(l1)}</div>
-            <div class="atom-hl">${createCardHtml(l2)}</div>
+            <div class="atom-vs">${createCardHtml(p)}</div>
+            <div class="atom-hl">${createCardHtml(l)}</div>
           </div>`;
       }
 
-      // --- ПРАВИЛО: 1 Большой + 2 Малых ---
-      case 'HL_2VS': { // [Большой HL] + [Малый VS] + [Малый VS]
-        const l1 = landscapes.splice(0, 1)[0];
-        const p1 = portraits.splice(0, 1)[0];
-        const p2 = portraits.splice(0, 1)[0];
-        return `
-          <div class="bento-atom-grid mode-hl-2vs">
-            <div class="atom-hl">${createCardHtml(l1)}</div>
-            <div class="atom-vs">${createCardHtml(p1)}</div>
-            <div class="atom-vs">${createCardHtml(p2)}</div>
-          </div>`;
-      }
-
-      case '2VS_HL': { // [Малый VS] + [Малый VS] + [Большой HL]
-        const p1 = portraits.splice(0, 1)[0];
-        const p2 = portraits.splice(0, 1)[0];
-        const l1 = landscapes.splice(0, 1)[0];
-        return `
-          <div class="bento-atom-grid mode-hl-2vs">
-            <div class="atom-vs">${createCardHtml(p1)}</div>
-            <div class="atom-vs">${createCardHtml(p2)}</div>
-            <div class="atom-hl">${createCardHtml(l1)}</div>
-          </div>`;
-      }
-
-      // --- Остальные вспомогательные комбинации ---
-      case '4_VS': {
-        const p = portraits.splice(0, 4);
+      // --- Стопка 2 HS + 1 HL ---
+      case 'STACK2HS_HL': {
+        const hs1 = landscapes.splice(0, 1)[0];
+        const hs2 = landscapes.splice(0, 1)[0];
+        const hl = landscapes.splice(0, 1)[0];
         return `
           <div class="bento-atom-grid">
-            <div class="atom-vs">${createCardHtml(p[0])}</div>
-            <div class="atom-vs">${createCardHtml(p[1])}</div>
-            <div class="atom-vs">${createCardHtml(p[2])}</div>
-            <div class="atom-vs">${createCardHtml(p[3])}</div>
+            <div class="hs-stack">
+              <div class="atom-hs">${createCardHtml(hs1)}</div>
+              <div class="atom-hs">${createCardHtml(hs2)}</div>
+            </div>
+            <div class="atom-hl">${createCardHtml(hl)}</div>
           </div>`;
       }
 
-      case '2_VL': {
-        const p = portraits.splice(0, 2);
+      case 'HL_STACK2HS': {
+        const hl = landscapes.splice(0, 1)[0];
+        const hs1 = landscapes.splice(0, 1)[0];
+        const hs2 = landscapes.splice(0, 1)[0];
         return `
           <div class="bento-atom-grid">
-            <div class="atom-vl">${createCardHtml(p[0])}</div>
-            <div class="atom-vl">${createCardHtml(p[1])}</div>
+            <div class="atom-hl">${createCardHtml(hl)}</div>
+            <div class="hs-stack">
+              <div class="atom-hs">${createCardHtml(hs1)}</div>
+              <div class="atom-hs">${createCardHtml(hs2)}</div>
+            </div>
           </div>`;
       }
 
-      case '3_HS': {
-        const l = landscapes.splice(0, 3);
+      // --- Стопка 2 HS + 2 VL ---
+      case 'STACK2HS_2VL': {
+        const hs1 = landscapes.splice(0, 1)[0];
+        const hs2 = landscapes.splice(0, 1)[0];
+        const vl1 = portraits.splice(0, 1)[0];
+        const vl2 = portraits.splice(0, 1)[0];
         return `
           <div class="bento-atom-grid">
-            <div class="atom-hs">${createCardHtml(l[0])}</div>
-            <div class="atom-hs">${createCardHtml(l[1])}</div>
-            <div class="atom-hs">${createCardHtml(l[2])}</div>
+            <div class="hs-stack">
+              <div class="atom-hs">${createCardHtml(hs1)}</div>
+              <div class="atom-hs">${createCardHtml(hs2)}</div>
+            </div>
+            <div class="atom-vs">${createCardHtml(vl1)}</div>
+            <div class="atom-vs">${createCardHtml(vl2)}</div>
           </div>`;
       }
 

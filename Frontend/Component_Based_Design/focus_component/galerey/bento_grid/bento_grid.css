@@ -1,8 +1,4 @@
-/* ==========================================================================
-   BENTO ATOMIC SYSTEM (4 Strict Atoms)
-   ========================================================================== */
-
-/* 1. Главный контейнер сетки */
+/* Базовый атомный сетка-ряд */
 .bento-atom-grid {
   display: grid;
   grid-template-columns: repeat(12, 1fr);
@@ -10,64 +6,54 @@
   width: 100%;
   box-sizing: border-box;
   margin-bottom: var(--grid-gap, 20px);
+  align-items: stretch;
 }
 
-/* 🎯 4 СТРОГО ФИКСИРОВАННЫХ АТОМА */
-
-/* 1. HL (Horizontal Large) — 8 колонок из 12 */
+/* 🎯 АТОМЫ */
 .atom-hl {
   grid-column: span 8;
   width: 100%;
 }
-.atom-hl .gallery-card {
-  aspect-ratio: 16 / 10;
-}
 
-/* 2. HS (Horizontal Small) — 4 колонки из 12 */
-.atom-hs {
-  grid-column: span 4;
-  width: 100%;
-}
-.atom-hs .gallery-card {
-  aspect-ratio: 16 / 10;
-}
-
-/* 3. VL (Vertical Large) — 6 колонок из 12 */
 .atom-vl {
   grid-column: span 6;
   width: 100%;
 }
-.atom-vl .gallery-card {
-  aspect-ratio: 3 / 4;
-}
 
-/* 4. VS (Vertical Small) — 3 колонки из 12 */
 .atom-vs {
-  grid-column: span 3;
+  grid-column: span 4; /* Расширяем VS до 4 колонок для идеального баланса с 8 (8 + 4 = 12) */
   width: 100%;
 }
-.atom-vs .gallery-card {
-  aspect-ratio: 3 / 4;
+
+/* 🎯 СТОПКА ИЗ 2-х МАЛЫХ ГОРИЗОНТАЛЕЙ (друг над другом) */
+.hs-stack {
+  grid-column: span 4;
+  display: flex;
+  flex-direction: column;
+  gap: var(--grid-gap, 20px);
+  height: 100%;
 }
 
-/* 🎯 Общие стили карточек внутри атомов */
-.bento-atom-grid .gallery-card {
+.hs-stack .atom-hs {
+  flex: 1;
+  width: 100%;
+}
+
+/* 🎯 Пропорции карточек */
+.atom-hl .gallery-card,
+.atom-hs .gallery-card {
+  aspect-ratio: 16 / 10;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 16px; /* Твой радиус скругления */
-  display: block;
+  border-radius: 16px;
 }
 
-/* 🎯 Хвост на случай остатков (1-2 фото) */
-.mode-tail {
-  justify-content: center;
-}
-
-/* 🎯 Новое правило: 1 Большой (HL: 6 col) + 2 Малых (VS: 3 col + VS: 3 col) */
-.mode-hl-2vs .atom-hl {
-  grid-column: span 6;
-}
-.mode-hl-2vs .atom-vs {
-  grid-column: span 3;
+.atom-vl .gallery-card,
+.atom-vs .gallery-card {
+  aspect-ratio: 3 / 4;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 16px;
 }
