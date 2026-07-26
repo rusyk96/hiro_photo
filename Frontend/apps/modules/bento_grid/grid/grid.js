@@ -8,9 +8,21 @@ export class GridEngine {
   // ==========================================
   // 📱 МОБИЛЬНЫЙ ГЕНЕРАТОР (Строго 2 колонки)
   // ==========================================
-  buildNextMobileRow(landscapes, portraits) {
+  buildNextMobileRow(landscapes, portraits, isFirstRow = false) {
     const total = landscapes.length + portraits.length;
     if (total === 0) return null;
+
+    // 🌟 ПРАВИЛО ПЕРВОГО КАДРА (Hero Image)
+    if (isFirstRow) {
+      // Если самое первое фото горизонтальное
+      if (landscapes.length > 0 && (!portraits.length || landscapes[0].originalIndex < portraits[0].originalIndex)) {
+        const hero = landscapes.splice(0, 1)[0];
+        return `
+          <div class="bento-atom-grid mode-mobile mode-hero">
+            <div class="atom-hl">${createCardHtml(hero)}</div>
+          </div>`;
+      }
+    }
 
     const possiblePresets = [];
 
@@ -100,9 +112,20 @@ export class GridEngine {
   // ==========================================
   // 💻 ДЕСКТОПНЫЙ ГЕНЕРАТОР (12 колонок)
   // ==========================================
-  buildNextDesktopRow(landscapes, portraits) {
+  buildNextDesktopRow(landscapes, portraits, isFirstRow = false) {
     const total = landscapes.length + portraits.length;
     if (total === 0) return null;
+
+    // 🌟 ПРАВИЛО ПЕРВОГО КАДРА (Hero Image)
+    if (isFirstRow) {
+      if (landscapes.length > 0 && (!portraits.length || landscapes[0].originalIndex < portraits[0].originalIndex)) {
+        const hero = landscapes.splice(0, 1)[0];
+        return `
+          <div class="bento-atom-grid mode-desktop mode-hero">
+            <div class="atom-hl" style="grid-column: span 12;">${createCardHtml(hero)}</div>
+          </div>`;
+      }
+    }
 
     const possiblePresets = [];
 
@@ -212,7 +235,7 @@ export class GridEngine {
   }
 
   _renderTail(landscapes, portraits) {
-    const remain = [...landscapes, ...portraits];
+    const remain = [...landscapes, ...portraits].sort((a, b) => a.originalIndex - b.originalIndex);
     landscapes.length = 0;
     portraits.length = 0;
 
