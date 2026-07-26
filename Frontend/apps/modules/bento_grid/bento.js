@@ -19,7 +19,7 @@ export async function renderAlbumGallery() {
   const rawPhotos = await fetchManifestPhotos();
   setLightboxPhotos(rawPhotos);
 
-  // 2. Индексируем кадры для корректной работы Лайтбокса
+  // 2. Индексируем кадры
   const indexedPhotos = rawPhotos.map((item, index) => ({
     ...item,
     originalIndex: index,
@@ -35,7 +35,6 @@ export async function renderAlbumGallery() {
   });
 }
 
-// Внутренняя логика сборки (вызывается из renderAlbumGallery)
 function buildSmartBentoGallery(photos) {
   const container = document.getElementById('album-gallery-container');
   if (!container) return;
@@ -44,11 +43,10 @@ function buildSmartBentoGallery(photos) {
   const fragment = document.createDocumentFragment();
   const gridEngine = new GridEngine();
 
-  // Делим фото на категории, сохраняя исходные структуры
   let landscapes = photos.filter(p => !p.isPortrait);
   let portraits = photos.filter(p => p.isPortrait);
 
-  // 1. РЕНДЕР ДЛЯ МОБИЛКИ (до 768px)
+  // 1. МОБИЛКА
   if (!isDesktop()) {
     photos.forEach(photo => {
       const rowWrapper = document.createElement('div');
@@ -58,7 +56,7 @@ function buildSmartBentoGallery(photos) {
       }
     });
   } 
-  // 2. РЕНДЕР ДЛЯ ДЕСКТОПА (от 768px) — Работаем через 8 Bento-паттернов
+  // 2. ДЕСКТОП (Сборка через Pattern 1)
   else {
     while (landscapes.length > 0 || portraits.length > 0) {
       const rowHtml = gridEngine.buildNextDesktopRow(landscapes, portraits);
@@ -73,14 +71,10 @@ function buildSmartBentoGallery(photos) {
     }
   }
 
-  // Заливаем весь скомпонованный фрагмент в DOM
   container.appendChild(fragment);
-
-  // Переинициализируем события лайтбокса
   initLightboxEvents();
 }
 
-// 🎯 ВТОРОЙ ЭКСПОРТ (для прелоадера роутера)
 export function waitForFirstImages(count = 4) {
   const container = document.getElementById('album-gallery-container');
   if (!container) return Promise.resolve();

@@ -1,0 +1,42 @@
+/* ==========================================================================
+   PATTERN 1 — DESKTOP (Grid 12 Columns)
+   ========================================================================== */
+
+.pattern-1 {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.pattern-1 .bento-top,
+.pattern-1 .bento-bottom {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 16px;
+  width: 100%;
+}
+
+.pattern-1 .col-left,
+.pattern-1 .col-right {
+  grid-column: span 6;
+  width: 100%;
+}
+
+/* Пропорции карточек */
+.pattern-1 .gallery-card {
+  width: 100%;
+  height: auto;
+}
+
+/* Портреты */
+.pattern-1 .bento-top .col-left .gallery-card,
+.pattern-1 .bento-bottom .col-right .gallery-card {
+  aspect-ratio: 3 / 4;
+}
+
+/* Горизонтали */
+.pattern-1 .bento-top .col-right .gallery-card,
+.pattern-1 .bento-bottom .col-left .gallery-card {
+  aspect-ratio: 16 / 10;
+}
