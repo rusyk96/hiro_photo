@@ -1,50 +1,51 @@
-/* ==========================================================================
-   BENTO GRID SYSTEM — MAIN ENTRY POINT
-   ========================================================================== */
-
-/* Базовый роу-контейнер атома */
+/* Базовый блок-атом */
 .bento-atom-grid {
   display: grid;
   grid-template-columns: repeat(12, 1fr);
-  gap: var(--grid-gap, 20px);
+  gap: var(--grid-gap, 16px);
   width: 100%;
-  margin-bottom: var(--grid-gap, 20px);
+  box-sizing: border-box;
 }
 
-/* Колонки */
-.span-12 { grid-column: span 12; }
-.span-8  { grid-column: span 8; }
-.span-6  { grid-column: span 6; }
-.span-4  { grid-column: span 4; }
-.span-3  { grid-column: span 3; }
+/* 🎯 Ряд из 4 вертикалок (4 Portrait Row) */
+.mode-4-portraits .atom-item {
+  grid-column: span 3;
+}
+.mode-4-portraits .gallery-card {
+  aspect-ratio: 3 / 4;
+}
 
-/* Вертикальный стек из 2х малых элементов */
-.atom-stack {
-  display: flex;
-  flex-direction: column;
-  gap: var(--grid-gap, 20px);
+/* 🎯 Ряд из 3 горизонталок (3 Landscape Row) */
+.mode-3-landscapes .atom-item {
+  grid-column: span 4;
+}
+.mode-3-landscapes .gallery-card {
+  aspect-ratio: 16 / 10;
+}
+
+/* 🎯 Комбо: 1 Ландшафт слева (span 8) + 2 Портрета справа (span 2 + span 2) */
+.mode-combo-hero-l {
+  align-items: stretch;
+}
+.mode-combo-hero-l .atom-hero {
+  grid-column: span 8;
+}
+.mode-combo-hero-l .atom-hero .gallery-card {
   height: 100%;
+  aspect-ratio: 16 / 10;
+}
+.mode-combo-hero-l .atom-sub {
+  grid-column: span 2;
+}
+.mode-combo-hero-l .atom-sub .gallery-card {
+  height: 100%;
+  aspect-ratio: 3 / 4;
 }
 
-.atom-stack .atom-sub {
-  flex: 1;
-}
-
-/* Вложенная под-сетка из 3х малых элементов */
-.grid-sub-3 {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--grid-gap, 20px);
-}
-
-/* Принудительная высота и заполнение для атомов */
+/* Изоляция карточек внутри атомов */
 .bento-atom-grid .gallery-card {
   width: 100%;
-  height: 100%;
-  min-height: 260px;
-  object-fit: cover;
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
 }
-
-/* Хвост */
-.mode-tail[data-count="1"] .atom-tail-item { grid-column: 3 / span 8; }
-.mode-tail[data-count="2"] .atom-tail-item { grid-column: span 6; }
