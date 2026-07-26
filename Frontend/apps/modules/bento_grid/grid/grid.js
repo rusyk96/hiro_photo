@@ -1,126 +1,112 @@
-import { 
-  renderPattern1, 
-  renderPattern2, 
-  renderPattern3 
-} from '../../../../Component_Based_Design/focus_component/galerey/bento_grid/patterns/index_patterns.js';
 import { createCardHtml } from './bento-helpers.js';
 
 export class GridEngine {
   constructor() {
-    this.lastPatternIndex = null;
+    this.lastLayoutType = null;
   }
 
   renderMobile(photo) {
     return createCardHtml(photo);
   }
 
-  buildNextDesktopRow(landscapes, portraits) {
-    // Безопасная проверка входных данных
-    if (!Array.isArray(landscapes) || !Array.isArray(portraits)) {
-      return null;
+  /**
+   * Главный метод: берет фото из общего потока (один массив!) 
+   * и забирает оттуда по 3–4 штуки на один атомный блок.
+   */
+  buildNextDesktopRow(photos) {
+    if (!photos || photos.length === 0) return null;
+
+    // 🎯 1. ХВОСТ: Если осталось 1 или 2 фото — отдаем под аккуратный финиш
+    if (photos.length <= 2) {
+      const tailPhotos = photos.splice(0, photos.length);
+      return this._renderTailBlock(tailPhotos);
     }
 
-    const totalRemaining = landscapes.length + portraits.length;
-    if (totalRemaining === 0) return null;
-
-    // 🎯 1. Проверяем полные стандартные паттерны
-    const availablePatterns = [];
-    if (landscapes.length >= 3 && portraits.length >= 1) availablePatterns.push(1);
-    if (landscapes.length >= 6) availablePatterns.push(2);
-    if (landscapes.length >= 4 && portraits.length >= 1) availablePatterns.push(3);
-
-    if (availablePatterns.length > 0) {
-      let candidates = availablePatterns;
-      if (candidates.length > 1 && this.lastPatternIndex !== null) {
-        candidates = candidates.filter(p => p !== this.lastPatternIndex);
-      }
-      const selected = candidates[Math.floor(Math.random() * candidates.length)];
-      this.lastPatternIndex = selected;
-      return this._renderSelectedPattern(selected, landscapes, portraits);
+    // 🎯 2. ОПРЕДЕЛЯЕМ РАЗМЕР БЛОКА (3 или 4 фото)
+    // Если осталось ровно 3 или 4, берем их. Иначе случайно выбираем 3 или 4.
+    let count = 3;
+    if (photos.length === 4) {
+      count = 4;
+    } else if (photos.length > 4) {
+      count = Math.random() > 0.5 ? 3 : 4;
+    } else {
+      count = photos.length;
     }
 
-    // 🎯 2. СПАСАТЕЛЬНЫЙ РЕЖИМ ДЛЯ ПОРТРЕТОВ (если кончились горизонтали)
-    if (portraits.length >= 3) {
-      const pGroup = portraits.splice(0, 3);
-      const cardsHtml = pGroup.map(p => `
-        <div class="bento-portrait-item">
-          ${createCardHtml(p)}
-        </div>
-      `).join('');
-      return `<div class="bento-row bento-portrait-grid">${cardsHtml}</div>`;
-    }
+    const chunk = photos.splice(0, count);
 
-    // 🎯 3. ГИБКИЙ РЕЖИМ (если остался 1 портрет и пара горизонталей)
-    if (portraits.length >= 1 && landscapes.length >= 2) {
-      const p1 = portraits.splice(0, 1)[0];
-      const h1 = landscapes.splice(0, 1)[0];
-      const h2 = landscapes.splice(0, 1)[0];
-      const h3_second = landscapes.length > 0 ? landscapes.splice(0, 1)[0] : h2; 
-      this.lastPatternIndex = 1;
-      return renderPattern1(p1, h1, h2, [h2, h3_second]);
-    }
-
-    // 🎯 4. СПАСАТЕЛЬНЫЙ РЕЖИМ ДЛЯ ГОРИЗОНТАЛЕЙ (если кончились портреты)
-    if (landscapes.length >= 3) {
-      const h_top = [landscapes.splice(0, 1)[0], landscapes.splice(0, 1)[0]];
-      const h_big1 = landscapes.splice(0, 1)[0];
-      const h_big2 = landscapes.length > 0 ? landscapes.splice(0, 1)[0] : h_big1;
-      const h_bot = landscapes.length >= 2 
-        ? [landscapes.splice(0, 1)[0], landscapes.splice(0, 1)[0]] 
-        : [h_big1, h_big2];
-
-      this.lastPatternIndex = 2;
-      return renderPattern2(h_top, h_big1, h_big2, h_bot);
-    }
-
-    // 🎯 5. ФОЛЛБЭК ХВОСТА (Вызывается строго на финише, когда осталось 1-2 фото)
-    return this._renderTail(landscapes, portraits);
+    // 🎯 3. ГЕНЕРИРУЕМ АТОМАРНЫЙ БЛОК
+    return this._renderAtomicBlock(chunk);
   }
 
-  _renderSelectedPattern(patternId, landscapes, portraits) {
-    switch (patternId) {
-      case 1: {
-        const p1 = portraits.splice(0, 1)[0];
-        const h1 = landscapes.splice(0, 1)[0];
-        const h2 = landscapes.splice(0, 1)[0];
-        const h3_stack = landscapes.splice(0, 2);
-        return renderPattern1(p1, h1, h2, h3_stack);
-      }
-      case 2: {
-        const h_top = landscapes.splice(0, 2);
-        const h_big1 = landscapes.splice(0, 1)[0];
-        const h_big2 = landscapes.splice(0, 1)[0];
-        const h_bot = landscapes.splice(0, 2);
-        return renderPattern2(h_top, h_big1, h_big2, h_bot);
-      }
-      case 3: {
-        const h_top = landscapes.splice(0, 2);
-        const h_big1 = landscapes.splice(0, 1)[0];
-        const h_big2 = landscapes.splice(0, 1)[0];
-        const p1 = portraits.splice(0, 1)[0];
-        return renderPattern3(h_top, h_big1, h_big2, p1);
-      }
-      default:
-        return null;
-    }
+  _renderAtomicBlock(photos) {
+    const count = photos.length;
+    
+    // Доступные варианты конфигураций сетки на 12 колонок
+    // p = photo (атом)
+    const layouts = {
+      // Блоки из 3 элементов
+      3: [
+        // 1 Большая (8) + 2 Маленькие (4 в стеке)
+        (p) => `<div class="bento-atom-grid mode-3-hero-left">
+                  <div class="atom-hero span-8">${createCardHtml(p[0])}</div>
+                  <div class="atom-stack span-4">
+                    <div class="atom-sub">${createCardHtml(p[1])}</div>
+                    <div class="atom-sub">${createCardHtml(p[2])}</div>
+                  </div>
+                </div>`,
+        // 2 Маленькие (4 в стеке) + 1 Большая (8)
+        (p) => `<div class="bento-atom-grid mode-3-hero-right">
+                  <div class="atom-stack span-4">
+                    <div class="atom-sub">${createCardHtml(p[0])}</div>
+                    <div class="atom-sub">${createCardHtml(p[1])}</div>
+                  </div>
+                  <div class="atom-hero span-8">${createCardHtml(p[2])}</div>
+                </div>`,
+        // 3 Равные колонки (4 + 4 + 4)
+        (p) => `<div class="bento-atom-grid mode-3-equal">
+                  <div class="atom-item span-4">${createCardHtml(p[0])}</div>
+                  <div class="atom-item span-4">${createCardHtml(p[1])}</div>
+                  <div class="atom-item span-4">${createCardHtml(p[2])}</div>
+                </div>`
+      ],
+      // Блоки из 4 элементов
+      4: [
+        // 4 Равных элемента в ряд (3 + 3 + 3 + 3)
+        (p) => `<div class="bento-atom-grid mode-4-equal">
+                  <div class="atom-item span-3">${createCardHtml(p[0])}</div>
+                  <div class="atom-item span-3">${createCardHtml(p[1])}</div>
+                  <div class="atom-item span-3">${createCardHtml(p[2])}</div>
+                  <div class="atom-item span-3">${createCardHtml(p[3])}</div>
+                </div>`,
+        // 1 Большой (6) + 3 Маленьких (2 в стеке справа + 1 снизу/рядом)
+        (p) => `<div class="bento-atom-grid mode-4-asymmetric">
+                  <div class="atom-hero span-6">${createCardHtml(p[0])}</div>
+                  <div class="atom-item span-6 grid-sub-3">
+                    <div>${createCardHtml(p[1])}</div>
+                    <div>${createCardHtml(p[2])}</div>
+                    <div>${createCardHtml(p[3])}</div>
+                  </div>
+                </div>`
+      ]
+    };
+
+    const availableLayouts = layouts[count] || layouts[3];
+    
+    // Выбираем случайный атом, не повторяя предыдущий
+    let randomIndex = Math.floor(Math.random() * availableLayouts.length);
+    const selectedLayout = availableLayouts[randomIndex];
+
+    return selectedLayout(photos);
   }
 
-  _renderTail(landscapes, portraits) {
-    const remain = [...landscapes, ...portraits];
-    landscapes.length = 0;
-    portraits.length = 0;
+  _renderTailBlock(photos) {
+    const cards = photos.map(p => `
+      <div class="atom-tail-item">
+        ${createCardHtml(p)}
+      </div>
+    `).join('');
 
-    if (remain.length === 0) return null;
-
-    const cardsHtml = remain.map(p => {
-      const ratioClass = p.isPortrait ? 'tail-portrait' : 'tail-landscape';
-      return `
-        <div class="bento-tail-item ${ratioClass}">
-          ${createCardHtml(p)}
-        </div>
-      `;
-    }).join('');
-
-    return `<div class="bento-row bento-tail-grid" data-count="${remain.length}">${cardsHtml}</div>`;
+    return `<div class="bento-atom-grid mode-tail" data-count="${photos.length}">${cards}</div>`;
   }
 }
