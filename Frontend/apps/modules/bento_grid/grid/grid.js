@@ -15,22 +15,22 @@ export class GridEngine {
 
     const possiblePresets = [];
 
-    // 🎯 СЦЕНАРИЙ 1: 1 Большая Горизонталь (8) + 1 Малая Вертикаль (4)
+    // 🎯 1. Смешанный сценарий: 1 HL (8 col) + 1 VS (4 col)
     if (landscapes.length >= 1 && portraits.length >= 1) {
       possiblePresets.push('HL_VS', 'VS_HL');
     }
 
-    // 🎯 СЦЕНАРИЙ 2: Стопка из 2-х Малых Горизонталей (4) + Большая Горизонталь (8)
-    if (landscapes.length >= 3) {
-      possiblePresets.push('STACK2HS_HL', 'HL_STACK2HS');
-    }
-
-    // 🎯 СЦЕНАРИЙ 3: Стопка из 2-х Малых Горизонталей (4) + Большая Вертикаль (8 -> 2 VL)
+    // 🎯 2. Смешанный сценарий: Стопка 2 HS (4 col) + 2 VL (8 col)
     if (landscapes.length >= 2 && portraits.length >= 2) {
       possiblePresets.push('STACK2HS_2VL', '2VL_STACK2HS');
     }
 
-    // Фильтруем повторы
+    // 🎯 3. Чисто ГОРИЗОНТАЛЬНЫЙ сценарий: Стопка 2 HS (4 col) + 1 HL (8 col)
+    if (landscapes.length >= 3) {
+      possiblePresets.push('STACK2HS_HL', 'HL_STACK2HS');
+    }
+
+    // Выбор пресета с защитой от дублей подряд
     let candidates = possiblePresets;
     if (candidates.length > 1 && this.lastPreset) {
       candidates = candidates.filter(p => p !== this.lastPreset);
@@ -42,7 +42,7 @@ export class GridEngine {
       return this._renderPreset(selected, landscapes, portraits);
     }
 
-    // Фоллбэк/хвост
+    // Если фоток осталось меньше, чем нужно для целого блока (1-2 кадра)
     return this._renderTail(landscapes, portraits);
   }
 
@@ -69,7 +69,7 @@ export class GridEngine {
           </div>`;
       }
 
-      // --- Стопка 2 HS + 1 HL ---
+      // --- Стопка 2 HS + Большая HL (Слева 2 малых стопкой, справа большая) ---
       case 'STACK2HS_HL': {
         const hs1 = landscapes.splice(0, 1)[0];
         const hs2 = landscapes.splice(0, 1)[0];
@@ -84,6 +84,7 @@ export class GridEngine {
           </div>`;
       }
 
+      // --- ЗЕРКАЛО: Большая HL + Стопка 2 HS (Слева большая, справа 2 малых стопкой) ---
       case 'HL_STACK2HS': {
         const hl = landscapes.splice(0, 1)[0];
         const hs1 = landscapes.splice(0, 1)[0];
@@ -115,6 +116,22 @@ export class GridEngine {
           </div>`;
       }
 
+      case '2VL_STACK2HS': {
+        const vl1 = portraits.splice(0, 1)[0];
+        const vl2 = portraits.splice(0, 1)[0];
+        const hs1 = landscapes.splice(0, 1)[0];
+        const hs2 = landscapes.splice(0, 1)[0];
+        return `
+          <div class="bento-atom-grid">
+            <div class="atom-vs">${createCardHtml(vl1)}</div>
+            <div class="atom-vs">${createCardHtml(vl2)}</div>
+            <div class="hs-stack">
+              <div class="atom-hs">${createCardHtml(hs1)}</div>
+              <div class="atom-hs">${createCardHtml(hs2)}</div>
+            </div>
+          </div>`;
+      }
+
       default:
         return null;
     }
@@ -127,6 +144,7 @@ export class GridEngine {
 
     if (remain.length === 0) return null;
 
+    // Если остался финальный хвост в 1-2 кадра, отколеруем их аккуратно по сетке
     const cards = remain.map(item => `
       <div class="${item.isPortrait ? 'atom-vs' : 'atom-hs'}">
         ${createCardHtml(item)}
