@@ -63,35 +63,32 @@
    ========================================================================== */
 
 @media (max-width: 768px) {
-  /* 1. Главный контейнер сетки переключаем на 2 колонки */
+  /* 1. Прижимаем главный контейнер ближе к краям экрана */
+  #album-gallery-container,
+  .gallery-container {
+    padding-left: 12px !important;  /* Боковые отступы мобилки (сделай 8px, если надо еще ближе) */
+    padding-right: 12px !important;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* 2. Убираем лишние margin-bottom у рядов, чтобы gap работал единообразно */
   .bento-atom-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: var(--grid-gap-mobile, 12px);
+    gap: 12px !important; /* Единый межстрочный и межколоночный зазор */
+    margin-bottom: 12px !important; /* Раньше тут мог быть большой отступ */
     width: 100%;
     box-sizing: border-box;
-    margin-bottom: var(--grid-gap-mobile, 12px);
     align-items: stretch;
   }
 
-  /* 2. Большая горизонталь (HL) — во всю ширину (2 колонки) */
-  .atom-hl {
-    grid-column: span 2 !important;
-    width: 100%;
-  }
-
-  /* 3. Малая вертикаль (VS) — занимает 1 колонку */
-  .atom-vs {
-    grid-column: span 1 !important;
-    width: 100%;
-  }
-
-  /* 4. Стопка из 2-х малых горизонталей (HS) — занимает 1 колонку */
+  /* 3. Фиксируем gap внутри стопки 2 HS */
   .hs-stack {
     grid-column: span 1 !important;
     display: flex;
     flex-direction: column;
-    gap: var(--grid-gap-mobile, 12px);
+    gap: 12px !important; /* Должен совпадать с gap сетки */
     height: 100%;
     width: 100%;
   }
@@ -101,26 +98,14 @@
     width: 100%;
   }
 
-  /* 5. Настраиваем идеальные пропорции для маленького экрана */
-  .atom-hl .gallery-card,
-  .atom-hs .gallery-card {
-    aspect-ratio: 16 / 10;
+  /* 4. Большая горизонталь на весь экран */
+  .atom-hl {
+    grid-column: span 2 !important;
     width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 12px;
   }
 
-  .atom-vs .gallery-card {
-    aspect-ratio: 3 / 4;
+  .atom-vs {
+    grid-column: span 1 !important;
     width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 12px;
-  }
-
-  /* Хвост для мобилки */
-  .mode-tail {
-    grid-template-columns: repeat(2, 1fr);
   }
 }
