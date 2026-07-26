@@ -1,11 +1,10 @@
-import { renderPattern1 
-
-} from '../../../../Component_Based_Design/focus_component/galerey/bento_grid/patterns/index_patterns.js'; 
-// (или через абсолютный путь, смотря где лежит grid.js)
+import { renderPattern1 } from '../../../../Component_Based_Design/focus_component/galerey/bento_grid/patterns/index_patterns.js';
+import { createCardHtml } from '../../../../Component_Based_Design/focus_component/galerey/apps/modules/bento_grid/grid/bento-helpers.js';
 
 export class GridEngine {
+  // Напрямую отдаем HTML карточки без лишних div
   renderMobile(photo) {
-    return renderMobilePattern(photo);
+    return createCardHtml(photo);
   }
 
   buildNextDesktopRow(landscapes, portraits) {
@@ -20,13 +19,17 @@ export class GridEngine {
       return renderPattern1(p[0], l[0], l[1], p[1]);
     }
 
-    // Простой фоллбэк для остатков фоток, пока отлаживаем
+    // Временный фоллбэк под остатки
     const remain = [...landscapes, ...portraits];
     landscapes.length = 0;
     portraits.length = 0;
 
     if (remain.length > 0) {
-      const cardsHtml = remain.map(p => `<div class="bento-tail-item">${renderMobilePattern(p)}</div>`).join('');
+      const cardsHtml = remain.map(p => `
+        <div class="bento-tail-item">
+          ${createCardHtml(p)}
+        </div>
+      `).join('');
       return `<div class="bento-row bento-tail-wrapper">${cardsHtml}</div>`;
     }
 

@@ -9,3 +9,17 @@
    @import './pattern2/pattern2.css';
    @import './pattern3/pattern3.css';
 */
+/* ==========================================================================
+   BENTO GRID — TAIL (ОСТАТКИ ФОТОК)
+   ========================================================================== */
+
+.bento-tail-wrapper {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+  width: 100%;
+}
+
+.bento-tail-wrapper .gallery-card {
+  aspect-ratio: 16 / 10;
+}
