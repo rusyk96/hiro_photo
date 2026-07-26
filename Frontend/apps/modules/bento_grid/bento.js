@@ -1,10 +1,10 @@
 import { fetchManifestPhotos } from '../api.js';
 import { setLightboxPhotos, initLightboxEvents } from '../lightbox.js';
 import { initChunkVirtualizer } from '../virtualizer.js';
-import { VramMonitor } from '../vram-hud.js';
+//import { VramMonitor } from '../vram-hud.js';
 import { GridEngine } from './grid/grid.js';
 
-new VramMonitor();
+//new VramMonitor();
 
 // Кэш текущих фото для корректной пересборки при resize
 let cachedPhotos = [];
