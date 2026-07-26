@@ -13,6 +13,7 @@ export function createCardHtml(photoObj) {
         class="gallery-img"
         loading="lazy"
         decoding="async"
+        onload="this.classList.add('is-loaded')"
         onerror="this.closest('.gallery-card').style.display='none';"
       />
     </div>

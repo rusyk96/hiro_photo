@@ -1,16 +1,16 @@
 /* ==========================================================================
-   ГАЛЕРЕЯ АЛЬБОМА (Bento Grid)
+   ГАЛЕРЕЯ АЛЬБОМА (Bento Grid Main Entry)
    ========================================================================== */
 
 @import url('/Frontend/Component_Based_Design/focus_component/galerey/slider/Lightbox_Slider_Modal.css');
 @import '/Frontend/Component_Based_Design/focus_component/galerey/bento_grid/bento_grid.css';
 
-/* ОСНОВНОЙ КОНТЕЙНЕР */
+/* 🎯 1. ОСНОВНОЙ КОНТЕЙНЕР ГАЛЕРЕИ */
 #album-gallery-container,
 .gallery-grid {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
   width: 100%;
   max-width: 1440px;
   margin: 0 auto 32px auto;
@@ -18,10 +18,11 @@
   box-sizing: border-box;
 }
 
-/* КАРТОЧКА И СКЕЛЕТОН */
+/* 🎯 2. КАРТОЧКА, СКЕЛЕТОН И ПЛАВНАЯ ЗАГРУЗКА */
 .gallery-card {
   position: relative;
   width: 100%;
+  height: 100%;
   border-radius: 16px;
   overflow: hidden;
   background-color: #121212;
@@ -29,37 +30,51 @@
   box-sizing: border-box;
 }
 
-.gallery-img {
+/* Изображение внутри карточки */
+.gallery-img,
+.gallery-card img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
-  opacity: 1;
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  opacity: 0; /* На старте скрыто для плавного Fade-In */
+  transition: opacity 0.4s ease-in-out, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   min-width: 0;
   min-height: 0;
 }
 
-.gallery-card:hover .gallery-img {
+/* Когда картинка загрузилась */
+.gallery-img.is-loaded,
+.gallery-card img.is-loaded,
+.gallery-img[src]:not([src=""]) {
+  opacity: 1;
+}
+
+/* Hover-эффект */
+.gallery-card:hover .gallery-img,
+.gallery-card:hover img {
   transform: scale(1.02);
 }
 
-/* Скелетон Шиммер для виртуализатора */
+/* 🎯 3. ШИММЕР СКУЛЕТОН (ДЛЯ ВИРТУАЛИЗАТОРА) */
 .gallery-img:not([src]),
 .gallery-img[src=""] {
   opacity: 0;
   visibility: hidden;
 }
 
+/* Шиммер крутится, пока у картинки внутри карточки нет валидного src */
 .gallery-card:has(.gallery-img:not([src]))::after,
-.gallery-card:has(.gallery-img[src=""])::after {
+.gallery-card:has(.gallery-card img:not([src]))::after,
+.gallery-card:has(.gallery-img[src=""])::after,
+.gallery-card:has(.gallery-card img[src=""])::after {
   content: '';
   position: absolute;
   inset: 0;
   background: linear-gradient(
     90deg, 
     rgba(255, 255, 255, 0.02) 0%, 
-    rgba(255, 255, 255, 0.06) 50%, 
+    rgba(255, 255, 255, 0.08) 50%, 
     rgba(255, 255, 255, 0.02) 100%
   );
   background-size: 200% 100%;
@@ -70,4 +85,62 @@
 @keyframes bento-shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
+}
+
+/* ==========================================================================
+   BENTO MOBILE RESPONSIVE (2 Columns Grid)
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  /* 1. Прижимаем контейнер галереи к краям экрана */
+  #album-gallery-container,
+  .gallery-container,
+  .gallery-grid {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+    gap: 12px !important;
+    margin-bottom: 24px;
+  }
+
+  /* 2. Мобильный сетка-ряд (2 колонки) */
+  .bento-atom-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
+    margin-bottom: 0 !important; /* Убираем двойной отступ */
+    width: 100%;
+    box-sizing: border-box;
+    align-items: stretch;
+  }
+
+  /* 3. Мобильная стопка (2 HS) */
+  .hs-stack {
+    grid-column: span 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    height: 100%;
+    width: 100%;
+  }
+
+  .hs-stack .atom-hs {
+    flex: 1;
+    width: 100%;
+  }
+
+  /* 4. Атомы для 2 колонок */
+  .atom-hl {
+    grid-column: span 2 !important; /* Большая горизонталь во всю ширину */
+    width: 100%;
+  }
+
+  .atom-vs {
+    grid-column: span 1 !important; /* Вертикаль в 1 колонку */
+    width: 100%;
+  }
+
+  /* Скругление карточек на мобилке */
+  .gallery-card {
+    border-radius: 12px;
+  }
 }
