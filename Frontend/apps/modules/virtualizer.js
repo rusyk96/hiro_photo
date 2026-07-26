@@ -6,13 +6,17 @@ let isFastScrolling = false;
 let scrollTimeout = null;
 let lastScrollTop = window.scrollY;
 let lastScrollTime = Date.now();
+let isScrollListenerAttached = false;
 
 // Порог скорости (пикселей в миллисекунду). Если скроллим быстрее — это "пролёт"
 const VELOCITY_THRESHOLD = 2.5; 
 
+// Микроскопический прозрачный 1x1 пиксель (занимает 0 байт VRAM)
+const EMPTY_PIXEL = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+
 const OBSERVER_OPTIONS = {
   root: null,
-  rootMargin: '800px 0px 800px 0px',
+  rootMargin: '1000px 0px 1000px 0px', // Слегка увеличили буфер прорисовывания
   threshold: 0
 };
 
@@ -23,8 +27,11 @@ export function initChunkVirtualizer(containerId = 'album-gallery-container') {
   const chunkRows = container.querySelectorAll('.bento-pattern-row, .bento-row');
   if (!chunkRows.length) return;
 
-  // 1. Отслеживаем скорость скролла окна
-  window.addEventListener('scroll', handleScrollVelocity, { passive: true });
+  // 1. Отслеживаем скорость скролла окна (строго один раз)
+  if (!isScrollListenerAttached) {
+    window.addEventListener('scroll', handleScrollVelocity, { passive: true });
+    isScrollListenerAttached = true;
+  }
 
   // 2. Инициализируем Observer
   const observer = new IntersectionObserver((entries) => {
@@ -32,6 +39,8 @@ export function initChunkVirtualizer(containerId = 'album-gallery-container') {
       const chunk = entry.target;
 
       if (entry.isIntersecting) {
+        chunk.dataset.inView = 'true';
+
         // Если летим на бешеной скорости — НЕ вгружаем VRAM на пролёте
         if (!isFastScrolling) {
           mountImagesInChunk(chunk);
@@ -40,9 +49,10 @@ export function initChunkVirtualizer(containerId = 'album-gallery-container') {
           chunk.dataset.pendingMount = 'true';
         }
       } else {
-        // Выгружаем ВСЕГДА и БЕЗ ЗАДЕРЖЕК, чтобы освобождать VRAM на лету
-        unmountImagesFromChunk(chunk);
+        // Чанк ушёл — мгновенно чистим и сбрасываем флаги
+        chunk.dataset.inView = 'false';
         chunk.dataset.pendingMount = 'false';
+        unmountImagesFromChunk(chunk);
       }
     });
   }, OBSERVER_OPTIONS);
@@ -51,7 +61,8 @@ export function initChunkVirtualizer(containerId = 'album-gallery-container') {
     const imgs = chunk.querySelectorAll('img');
     imgs.forEach((img) => {
       if (!img.dataset.originalSrc) {
-        img.dataset.originalSrc = img.src;
+        // Запоминаем исходный src (или data-src)
+        img.dataset.originalSrc = img.src || img.getAttribute('src');
       }
       img.setAttribute('decoding', 'async');
     });
@@ -71,8 +82,6 @@ function handleScrollVelocity() {
 
   if (deltaTime > 0) {
     const velocity = deltaScroll / deltaTime;
-
-    // Если скорость выше порога — включаем режим быстрых пролётов
     isFastScrolling = velocity > VELOCITY_THRESHOLD;
   }
 
@@ -84,7 +93,7 @@ function handleScrollVelocity() {
   scrollTimeout = setTimeout(() => {
     isFastScrolling = false;
     processPendingChunks();
-  }, 150); // 150мс паузы означает, что скролл замедлился/остановился
+  }, 120);
 }
 
 /**
@@ -93,7 +102,9 @@ function handleScrollVelocity() {
 function processPendingChunks() {
   const pendingChunks = document.querySelectorAll('[data-pending-mount="true"]');
   pendingChunks.forEach((chunk) => {
-    mountImagesInChunk(chunk);
+    if (chunk.dataset.inView === 'true') {
+      mountImagesInChunk(chunk);
+    }
     chunk.dataset.pendingMount = 'false';
   });
 }
@@ -104,45 +115,47 @@ function processPendingChunks() {
 function mountImagesInChunk(chunk) {
   if (chunk.dataset.isMounted === 'true') return;
 
+  // Фиксируем статус монтирования
+  chunk.dataset.isMounted = 'true';
+
   const imgs = chunk.querySelectorAll('img');
   imgs.forEach((img) => {
     const originalSrc = img.dataset.originalSrc;
-    if (!originalSrc || img.getAttribute('src') === originalSrc) return;
+    if (!originalSrc) return;
 
-    // Своевременно подгружаем WebP
+    // Своевременно распаковываем WebP в фоновом потоке GPU
     const tempImg = new Image();
     tempImg.src = originalSrc;
 
-    // Асинхронно распаковываем WebP в фоновом потоке GPU
     tempImg.decode()
       .then(() => {
-        // Проверяем, не успел ли чанк уйти из видимости, пока декодировался WebP
-        if (chunk.dataset.pendingMount !== 'false') {
+        // ПРОВЕРКА RACE CONDITION:
+        // Убеждаемся, что чанк ВСЁ ЕЩЁ находится в зоне видимости и смонтирован!
+        if (chunk.dataset.inView === 'true' && chunk.dataset.isMounted === 'true') {
           img.src = originalSrc;
           img.classList.add('is-loaded');
         }
       })
       .catch(() => {
-        // Если браузер сбросил поток или не успел — ставим нативно
-        img.src = originalSrc;
-        img.classList.add('is-loaded');
+        // Фолбэк на случай ошибки decode()
+        if (chunk.dataset.inView === 'true' && chunk.dataset.isMounted === 'true') {
+          img.src = originalSrc;
+          img.classList.add('is-loaded');
+        }
       });
   });
-
-  chunk.dataset.isMounted = 'true';
 }
 
-// Микроскопический прозрачный 1x1 пиксель (занимает 0 байт VRAM)
-const EMPTY_PIXEL = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-
+/**
+ * Выгружает картинки из VRAM
+ */
 function unmountImagesFromChunk(chunk) {
+  chunk.dataset.isMounted = 'false';
+
   const imgs = chunk.querySelectorAll('img');
   imgs.forEach((img) => {
-    // Принудительно сбрасываем ссылку на прозрачный пиксель
-    img.src = EMPTY_PIXEL; 
-    img.removeAttribute('src'); // Полностью чистим
+    img.src = EMPTY_PIXEL;
+    img.removeAttribute('src'); // Полностью чистим VRAM
     img.classList.remove('is-loaded');
   });
-
-  chunk.dataset.isMounted = 'false';
 }
