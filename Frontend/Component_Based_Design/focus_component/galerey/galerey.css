@@ -113,8 +113,7 @@
     grid-template-columns: repeat(12, 1fr) !important;
     gap: 16px !important;
     width: 100% !important;
-    height: 540px; /* Компактная монолитная высота ряда */
-    max-height: 70vh; /* Защита для низких экранов (MacBook/ноутбуки) */
+    height: auto !important; /* <--- Поменяй с 540px на auto! */
   }
 
   /* ------------------------------------------------------------------------
@@ -168,15 +167,15 @@
   }
 
   /* Мелкие карточки внутри стопок делят доступную высоту поровну */
-  .sub-stack > .gallery-card,
+.sub-stack > .gallery-card,
   .sub-stack-2 > .gallery-card,
   .sub-stack-3 > .gallery-card,
   .sub-stack-custom > .gallery-card,
   .col-left > .gallery-card,
   .col-right > .gallery-card {
-    flex: 1 1 0;
-    min-height: 0;
-    height: 100%;
+    flex: 1 1 auto;        /* <--- Даем флексу считывать контент */
+    min-height: 220px;     /* <--- Гарантированная минимальная высота */
+    height: auto;
   }
 
   /* ------------------------------------------------------------------------
