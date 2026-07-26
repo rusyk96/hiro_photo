@@ -1,6 +1,10 @@
 import { RAW_BASE_URL, fetchManifestPhotos } from './api.js';
 import { setLightboxPhotos, initLightboxEvents } from './lightbox.js';
 import { initChunkVirtualizer } from './virtualizer.js';
+import { VramMonitor } from './vram-hud.js';
+
+// Запускаем монитор VRAM для тестов
+new VramMonitor();
 
 function parsePhotosList(manifestData) {
   return manifestData.map((fileItem, index) => {
@@ -13,6 +17,7 @@ function parsePhotosList(manifestData) {
   });
 }
 
+// ВАЖНО: Картинка изначально создается БЕЗ src, но с data-original-src
 function createCardHtml(fileItem, index) {
   const fileName = typeof fileItem === 'string' ? fileItem : fileItem.name;
   const cleanFileName = fileName.normalize('NFC');
@@ -21,7 +26,7 @@ function createCardHtml(fileItem, index) {
   return `
     <div class="gallery-card" onclick="openLightbox(${index})">
       <img 
-        src="${photoUrl}" 
+        data-original-src="${photoUrl}" 
         alt="Кадр ${index + 1}" 
         class="gallery-img"
         loading="lazy"
@@ -42,8 +47,10 @@ export async function renderAlbumGallery() {
   const analyzedPhotos = parsePhotosList(rawPhotos);
   buildSmartBentoGallery(analyzedPhotos);
 
-  // Инициализируем защиту VRAM после построения всей сетки
-  initChunkVirtualizer('album-gallery-container');
+  // Ожидаем следующий кадр браузера, чтобы DOM точно сформировал высоты блоков
+  requestAnimationFrame(() => {
+    initChunkVirtualizer('album-gallery-container');
+  });
 }
 
 function buildSmartBentoGallery(photos) {
@@ -199,8 +206,3 @@ export function waitForFirstImages(count = 4) {
 
   return Promise.all(loadPromises);
 }
-
-import { VramMonitor } from './vram-hud.js';
-
-// Запускаем монитор в режиме разработки
-new VramMonitor();
