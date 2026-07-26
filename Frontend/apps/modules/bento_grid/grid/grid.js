@@ -1,5 +1,5 @@
 import { renderPattern1 } from '../../../../Component_Based_Design/focus_component/galerey/bento_grid/patterns/index_patterns.js';
-import { createCardHtml } from '../../../../Component_Based_Design/focus_component/galerey/apps/modules/bento_grid/grid/bento-helpers.js';
+import { createCardHtml } from './bento-helpers.js';
 
 export class GridEngine {
   // Напрямую отдаем HTML карточки без лишних div

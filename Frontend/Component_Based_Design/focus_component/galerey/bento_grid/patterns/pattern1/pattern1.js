@@ -1,4 +1,4 @@
-import { createCardHtml } from '../../../../../../apps/modules/bento_grid/grid/bento-helpers'
+
 export function renderPattern1(p1, h1, h2, p2) {
   return `
     <div class="bento-row pattern-1">
