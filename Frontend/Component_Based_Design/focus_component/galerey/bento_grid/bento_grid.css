@@ -1,42 +1,65 @@
-/* Основной контейнер сетки */
+/* ==========================================================================
+   BENTO ATOMIC SYSTEM (4 Strict Atoms)
+   ========================================================================== */
+
+/* 1. Главный контейнер сетки */
 .bento-atom-grid {
   display: grid;
   grid-template-columns: repeat(12, 1fr);
   gap: var(--grid-gap, 20px);
   width: 100%;
   box-sizing: border-box;
+  margin-bottom: var(--grid-gap, 20px);
 }
 
 /* 🎯 4 СТРОГО ФИКСИРОВАННЫХ АТОМА */
 
-/* 1. HL (Horizontal Large) — 8 колонок */
+/* 1. HL (Horizontal Large) — 8 колонок из 12 */
 .atom-hl {
   grid-column: span 8;
+  width: 100%;
+}
+.atom-hl .gallery-card {
   aspect-ratio: 16 / 10;
 }
 
-/* 2. HS (Horizontal Small) — 4 колонки */
+/* 2. HS (Horizontal Small) — 4 колонки из 12 */
 .atom-hs {
   grid-column: span 4;
+  width: 100%;
+}
+.atom-hs .gallery-card {
   aspect-ratio: 16 / 10;
 }
 
-/* 3. VL (Vertical Large) — 6 колонок */
+/* 3. VL (Vertical Large) — 6 колонок из 12 */
 .atom-vl {
   grid-column: span 6;
+  width: 100%;
+}
+.atom-vl .gallery-card {
   aspect-ratio: 3 / 4;
 }
 
-/* 4. VS (Vertical Small) — 3 колонки */
+/* 4. VS (Vertical Small) — 3 колонки из 12 */
 .atom-vs {
   grid-column: span 3;
+  width: 100%;
+}
+.atom-vs .gallery-card {
   aspect-ratio: 3 / 4;
 }
 
-/* Фиксация внутри карточек */
+/* 🎯 Общие стили карточек внутри атомов */
 .bento-atom-grid .gallery-card {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 16px;
+  border-radius: 16px; /* Твой радиус скругления */
+  display: block;
+}
+
+/* 🎯 Хвост на случай остатков (1-2 фото) */
+.mode-tail {
+  justify-content: center;
 }
