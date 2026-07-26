@@ -9,13 +9,12 @@
 .gallery-grid {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 16px; /* Единственный отступ между рядами! */
   width: 100%;
   max-width: 1440px;
-  margin: 0 auto 80px auto; /* 80px снизу — надежный отступ до подвала */
+  margin: 0 auto 32px auto; /* Снизили гигантский margin до нормальных 32px */
   padding: 0 16px;
   box-sizing: border-box;
-  clear: both;
 }
 
 /* КАРТОЧКА И СКЕЛЕТОН */
@@ -105,20 +104,19 @@
    ДЕСКТОП СЕТКА BENTO (от 768px и выше)
    ========================================================================== */
 
-@media (min-width: 768px) {
+@@media (min-width: 768px) {
 
-  /* Базовый ряд Bento: ограничиваем высоту, чтобы не раздувался на весь экран */
+  /* Ряд Бенто — убираем растяжение по высоте */
   .bento-row {
     display: grid !important;
     grid-template-columns: repeat(12, 1fr) !important;
     gap: 16px !important;
     width: 100% !important;
-    height: auto !important; /* <--- Поменяй с 540px на auto! */
+    height: auto !important;
+    align-items: start; /* Важно: чтобы блоки не растягивали ряд вниз */
   }
 
-  /* ------------------------------------------------------------------------
-     ОБЩИЕ ГРУППЫ И КОЛОНКИ
-     ------------------------------------------------------------------------ */
+  /* Составные контейнеры (Top / Bottom) */
   .bento-top,
   .bento-bottom {
     grid-column: span 12;
@@ -126,9 +124,9 @@
     grid-template-columns: repeat(12, 1fr);
     gap: 16px;
     width: 100%;
-    height: 50%; /* Внутри составных рядов 1-3 разделение 50/50 */
   }
 
+  /* Колонки */
   .col-left,
   .col-right {
     grid-column: span 6;
@@ -136,21 +134,11 @@
     flex-direction: column;
     gap: 16px;
     width: 100%;
-    height: 100%;
-    min-height: 0;
   }
 
-  /* ------------------------------------------------------------------------
-     СТОПКИ И АКЦЕНТЫ (Гибкое заполнение высоты)
-     ------------------------------------------------------------------------ */
+  /* Стопки и акценты */
   .main-accent {
     grid-column: span 6;
-    height: 100%;
-    min-height: 0;
-  }
-
-  .main-accent .gallery-card {
-    height: 100%;
     width: 100%;
   }
 
@@ -161,44 +149,52 @@
     display: flex;
     flex-direction: column;
     gap: 16px;
-    height: 100%;
     width: 100%;
-    min-height: 0;
   }
 
-  /* Мелкие карточки внутри стопок делят доступную высоту поровну */
-.sub-stack > .gallery-card,
-  .sub-stack-2 > .gallery-card,
-  .sub-stack-3 > .gallery-card,
-  .sub-stack-custom > .gallery-card,
-  .col-left > .gallery-card,
-  .col-right > .gallery-card {
-    flex: 1 1 auto;        /* <--- Даем флексу считывать контент */
-    min-height: 220px;     /* <--- Гарантированная минимальная высота */
+  /* Пропорции карточек: опираемся на aspect-ratio */
+  .gallery-card {
+    width: 100%;
     height: auto;
   }
 
-  /* ------------------------------------------------------------------------
-     АККУРАТНЫЙ ХВОСТ В КОНЦЕ АЛЬБОМА (Изоляция от подвала)
-     ------------------------------------------------------------------------ */
-  .bento-tail-wrapper {
-    display: flex !important;
-    flex-wrap: wrap;
-    gap: 16px !important;
-    width: 100% !important;
-    height: auto !important;
-    max-height: 400px;
-    margin-top: 16px;
+  /* Портретные карточки в сетке */
+  .pattern-1 .bento-top .col-left .gallery-card,
+  .pattern-1 .bento-bottom .col-right .gallery-card {
+    aspect-ratio: 3 / 4;
   }
 
-  .bento-tail-item {
-    flex: 1 1 300px;
-    max-width: 600px;
-    height: 360px;
+  /* Пейзажные карточки в сетке */
+  .pattern-1 .bento-top .col-right .gallery-card,
+  .pattern-1 .bento-bottom .col-left .gallery-card {
+    aspect-ratio: 16 / 10;
+  }
+
+  /* Акценты в паттернах 4-8 */
+  .pattern-4 .main-accent .gallery-card,
+  .pattern-5 .main-accent .gallery-card,
+  .pattern-6 .main-accent .gallery-card,
+  .pattern-7 .main-accent .gallery-card,
+  .pattern-8 .main-accent .gallery-card {
+    aspect-ratio: 4 / 3; /* Красивая фото-пропорция без раздувания */
+  }
+
+  /* Карточки в стопках (sub-stacks) */
+  .sub-stack .gallery-card,
+  .sub-stack-2 .gallery-card,
+  .sub-stack-3 .gallery-card {
+    aspect-ratio: 16 / 10;
+  }
+
+  /* Хвост */
+  .bento-tail-wrapper {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)) !important;
+    gap: 16px !important;
+    width: 100% !important;
   }
 
   .bento-tail-item .gallery-card {
-    height: 100%;
-    width: 100%;
+    aspect-ratio: 16 / 10;
   }
 }
