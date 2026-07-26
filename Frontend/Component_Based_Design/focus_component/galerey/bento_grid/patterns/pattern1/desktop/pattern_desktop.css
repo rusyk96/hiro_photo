@@ -4,8 +4,8 @@
 
 .pattern-1 {
   display: grid;
-  grid-template-columns: repeat(var(--grid-columns, 12), 1fr);[cite: 1, 2]
-  gap: var(--grid-gap, 20px);[cite: 1, 2]
+  grid-template-columns: repeat(var(--grid-columns, 12), 1fr);
+  gap: var(--grid-gap, 20px);
   width: 100%;
 }
 
@@ -17,15 +17,15 @@
 .pattern-1 .col-stack {
   display: flex;
   flex-direction: column;
-  gap: var(--grid-gap, 20px);[cite: 1, 2]
+  gap: var(--grid-gap, 20px);
   width: 100%;
 }
 
-.pattern-1 .bento-top .col-left  { grid-column: span 5; }[cite: 4]
-.pattern-1 .bento-top .col-right { grid-column: span 7; }[cite: 4]
+.pattern-1 .bento-top .col-left  { grid-column: span 5; }
+.pattern-1 .bento-top .col-right { grid-column: span 7; }
 
-.pattern-1 .bento-bottom .col-left  { grid-column: span 7; }[cite: 4]
-.pattern-1 .bento-bottom .col-right { grid-column: span 5; }[cite: 4]
+.pattern-1 .bento-bottom .col-left  { grid-column: span 7; }
+.pattern-1 .bento-bottom .col-right { grid-column: span 5; }
 
 .pattern-1 .gallery-card {
   width: 100%;
