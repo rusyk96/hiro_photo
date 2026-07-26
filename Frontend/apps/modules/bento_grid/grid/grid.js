@@ -89,19 +89,25 @@ export class GridEngine {
     }
   }
 
-  _renderTail(landscapes, portraits) {
+ _renderTail(landscapes, portraits) {
     const remain = [...landscapes, ...portraits];
     landscapes.length = 0;
     portraits.length = 0;
 
     if (remain.length === 0) return null;
 
-    const cardsHtml = remain.map(p => `
-      <div class="bento-tail-item">
-        ${createCardHtml(p)}
-      </div>
-    `).join('');
+    // Группируем остатки в аккуратную сетку
+    const cardsHtml = remain.map(p => {
+      // Определяем соотношение сторон в зависимости от типа кадра
+      const ratioClass = p.isPortrait ? 'tail-portrait' : 'tail-landscape';
+      return `
+        <div class="bento-tail-item ${ratioClass}">
+          ${createCardHtml(p)}
+        </div>
+      `;
+    }).join('');
 
-    return `<div class="bento-row bento-tail-grid">${cardsHtml}</div>`;
+    // Передаем количество элементов через data-count, чтобы CSS сам выбрал идеальное число колонок
+    return `<div class="bento-row bento-tail-grid" data-count="${remain.length}">${cardsHtml}</div>`;
   }
 }
