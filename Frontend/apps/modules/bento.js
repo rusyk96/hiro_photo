@@ -1,4 +1,4 @@
-import { RAW_BASE_URL, fetchManifestPhotos } from './api.js';
+import { THUMB_BASE_URL, fetchManifestPhotos } from './api.js';
 import { setLightboxPhotos, initLightboxEvents } from './lightbox.js';
 import { initChunkVirtualizer } from './virtualizer.js';
 import { VramMonitor } from './vram-hud.js';
@@ -17,11 +17,11 @@ function parsePhotosList(manifestData) {
   });
 }
 
-// ВАЖНО: Картинка изначально создается БЕЗ src, но с data-original-src
+// 🎯 ВАЖНО: Берём ссылки из THUMB_BASE_URL (папка webp_thumb)
 function createCardHtml(fileItem, index) {
   const fileName = typeof fileItem === 'string' ? fileItem : fileItem.name;
   const cleanFileName = fileName.normalize('NFC');
-  const photoUrl = `${RAW_BASE_URL}${encodeURIComponent(cleanFileName)}`;
+  const photoUrl = `${THUMB_BASE_URL}${encodeURIComponent(cleanFileName)}`;
 
   return `
     <div class="gallery-card" onclick="openLightbox(${index})">
