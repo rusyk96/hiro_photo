@@ -1,15 +1,18 @@
-/* Базовый атомный сетка-ряд */
+/* ==========================================================================
+   BENTO GRID SYSTEM (Desktop & Mobile)
+   ========================================================================== */
+
+/* Базовый атомный сетка-ряд (Desktop 12 cols) */
 .bento-atom-grid {
   display: grid;
   grid-template-columns: repeat(12, 1fr);
   gap: var(--grid-gap, 20px);
   width: 100%;
   box-sizing: border-box;
-  margin-bottom: var(--grid-gap, 20px);
   align-items: stretch;
 }
 
-/* 🎯 АТОМЫ */
+/* 🎯 ДЕСКТОПНЫЕ АТОМЫ */
 .atom-hl {
   grid-column: span 8;
   width: 100%;
@@ -21,11 +24,11 @@
 }
 
 .atom-vs {
-  grid-column: span 4; /* Расширяем VS до 4 колонок для идеального баланса с 8 (8 + 4 = 12) */
+  grid-column: span 4;
   width: 100%;
 }
 
-/* 🎯 СТОПКА ИЗ 2-х МАЛЫХ ГОРИЗОНТАЛЕЙ (друг над другом) */
+/* 🎯 СТОПКА ИЗ 2-х МАЛЫХ ГОРИЗОНТАЛЕЙ */
 .hs-stack {
   grid-column: span 4;
   display: flex;
@@ -39,7 +42,7 @@
   width: 100%;
 }
 
-/* 🎯 Пропорции карточек */
+/* 🎯 Пропорции карточек (Десктоп) */
 .atom-hl .gallery-card,
 .atom-hs .gallery-card {
   aspect-ratio: 16 / 10;
@@ -63,49 +66,50 @@
    ========================================================================== */
 
 @media (max-width: 768px) {
-  /* 1. Прижимаем главный контейнер ближе к краям экрана */
-  #album-gallery-container,
-  .gallery-container {
-    padding-left: 12px !important;  /* Боковые отступы мобилки (сделай 8px, если надо еще ближе) */
-    padding-right: 12px !important;
-    width: 100%;
-    box-sizing: border-box;
-  }
-
-  /* 2. Убираем лишние margin-bottom у рядов, чтобы gap работал единообразно */
   .bento-atom-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px !important; /* Единый межстрочный и межколоночный зазор */
-    margin-bottom: 12px !important; /* Раньше тут мог быть большой отступ */
-    width: 100%;
-    box-sizing: border-box;
-    align-items: stretch;
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    align-items: stretch !important;
   }
 
-  /* 3. Фиксируем gap внутри стопки 2 HS */
+  /* Стопка из 2 HS слева или справа */
   .hs-stack {
     grid-column: span 1 !important;
-    display: flex;
-    flex-direction: column;
-    gap: 12px !important; /* Должен совпадать с gap сетки */
-    height: 100%;
-    width: 100%;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    height: 100% !important;
+    width: 100% !important;
   }
 
   .hs-stack .atom-hs {
-    flex: 1;
-    width: 100%;
+    flex: 1 !important;
+    width: 100% !important;
+    height: 100% !important;
   }
 
-  /* 4. Большая горизонталь на весь экран */
+  /* На мобилке карточки внутри HS-стопки должны идеально разжиматься */
+  .hs-stack .atom-hs .gallery-card {
+    aspect-ratio: auto !important; /* Убираем жесткий ratio, чтобы flex: 1 сам заполнял высоту вертикалки рядом */
+    height: 100% !important;
+  }
+
+  /* Большая горизонталь на весь экран */
   .atom-hl {
     grid-column: span 2 !important;
-    width: 100%;
+    width: 100% !important;
   }
 
   .atom-vs {
     grid-column: span 1 !important;
-    width: 100%;
+    width: 100% !important;
+  }
+
+  /* Хвост альбома */
+  .bento-atom-grid.mode-tail .atom-hs {
+    grid-column: span 2 !important;
   }
 }

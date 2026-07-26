@@ -18,6 +18,14 @@
   box-sizing: border-box;
 }
 
+@media (max-width: 768px) {
+  #album-gallery-container,
+  .gallery-grid {
+    gap: 12px !important; /* На мобилке зазор между рядами 12px */
+    padding: 0 12px !important;
+  }
+}
+
 /* 🎯 2. КАРТОЧКА, СКЕЛЕТОН И ПЛАВНАЯ ЗАГРУЗКА */
 .gallery-card {
   position: relative;
@@ -37,7 +45,7 @@
   height: 100%;
   object-fit: cover;
   display: block;
-  opacity: 0; /* На старте скрыто для плавного Fade-In */
+  opacity: 0;
   transition: opacity 0.4s ease-in-out, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   min-width: 0;
   min-height: 0;
@@ -63,7 +71,6 @@
   visibility: hidden;
 }
 
-/* Шиммер крутится, пока у картинки внутри карточки нет валидного src */
 .gallery-card:has(.gallery-img:not([src]))::after,
 .gallery-card:has(.gallery-card img:not([src]))::after,
 .gallery-card:has(.gallery-img[src=""])::after,
@@ -85,46 +92,4 @@
 @keyframes bento-shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
-}
-
-/* ==========================================================================
-   BENTO MOBILE RESPONSIVE (2 Columns Grid)
-   ========================================================================== */
-
-@media (max-width: 768px) {
-  /* 1. Главный контейнер атома переводим в честные 2 колонки */
-  .bento-atom-grid {
-    display: grid !important;
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 12px !important;
-    width: 100% !important;
-    margin-bottom: 12px !important;
-  }
-
-  /* 2. Горизонтальный большой кадр (HL) растягиваем на ВСЮ ширину (2 колонки) */
-  .atom-hl {
-    grid-column: span 2 !important;
-    width: 100% !important;
-  }
-
-  /* 3. Вертикальный кадр (VS) занимает ровно 1 колонку */
-  .atom-vs {
-    grid-column: span 1 !important;
-    width: 100% !important;
-  }
-
-  /* 4. Лечитель стопки HS (которая на скрине сжалась в угол!) */
-  .hs-stack {
-    grid-column: span 1 !important; /* Стопка занимает 1 колонку */
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 12px !important;
-    width: 100% !important;
-  }
-
-  /* 5. Карточки внутри стопки заполняют всю ширину своей колонки */
-  .hs-stack .atom-hs,
-  .hs-stack .gallery-card {
-    width: 100% !important;
-  }
 }
