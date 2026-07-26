@@ -43,6 +43,7 @@ function buildSmartBentoGallery(photos) {
   container.innerHTML = '';
   const fragment = document.createDocumentFragment();
   const gridEngine = new GridEngine();
+  const isMobile = window.innerWidth < 768;
 
   // Клонируем элементы массивов
   let landscapes = photos.filter(p => !p.isPortrait).map(p => ({ ...p }));
@@ -51,10 +52,14 @@ function buildSmartBentoGallery(photos) {
   let safetyIterator = 0;
   const MAX_ITERATIONS = photos.length;
 
-  // Единый цикл сборки Bento (и для десктопа, и для мобилки)
+  // Цикл сборки Bento с раздельной логикой под экраны
   while ((landscapes.length > 0 || portraits.length > 0) && safetyIterator < MAX_ITERATIONS) {
     const prevTotal = landscapes.length + portraits.length;
-    const rowHtml = gridEngine.buildNextRow(landscapes, portraits);
+    
+    // Вызов соответствующего билдера
+    const rowHtml = isMobile
+      ? gridEngine.buildNextMobileRow(landscapes, portraits)
+      : gridEngine.buildNextDesktopRow(landscapes, portraits);
 
     if (!rowHtml) break;
 
