@@ -1,6 +1,6 @@
-import { createCardHtml } from './bento-helpers.js';
 
-eimport { createCardHtml } from './bento-helpers.js';
+
+import { createCardHtml } from './bento-helpers.js';
 
 export class GridEngine {
   constructor() {
