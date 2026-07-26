@@ -173,6 +173,20 @@ function buildSmartBentoGallery(photos) {
   initLightboxEvents();
 }
 
+import { initChunkVirtualizer } from './virtualizer.js';
+
+export async function renderAlbumGallery() {
+  // ... твой код отрисовки Bento-сетки ...
+
+  const container = document.getElementById('album-gallery-container');
+  if (container) {
+    container.innerHTML = htmlContent;
+
+    // Инициализируем защиту VRAM
+    initChunkVirtualizer('album-gallery-container');
+  }
+}
+
 // Вспомогательная функция: ждёт загрузки первых N картинок из контейнера
 export function waitForFirstImages(count = 4) {
   const container = document.getElementById('album-gallery-container');

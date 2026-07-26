@@ -186,3 +186,15 @@
     aspect-ratio: 16 / 9;
   }
 }
+
+/* Фиксация высоты чанка, пока он выгружен из памяти */
+.bento-pattern-row,
+.bento-row {
+  box-sizing: border-box;
+  min-height: 250px; /* Защита от нулевой высоты */
+}
+
+.bento-pattern-row[data-is-mounted="false"],
+.bento-row[data-is-mounted="false"] {
+  background-color: rgba(255, 255, 255, 0.01);
+}
