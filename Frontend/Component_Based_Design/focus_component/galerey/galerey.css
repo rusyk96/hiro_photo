@@ -18,11 +18,12 @@
 .gallery-card {
   position: relative;
   width: 100%;
+  height: 100%;
   border-radius: 16px;
   overflow: hidden;
   background-color: #121212;
   cursor: pointer;
-  min-height: 100px;
+  box-sizing: border-box;
 }
 
 .gallery-img {
@@ -75,97 +76,143 @@
 @media (max-width: 767px) {
   .bento-row, 
   .bento-pattern-row,
-  .bento-top-group,
-  .bento-remainder-row {
+  .bento-top,
+  .bento-bottom,
+  .bento-mobile-row,
+  .col-left,
+  .col-right,
+  .sub-stack,
+  .sub-stack-2,
+  .sub-stack-3,
+  .sub-stack-custom {
     display: flex !important;
     flex-direction: column !important;
     gap: 12px !important;
     width: 100% !important;
   }
 
-  .bento-col-4, 
-  .bento-col-6, 
-  .bento-col-8, 
-  .bento-col-12,
-  .bento-left-col,
-  .bento-right-col,
-  .bento-bottom-full {
-    width: 100% !important;
-  }
-
   .gallery-card {
     aspect-ratio: 4 / 3;
+    height: auto;
   }
 }
 
 /* ==========================================================================
-   ДЕСКТОП СЕТКА (от 768px и выше)
+   ДЕСКТОП СЕТКА BENTO (от 768px и выше)
    ========================================================================== */
 
 @media (min-width: 768px) {
 
-  /* Общие ряды Grid */
-  .bento-row,
-  .bento-remainder-row {
+  /* Базовый ряд 12-колоночного Bento */
+  .bento-row {
     display: grid !important;
     grid-template-columns: repeat(12, 1fr) !important;
     gap: 16px !important;
     width: 100% !important;
   }
 
-  /* Колоночный сет */
-  .bento-col-4 { grid-column: span 4 !important; }
-  .bento-col-6 { grid-column: span 6 !important; }
-  .bento-col-8 { grid-column: span 8 !important; }
-  .bento-col-12 { grid-column: span 12 !important; }
-
-  /* Пропорции для простых рядов и остатка */
-  .bento-col-4 .gallery-card { aspect-ratio: 4 / 3; }
-  .bento-col-6 .gallery-card { aspect-ratio: 16 / 10; }
-  .bento-col-8 .gallery-card { aspect-ratio: 16 / 9; }
-  .bento-col-12 .gallery-card { aspect-ratio: 21 / 9; }
-
-  /* Сложный Паттерн Bento */
-  .bento-pattern-row {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    width: 100%;
-  }
-
-  .bento-top-group {
+  /* ------------------------------------------------------------------------
+     ОБЩИЕ ГРУППЫ И КОЛОНКИ
+     ------------------------------------------------------------------------ */
+  .bento-top,
+  .bento-bottom {
+    grid-column: span 12;
     display: grid;
     grid-template-columns: repeat(12, 1fr);
     gap: 16px;
     width: 100%;
   }
 
-  .bento-left-col {
+  .col-left,
+  .col-right {
     grid-column: span 6;
     display: flex;
     flex-direction: column;
     gap: 16px;
-  }
-
-  .bento-left-col .gallery-card {
-    aspect-ratio: 4 / 3;
-  }
-
-  .bento-right-col {
-    grid-column: span 6;
-    height: 100%;
-  }
-
-  .bento-right-col .gallery-card {
-    height: 100%;
-    min-height: 100%;
-  }
-
-  .bento-bottom-full {
     width: 100%;
+    height: 100%;
   }
 
-  .bento-bottom-full .gallery-card {
+  /* ------------------------------------------------------------------------
+     СТОПКИ И АКЦЕНТЫ (Sub-stacks & Accents)
+     ------------------------------------------------------------------------ */
+  .main-accent {
+    height: 100%;
+  }
+
+  .main-accent .gallery-card {
+    height: 100%;
+  }
+
+  .sub-stack,
+  .sub-stack-2,
+  .sub-stack-3,
+  .sub-stack-custom {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    height: 100%;
+    justify-content: space-between;
+  }
+
+  .sub-stack > .gallery-card,
+  .sub-stack-2 > .gallery-card,
+  .sub-stack-3 > .gallery-card,
+  .sub-stack-custom > .gallery-card {
+    flex: 1;
+    min-height: 0;
+  }
+
+  /* ------------------------------------------------------------------------
+     ПРОПОРЦИИ ДЛЯ КАЖДОГО ПАТТЕРНА (Aspect Ratios)
+     ------------------------------------------------------------------------ */
+
+  /* Паттерны 1, 2, 3 (Комбинированные верх/низ) */
+  .pattern-1 .bento-top .col-left .gallery-card,
+  .pattern-1 .bento-bottom .col-right .gallery-card {
+    aspect-ratio: 3 / 4; /* Портреты */
+  }
+
+  .pattern-1 .bento-top .col-right .gallery-card,
+  .pattern-1 .bento-bottom .col-left .gallery-card {
+    aspect-ratio: 16 / 10; /* Пейзажи */
+  }
+
+  .pattern-2 .sub-stack .gallery-card,
+  .pattern-3 .sub-stack .gallery-card {
     aspect-ratio: 16 / 9;
+  }
+
+  /* Паттерны 4 и 5 (Стопка слева + Большой акцент справа) */
+  .pattern-4 .col-left,
+  .pattern-5 .col-left {
+    grid-column: span 5;
+  }
+
+  .pattern-4 .col-right,
+  .pattern-5 .col-right {
+    grid-column: span 7;
+  }
+
+  /* Паттерны 6, 7, 8 (Большой акцент слева + Стопка справа) */
+  .pattern-6 .col-left,
+  .pattern-7 .col-left,
+  .pattern-8 .col-left {
+    grid-column: span 7;
+  }
+
+  .pattern-6 .col-right,
+  .pattern-7 .col-right,
+  .pattern-8 .col-right {
+    grid-column: span 5;
+  }
+
+  /* Универсальные высоты пропорций для акцентов */
+  .pattern-4 .main-accent .gallery-card,
+  .pattern-5 .main-accent .gallery-card,
+  .pattern-6 .main-accent .gallery-card,
+  .pattern-7 .main-accent .gallery-card,
+  .pattern-8 .main-accent .gallery-card {
+    aspect-ratio: 1 / 1; /* Квадрат или большой формат для доминанты */
   }
 }
