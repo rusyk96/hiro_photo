@@ -16,47 +16,50 @@ const raiser = new CardRaiseAnimation();
  * 🛠 Безопасная сборка URL без двойных слэшей и двойного энкодинга браузером
  */
 function getValidPhotoUrl(photoData) {
-  console.group('🔍 [Lightbox Debug] Обработка URL');
-  console.log('1. Входной photoData:', photoData);
+  if (!photoData) return '';
 
-  if (!photoData) {
-    console.error('❌ photoData не передан!');
-    console.groupEnd();
-    return '';
-  }
-
-  // 1. Если есть готовое поле
   if (photoData.fullUrl || photoData.url || photoData.src) {
-    const directUrl = photoData.fullUrl || photoData.url || photoData.src;
-    console.log('2. Найдено готовое поле:', directUrl);
-    console.groupEnd();
-    return directUrl;
+    return photoData.fullUrl || photoData.url || photoData.src;
   }
 
-  // 2. Чистим RAW_BASE_URL от слэша на конце, чтобы не было '//'
   const baseUrl = RAW_BASE_URL.replace(/\/+$/, '');
 
-  // 3. Достаем имя файла и сбрасываем любые старые %25
   let rawName = photoData.name || '';
   while (rawName.includes('%25')) {
     rawName = rawName.replace(/%25/g, '%');
   }
 
-  // 4. Приводим к чистой незакодированной кириллице
   try {
     rawName = decodeURIComponent(rawName);
-  } catch (e) {
-    // Уже декодировано
+  } catch (e) {}
+
+  return `${baseUrl}/${rawName}`;
+}
+
+/**
+ * 🔢 Достаем номер кадра из JSON (из имени файла "-1.webp" или поля frame)
+ */
+function getFrameNumber(photoData, index, totalCount) {
+  const total = String(totalCount).padStart(2, '0');
+
+  if (!photoData) return `#01 / ${total}`;
+
+  // Сначала проверяем явное поле в JSON
+  if (photoData.frame !== undefined) {
+    const num = String(photoData.frame).padStart(2, '0');
+    return `#${num} / ${total}`;
   }
 
-  console.log('3. Очищенное имя файла:', rawName);
+  // Вытаскиваем число перед расширением из имени "НЕ спонтанный концерт -1.webp"
+  const match = photoData.name?.match(/-(\d+)\./);
+  if (match && match[1]) {
+    const num = String(match[1]).padStart(2, '0');
+    return `#${num} / ${total}`;
+  }
 
-  // 5. Формируем прямой путь (браузер сам закодирует кириллицу в сетевом запросе)
-  const finalUrl = `${baseUrl}/${rawName}`;
-  console.log('4. 🚀 ФИНАЛЬНЫЙ URL:', finalUrl);
-  console.groupEnd();
-
-  return finalUrl;
+  // Порядковый номер в массиве по умолчанию
+  const fallback = String(index + 1).padStart(2, '0');
+  return `#${fallback} / ${total}`;
 }
 
 export function setLightboxPhotos(photos) {
@@ -68,15 +71,16 @@ export function openLightbox(index) {
 
   const lightbox = document.getElementById('lightbox');
   const polaroidCard = document.getElementById('polaroid-card');
+  const counterElement = document.getElementById('polaroid-counter');
   
   const photosArray = getPhotos();
   const photoData = photosArray[index]; 
   
-  console.log(`📸 [openLightbox] Открытие кадра #${index}`, photoData);
+  if (!photoData) return;
 
-  if (!photoData) {
-    console.error(`❌ Фотография по индексу ${index} не найдена в getPhotos()!`);
-    return;
+  // Обновляем счетчик
+  if (counterElement) {
+    counterElement.textContent = getFrameNumber(photoData, index, photosArray.length);
   }
 
   const fullImgUrl = getValidPhotoUrl(photoData);
@@ -104,6 +108,7 @@ export function closeLightbox() {
 function updateLightboxImage() {
   const imgElement = document.getElementById('lightbox-img');
   const polaroidCard = document.getElementById('polaroid-card');
+  const counterElement = document.getElementById('polaroid-counter');
   if (!imgElement || !polaroidCard) return;
 
   const photosArray = getPhotos();
@@ -111,6 +116,11 @@ function updateLightboxImage() {
   const photoData = photosArray[currentIndex];
 
   if (!photoData) return;
+
+  // Обновляем счетчик кадра из JSON
+  if (counterElement) {
+    counterElement.textContent = getFrameNumber(photoData, currentIndex, photosArray.length);
+  }
 
   imgElement.classList.remove('developed');
   imgElement.style.opacity = '0';
@@ -124,16 +134,11 @@ function updateLightboxImage() {
   const loader = new Image();
   
   loader.onload = () => {
-    console.log('✅ [Image Loader] Картинка успешно загрузилась:', fullImgUrl);
     imgElement.src = fullImgUrl;
     setTimeout(() => {
       imgElement.style.opacity = '';
       imgElement.classList.add('developed');
     }, 50);
-  };
-
-  loader.onerror = (err) => {
-    console.error('❌ [Image Loader] Ошибка загрузки по ссылке:', fullImgUrl, err);
   };
 
   loader.src = fullImgUrl;
