@@ -5,6 +5,42 @@ export class GridEngine {
     this.lastPreset = null;
   }
 
+  /**
+   * 🧱 Генерирует сразу весь массив готовых HTML-рядов для альбома (один раз на старте!)
+   */
+  generateFullGrid(items, isMobile = false) {
+    // Делим исходные элементы на ландшафты и портреты с сохранением оригинальных индексов
+    const landscapes = items
+      .map((item, originalIndex) => ({ ...item, originalIndex }))
+      .filter(item => !item.isPortrait);
+
+    const portraits = items
+      .map((item, originalIndex) => ({ ...item, originalIndex }))
+      .filter(item => item.isPortrait);
+
+    const rowsHtml = [];
+    let isFirstRow = true;
+
+    while (landscapes.length > 0 || portraits.length > 0) {
+      let rowHtml = null;
+
+      if (isMobile) {
+        rowHtml = this.buildNextMobileRow(landscapes, portraits, isFirstRow);
+      } else {
+        rowHtml = this.buildNextDesktopRow(landscapes, portraits, isFirstRow);
+      }
+
+      if (rowHtml) {
+        rowsHtml.push(rowHtml);
+        isFirstRow = false;
+      } else {
+        break;
+      }
+    }
+
+    return rowsHtml.join('');
+  }
+
   // ==========================================
   // 📱 МОБИЛЬНЫЙ ГЕНЕРАТОР (Строго 2 колонки)
   // ==========================================
@@ -12,9 +48,7 @@ export class GridEngine {
     const total = landscapes.length + portraits.length;
     if (total === 0) return null;
 
-    // 🌟 ПРАВИЛО ПЕРВОГО КАДРА (Hero Image)
     if (isFirstRow) {
-      // Если самое первое фото горизонтальное
       if (landscapes.length > 0 && (!portraits.length || landscapes[0].originalIndex < portraits[0].originalIndex)) {
         const hero = landscapes.splice(0, 1)[0];
         return `
@@ -26,22 +60,16 @@ export class GridEngine {
 
     const possiblePresets = [];
 
-    // 🎯 1. Две вертикалки рядом (каждая 1 col)
     if (portraits.length >= 2) {
       possiblePresets.push('2VS');
     }
-
-    // 🎯 2. Стопка из 2 горизонталок + 1 вертикалка рядом (2 col)
     if (landscapes.length >= 2 && portraits.length >= 1) {
       possiblePresets.push('STACK2HS_VS', 'VS_STACK2HS');
     }
-
-    // 🎯 3. Одна большая горизонталка на всю ширину (2 col)
     if (landscapes.length >= 1) {
       possiblePresets.push('1HL');
     }
 
-    // Выбор с защитой от повторов
     let candidates = possiblePresets;
     if (candidates.length > 1 && this.lastPreset) {
       candidates = candidates.filter(p => p !== this.lastPreset);
@@ -67,7 +95,6 @@ export class GridEngine {
             <div class="atom-vs">${createCardHtml(p2)}</div>
           </div>`;
       }
-
       case 'STACK2HS_VS': {
         const hs1 = landscapes.splice(0, 1)[0];
         const hs2 = landscapes.splice(0, 1)[0];
@@ -81,7 +108,6 @@ export class GridEngine {
             <div class="atom-vs">${createCardHtml(p)}</div>
           </div>`;
       }
-
       case 'VS_STACK2HS': {
         const p = portraits.splice(0, 1)[0];
         const hs1 = landscapes.splice(0, 1)[0];
@@ -95,7 +121,6 @@ export class GridEngine {
             </div>
           </div>`;
       }
-
       case '1HL': {
         const l = landscapes.splice(0, 1)[0];
         return `
@@ -103,7 +128,6 @@ export class GridEngine {
             <div class="atom-hl">${createCardHtml(l)}</div>
           </div>`;
       }
-
       default:
         return null;
     }
@@ -116,7 +140,6 @@ export class GridEngine {
     const total = landscapes.length + portraits.length;
     if (total === 0) return null;
 
-    // 🌟 ПРАВИЛО ПЕРВОГО КАДРА (Hero Image)
     if (isFirstRow) {
       if (landscapes.length > 0 && (!portraits.length || landscapes[0].originalIndex < portraits[0].originalIndex)) {
         const hero = landscapes.splice(0, 1)[0];
