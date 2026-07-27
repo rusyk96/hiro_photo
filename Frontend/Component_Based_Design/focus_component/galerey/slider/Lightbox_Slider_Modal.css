@@ -105,9 +105,16 @@
 .polaroid-caption {
   width: 100%;
   margin-top: 14px;
+  
+  /* Добавляем боковые отступы, чтобы счетчик и лого не липли к краям */
+  padding: 0 20px; 
+  
   display: grid;
-  grid-template-columns: 1fr auto 1fr; /* Три равные секции для идеального центрирования */
-  align-items: center;
+  grid-template-columns: 1fr auto 1fr;
+  
+  /* Жёстко выравниваем все три элемента строго по центру по вертикали */
+  align-items: center; 
+  
   box-sizing: border-box;
   user-select: none;
 }
@@ -120,6 +127,7 @@
   font-weight: 600;
   color: #888888;
   letter-spacing: 0.05em;
+  line-height: 1; /* Убираем лишние межстрочные высоты */
 }
 
 /* 2. Название группы (В центре) */
@@ -127,11 +135,15 @@
   justify-self: center;
   margin: 0;
   font-family: 'Bebas Neue', sans-serif;
-  font-size: 2.8rem;
+  font-size: 2.4rem; /* Чуток уменьшили размер, чтобы смотрелось изящнее */
   font-weight: 700;
   color: #121212;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  
+  /* Уменьшили междубуквенный интервал (у Bebas и так узкие знаки, 0.02em даст плотную посадку) */
+  letter-spacing: 0.02em; 
+  
+  line-height: 1; /* Чтобы шрифт выравнивался строго по центровой оси */
   text-align: center;
 }
 
@@ -143,12 +155,10 @@
 }
 
 .caption-logo {
-  height: 60px; /* Регулируй высоту под свой логотип */
+  height: 28px; /* Уменьшили высоту, чтобы он пропорционально совпадал с высотой Bebas */
   width: auto;
   display: block;
   opacity: 0.85;
-  /* Если вектор логотипа белый, раскомментируй строчку ниже, чтобы сделать его темным на белой бумаге: */
-  /* filter: invert(1); */
 }
 
 /* Кнопки управления */
