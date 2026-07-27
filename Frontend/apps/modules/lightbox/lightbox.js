@@ -6,6 +6,28 @@ import {
   stepPrev 
 } from './base_lightbox/lightbox-core.js';
 import { bindLightboxEvents } from './base_lightbox/lightbox-events.js';
+import { CardRaiseAnimation } from './lightbox-animation/card-raise.js';
+
+const raiser = new CardRaiseAnimation();
+
+export function openLightbox(index, clickEvent) {
+  setCurrentIndex(index);
+  updateLightboxImage();
+
+  const lightbox = document.getElementById('lightbox');
+  const polaroidCard = document.getElementById('polaroid-card');
+  const clickedImg = clickEvent?.currentTarget?.querySelector('img') || clickEvent?.target;
+
+  if (lightbox) {
+    lightbox.classList.add('active');
+    document.body.style.overflow = 'hidden';
+
+    // Запускаем взлет кадра
+    if (clickedImg && polaroidCard) {
+      raiser.animateRaise(clickedImg, polaroidCard);
+    }
+  }
+}
 
 export function setLightboxPhotos(photos) {
   setPhotos(photos);
