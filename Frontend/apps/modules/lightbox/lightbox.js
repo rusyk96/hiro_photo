@@ -13,33 +13,53 @@ import { RAW_BASE_URL } from '../api.js';
 const raiser = new CardRaiseAnimation();
 
 /**
- * 🛠 Абсолютно безопасная сборка URL файла
+ * 🛠 Безопасная сборка URL с подробным логированием
  */
 function getValidPhotoUrl(photoData) {
-  if (!photoData) return '';
-  if (photoData.url) return photoData.url;
-  if (photoData.src) return photoData.src;
+  console.group('🔍 [Lightbox Debug] Обработка URL');
+  console.log('1. Входной photoData:', photoData);
+  console.log('2. RAW_BASE_URL из api.js:', RAW_BASE_URL);
 
-  let filename = photoData.name || '';
-
-  // 1. Снимаем все слои двойного кодирования (%25 -> %)
-  while (filename.includes('%25')) {
-    filename = filename.replace(/%25/g, '%');
+  if (!photoData) {
+    console.error('❌ photoData не передан!');
+    console.groupEnd();
+    return '';
   }
 
-  // 2. Декодируем из %D0%9D в чистую кириллицу
+  if (photoData.url || photoData.src) {
+    const directUrl = photoData.url || photoData.src;
+    console.log('3. Найдено готовое поле url/src:', directUrl);
+    console.groupEnd();
+    return directUrl;
+  }
+
+  let rawName = photoData.name || '';
+  console.log('3. Исходное имя из JSON (photoData.name):', rawName);
+
+  // Многослойная очистка от двойного %25
+  let cleanName = rawName;
+  while (cleanName.includes('%25')) {
+    cleanName = cleanName.replace(/%25/g, '%');
+  }
+  console.log('4. После очистки %25:', cleanName);
+
+  // Пробуем декодировать
   try {
-    filename = decodeURIComponent(filename);
+    cleanName = decodeURIComponent(cleanName);
+    console.log('5. После decodeURIComponent:', cleanName);
   } catch (e) {
-    // Если строка уже сырая — пропускаем ошибку
+    console.warn('⚠️ Ошибка при decodeURIComponent (возможно, строка уже сырая):', e);
   }
 
-  // 3. Кодируем строго ОДИН РАЗ под стандарты URL (пробелы -> %20, кириллица -> %D0...)
-  const safeName = encodeURIComponent(filename)
-    .replace(/%2F/g, '/') // Сохраняем слэши, если есть подпапки
-    .replace(/%20/g, '%20'); // Гарантируем чистые пробелы
+  // Сборка финального URL
+  const encodedName = encodeURIComponent(cleanName);
+  console.log('6. Результат encodeURIComponent(cleanName):', encodedName);
 
-  return `${RAW_BASE_URL}/${safeName}`;
+  const finalUrl = `${RAW_BASE_URL}/${encodedName}`;
+  console.log('7. 🚀 ФИНАЛЬНЫЙ СФОРМИРОВАННЫЙ URL:', finalUrl);
+  console.groupEnd();
+
+  return finalUrl;
 }
 
 export function setLightboxPhotos(photos) {
@@ -55,8 +75,10 @@ export function openLightbox(index) {
   const photosArray = getPhotos();
   const photoData = photosArray[index]; 
   
+  console.log(`📸 [openLightbox] Открытие кадра #${index}`, photoData);
+
   if (!photoData) {
-    console.error(`Фотография по индексу ${index} не найдена в сторе!`);
+    console.error(`❌ Фотография по индексу ${index} не найдена в getPhotos()!`);
     return;
   }
 
@@ -103,9 +125,9 @@ function updateLightboxImage() {
   const fullImgUrl = getValidPhotoUrl(photoData);
 
   const loader = new Image();
-  loader.src = fullImgUrl;
-
-  const applyAndDevelop = () => {
+  
+  loader.onload = () => {
+    console.log('✅ [Image Loader] Картинка успешно загрузилась:', fullImgUrl);
     imgElement.src = fullImgUrl;
     setTimeout(() => {
       imgElement.style.opacity = '';
@@ -113,11 +135,11 @@ function updateLightboxImage() {
     }, 50);
   };
 
-  if (loader.complete) {
-    applyAndDevelop();
-  } else {
-    loader.onload = applyAndDevelop;
-  }
+  loader.onerror = (err) => {
+    console.error('❌ [Image Loader] Ошибка загрузки по ссылке:', fullImgUrl, err);
+  };
+
+  loader.src = fullImgUrl;
 }
 
 export function nextSlide() {
