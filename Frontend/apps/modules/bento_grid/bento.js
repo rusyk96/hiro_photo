@@ -1,5 +1,5 @@
 import { fetchManifestPhotos } from '../api.js';
-import { setLightboxPhotos, initLightboxEvents } from '../lightbox.js';
+import { setLightboxPhotos, initLightboxEvents } from '../lightbox/lightbox.js';
 import { initChunkVirtualizer } from '../virtualizer.js';
 import { GridEngine } from './grid/grid.js';
 

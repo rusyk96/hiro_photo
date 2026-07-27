@@ -1,27 +1,33 @@
 <main class="container">
+  
+  <!-- Хлебные крошки -->
   <section class="focus-zone">
-    
-    <!-- Хлебные крошки -->
     <nav class="breadcrumbs" aria-label="Хлебные крошки">
       <a href="#" class="crumb-link">Главная</a>
       <span class="crumb-separator">/</span>
       <span class="crumb-current">НЕ спонтанный концерт</span>
     </nav>
 
-    <!-- JS сам заполнит этот контейнер 371 карточкой -->
+    <!-- JS сам заполнит этот контейнер карточками -->
     <div class="grid gallery-grid" id="album-gallery-container"></div>
-
   </section>
 
   <!-- Lightbox / Slider Modal -->
-<div id="lightbox" class="lightbox">
-  <button class="lightbox-close" id="lightbox-close" aria-label="Close">&times;</button>
-  <button class="lightbox-nav lightbox-prev" id="lightbox-prev" aria-label="Previous">&lsaquo;</button>
-  <button class="lightbox-nav lightbox-next" id="lightbox-next" aria-label="Next">&rsaquo;</button>
-  
-  <div class="lightbox-content">
-    <img id="lightbox-img" src="" alt="Large preview" />
+  <div id="lightbox" class="lightbox">
+    <button class="lightbox-close" id="lightbox-close" aria-label="Close">&times;</button>
+    <button class="lightbox-nav lightbox-prev" id="lightbox-prev" aria-label="Previous">&lsaquo;</button>
+    <button class="lightbox-nav lightbox-next" id="lightbox-next" aria-label="Next">&rsaquo;</button>
+    
+    <div class="lightbox-content">
+      <!-- 📸 Карточка-Полароид с паспарту -->
+      <div class="polaroid-card" id="polaroid-card">
+        <div class="polaroid-frame">
+          <img id="lightbox-img" src="" alt="Large preview" />
+        </div>
+        <!-- Нижнее широкое поле полароида -->
+        <div class="polaroid-caption" id="polaroid-caption"></div>
+      </div>
+    </div>
   </div>
-</div>
 
 </main>
