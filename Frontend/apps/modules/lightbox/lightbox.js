@@ -17,21 +17,30 @@ export function setLightboxPhotos(photos) {
   setPhotos(photos);
 }
 
-export function openLightbox(index) {
+export function openLightbox(index, clickEvent) {
   setCurrentIndex(index);
-  
+
   const lightbox = document.getElementById('lightbox');
   const polaroidCard = document.getElementById('polaroid-card');
-  const imgUrl = getCurrentImageUrl(); // Забираем ссылку на оригинальное фото
+  const fullImgUrl = getCurrentImageUrl(); // Ссылка на оригинал из API
 
-  if (lightbox) {
+  // Достаем кликнутую превьюшку из DOM
+  let previewImg = null;
+  if (clickEvent) {
+    const target = clickEvent.currentTarget || clickEvent.target;
+    previewImg = target.tagName === 'IMG' ? target : target.querySelector('img');
+  }
+
+  if (!previewImg) {
+    previewImg = document.querySelectorAll('#album-gallery-container img')[index];
+  }
+
+  if (lightbox && polaroidCard) {
     lightbox.classList.add('active');
     document.body.style.overflow = 'hidden';
 
-    if (polaroidCard) {
-      // Передаем URL — карточка вылетит строго ПОСЛЕ подгрузки!
-      raiser.animateRaise(polaroidCard, lightbox, imgUrl);
-    }
+    // Запускаем выдвижение с прокидыванием превьюшка -> оригинал
+    raiser.animateRaise(polaroidCard, lightbox, previewImg, fullImgUrl);
   }
 }
 

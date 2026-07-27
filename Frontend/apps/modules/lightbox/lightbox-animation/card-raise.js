@@ -1,6 +1,5 @@
 /**
- * 🎬 Модуль выдвижения карточки Polaroid
- * Режиссура: Сброс шлейфа -> Выдвижение -> Определение ориентации (3:2 / 2:3) -> Химическая проявка.
+ * 🎬 Модуль вылета карточки по превью-габаритам + Проявка оригинала
  */
 
 export class CardRaiseAnimation {
@@ -9,28 +8,53 @@ export class CardRaiseAnimation {
   }
 
   /**
-   * 🛫 Выдвижение и проявка кадра
+   * 🛫 Выдвижение с зафиксированной геометрией и последующей проявкой
    */
-  animateRaise(polaroidCard, backdropEl, imgUrl, onComplete) {
+  animateRaise(polaroidCard, backdropEl, previewImg, fullImgUrl, onComplete) {
     if (!polaroidCard || this.isAnimating) return;
     this.isAnimating = true;
 
     const imgElement = document.getElementById('lightbox-img');
+    const polaroidFrame = polaroidCard.querySelector('.polaroid-frame');
 
-    // 🧹 ФАЗА 1: Полный сброс (Reset)
+    // 1. 🧹 РЕСЕТ СТАРОГО СОСТОЯНИЯ
     if (imgElement) {
       imgElement.classList.remove('developed');
-      imgElement.style.opacity = '0';
-      imgElement.src = ''; // Очищаем старый src, чтобы убрать шлейф
+      imgElement.src = '';
     }
 
-    // 2. Включаем затемнение фона
+    // 2. 📐 ШАГ 1: Задаем геометрические правила по превьюшке (ЕЩЁ ЗА КАДРОМ)
+    if (previewImg && polaroidFrame) {
+      const width = previewImg.naturalWidth || previewImg.clientWidth;
+      const height = previewImg.naturalHeight || previewImg.clientHeight;
+
+      if (width && height) {
+        // Задаем точный Aspect Ratio рамки на основе быстрого превью
+        polaroidFrame.style.aspectRatio = `${width} / ${height}`;
+        
+        // Корректируем ширину карточки, чтобы вертикалки и горизонталки смотрелись одинаково сочно
+        if (height > width) {
+          // Вертикальное фото
+          polaroidCard.style.width = 'min(82vw, 460px)';
+        } else {
+          // Горизонтальное фото
+          polaroidCard.style.width = 'min(88vw, 820px)';
+        }
+      }
+    }
+
+    // Ставим превьюшку как временную підложку
+    if (imgElement && previewImg) {
+      imgElement.src = previewImg.src;
+    }
+
+    // 3. 🌑 Включаем затемнение
     if (backdropEl) {
       backdropEl.style.transition = 'opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
       backdropEl.style.opacity = '1';
     }
 
-    // 3. Выдвигаем чистую карточку снизу экрана
+    // 4. 🛫 ШАГ 2: Выдвигаем карточку с уже ИДЕАЛЬНОЙ геометрией
     const startY = window.innerHeight;
     Object.assign(polaroidCard.style, {
       transition: 'none',
@@ -46,45 +70,22 @@ export class CardRaiseAnimation {
       });
     });
 
-    // 📐 Вспомогательная функция переключения формата паспарту
-    const applyCardFormat = (imageWidth, imageHeight) => {
-      polaroidCard.classList.remove('landscape', 'portrait');
+    // 5. 🧪 ШАГ 3: Загружаем оригинал и запускаем проявку поверх превью
+    if (imgElement && fullImgUrl) {
+      const fullImgLoader = new Image();
+      fullImgLoader.src = fullImgUrl;
 
-      if (imageHeight > imageWidth) {
-        // Вертикальный кадр
-        polaroidCard.classList.add('portrait');
-      } else {
-        // Горизонтальный кадр
-        polaroidCard.classList.add('landscape');
-      }
-    };
-
-    // 🧪 ФАЗА 2: Подгрузка, установка формата и проявка
-    const startDeveloping = () => {
-      setTimeout(() => {
-        if (imgElement) {
-          imgElement.style.opacity = '';
-          imgElement.classList.add('developed');
-        }
-      }, 100);
-    };
-
-    if (imgElement && imgUrl) {
-      const tempImg = new Image();
-      tempImg.src = imgUrl;
-
-      const applyNewImage = () => {
-        // Задаем ориентацию рамки по реальным габаритам фото
-        applyCardFormat(tempImg.naturalWidth, tempImg.naturalHeight);
-
-        imgElement.src = imgUrl;
-        startDeveloping();
+      const triggerDevelopment = () => {
+        imgElement.src = fullImgUrl;
+        setTimeout(() => {
+          if (imgElement) imgElement.classList.add('developed');
+        }, 80);
       };
 
-      if (tempImg.complete && tempImg.naturalWidth !== 0) {
-        applyNewImage();
+      if (fullImgLoader.complete) {
+        triggerDevelopment();
       } else {
-        tempImg.onload = applyNewImage;
+        fullImgLoader.onload = triggerDevelopment;
       }
     }
 
@@ -99,7 +100,7 @@ export class CardRaiseAnimation {
   }
 
   /**
-   * 🛬 Уход карточки обратно вниз при закрытии
+   * 🛬 Уход карточки обратно вниз
    */
   animateDrop(polaroidCard, backdropEl, onComplete) {
     if (!polaroidCard || this.isAnimating) return;
@@ -108,7 +109,6 @@ export class CardRaiseAnimation {
     const imgElement = document.getElementById('lightbox-img');
     if (imgElement) {
       imgElement.classList.remove('developed');
-      imgElement.style.opacity = '0';
     }
 
     if (backdropEl) {
@@ -128,10 +128,14 @@ export class CardRaiseAnimation {
       if (e.target !== polaroidCard) return;
       polaroidCard.removeEventListener('transitionend', handleEnd);
 
-      // Сбрасываем стили после ухода
       polaroidCard.style.transform = '';
       polaroidCard.style.opacity = '';
-      polaroidCard.classList.remove('landscape', 'portrait');
+      polaroidCard.style.width = '';
+
+      const polaroidFrame = polaroidCard.querySelector('.polaroid-frame');
+      if (polaroidFrame) {
+        polaroidFrame.style.aspectRatio = '';
+      }
 
       if (imgElement) {
         imgElement.src = '';
