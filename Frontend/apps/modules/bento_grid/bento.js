@@ -32,45 +32,14 @@ function buildSmartBentoGallery(photos) {
   if (!container || !photos || photos.length === 0) return;
 
   container.innerHTML = '';
-  const fragment = document.createDocumentFragment();
+  
   const gridEngine = new GridEngine();
   const isMobile = window.innerWidth < 768;
 
-  // Сохраняем сортировку по исходному индексу
-  let landscapes = photos.filter(p => !p.isPortrait).map(p => ({ ...p })).sort((a, b) => a.originalIndex - b.originalIndex);
-  let portraits = photos.filter(p => p.isPortrait).map(p => ({ ...p })).sort((a, b) => a.originalIndex - b.originalIndex);
+  // 🚀 Вся сложная сборка и рандомизация теперь происходят строго один раз внутри движка!
+  const fullHtml = gridEngine.generateFullGrid(photos, isMobile);
 
-  let safetyIterator = 0;
-  let isFirstRow = true;
-  const MAX_ITERATIONS = photos.length;
-
-  while ((landscapes.length > 0 || portraits.length > 0) && safetyIterator < MAX_ITERATIONS) {
-    const prevTotal = landscapes.length + portraits.length;
-    
-    const rowHtml = isMobile
-      ? gridEngine.buildNextMobileRow(landscapes, portraits, isFirstRow)
-      : gridEngine.buildNextDesktopRow(landscapes, portraits, isFirstRow);
-
-    if (!rowHtml) break;
-
-    const rowWrapper = document.createElement('div');
-    rowWrapper.innerHTML = rowHtml;
-
-    if (rowWrapper.firstElementChild) {
-      fragment.appendChild(rowWrapper.firstElementChild);
-    }
-
-    isFirstRow = false; // После первого ряда сбрасываем флаг
-
-    if (landscapes.length + portraits.length === prevTotal) {
-      console.warn('[Bento Engine] Внимание: Длина массивов не изменилась. Завершаем сборку.');
-      break;
-    }
-
-    safetyIterator++;
-  }
-
-  container.appendChild(fragment);
+  container.innerHTML = fullHtml;
   initLightboxEvents();
 }
 
