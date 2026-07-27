@@ -44,20 +44,20 @@ function getFrameNumber(photoData, index, totalCount) {
 
   if (!photoData) return `#01 / ${total}`;
 
-  // Сначала проверяем явное поле в JSON
+  // 1. Сначала проверяем явное поле в JSON
   if (photoData.frame !== undefined) {
     const num = String(photoData.frame).padStart(2, '0');
     return `#${num} / ${total}`;
   }
 
-  // Вытаскиваем число перед расширением из имени "НЕ спонтанный концерт -1.webp"
-  const match = photoData.name?.match(/-(\d+)\./);
+  // 2. Вытаскиваем последнее число перед расширением из имени "НЕ спонтанный концерт -1.webp"
+  const match = photoData.name?.match(/-(\d+)(?:\.[a-zA-Z0-9]+)?$/);
   if (match && match[1]) {
     const num = String(match[1]).padStart(2, '0');
     return `#${num} / ${total}`;
   }
 
-  // Порядковый номер в массиве по умолчанию
+  // 3. Порядковый номер в массиве по умолчанию
   const fallback = String(index + 1).padStart(2, '0');
   return `#${fallback} / ${total}`;
 }
