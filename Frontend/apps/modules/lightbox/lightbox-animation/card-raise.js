@@ -69,7 +69,7 @@ export class CardRaiseAnimation {
             imgElement.style.opacity = '';
             imgElement.classList.add('developed');
           }
-        }, 80);
+        }, 30);
       };
 
       if (loader.complete) {

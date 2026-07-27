@@ -88,36 +88,60 @@
   transform: scale(1.04);
 }
 
-/* 🎯 4. ШИММЕР СКЕЛЕТОН */
-.gallery-img:not([src]),
-.gallery-img[src=""] {
-  opacity: 0;
-  visibility: hidden;
+/* 🎯 4. ШИММЕР СКЕЛЕТОН И ПЛАВНОЕ ПОЯВЛЕНИЕ */
+
+/* Контейнер скелетона (подложка) */
+.gallery-card.skeleton-active {
+  position: relative;
+  background-color: transparent;
+  /* Плавное появление контейнера */
+  animation: skeleton-fade-in 0.3s ease-out forwards;
 }
 
-.gallery-card:has(.gallery-img:not([src]))::after,
-.gallery-card:has(.gallery-card img:not([src]))::after,
-.gallery-card:has(.gallery-img[src=""])::after,
-.gallery-card:has(.gallery-card img[src=""])::after {
+/* Сам подстилающий плашка-скелетон со сквирклом */
+.gallery-card.skeleton-active::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    90deg, 
-    rgba(255, 255, 255, 0.02) 0%, 
-    rgba(255, 255, 255, 0.08) 50%, 
-    rgba(255, 255, 255, 0.02) 100%
-  );
-  background-size: 200% 100%;
-  animation: bento-shimmer 1.8s infinite;
-  pointer-events: none;
+  background-color: #1a1a1a;
+  z-index: 1;
 
-  /* Скелетон тоже режем по сквирклу */
+  /* 🚀 Применяем Paint Worklet напрямую к подложке */
+  background: paint(superellipse);
   -webkit-mask-image: paint(superellipse);
   mask-image: paint(superellipse);
   border-radius: 16px;
 }
 
+/* Блик шиммера, режущийся по той же маске */
+.gallery-card.skeleton-active::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: linear-gradient(
+    90deg, 
+    rgba(255, 255, 255, 0) 0%, 
+    rgba(255, 255, 255, 0.08) 50%, 
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+  animation: bento-shimmer 1.5s infinite linear;
+  pointer-events: none;
+
+  /* 🚀 Тоже маскируем ворклетом superellipse */
+  -webkit-mask-image: paint(superellipse);
+  mask-image: paint(superellipse);
+  border-radius: 16px;
+}
+
+/* Появление скелетона */
+@keyframes skeleton-fade-in {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* Бесконечный блик */
 @keyframes bento-shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
