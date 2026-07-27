@@ -119,10 +119,12 @@
   user-select: none;
 }
 
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@700&display=swap');
+
 /* 1. Счетчик кадра (Слева) */
 .caption-counter {
   justify-self: start;
-  font-family: 'Steppe', sans-serif;
+  font-family: 'Caveat', cursive;
   font-size: 0.85rem;
   font-weight: 600;
   color: #888888;
@@ -134,7 +136,7 @@
 .caption-title {
   justify-self: center;
   margin: 0;
-  font-family: 'Bebas Neue', sans-serif;
+  font-family: 'Caveat', cursive;
   font-size: 2.4rem; /* Чуток уменьшили размер, чтобы смотрелось изящнее */
   font-weight: 700;
   color: #121212;
@@ -145,7 +147,11 @@
   
   line-height: 1; /* Чтобы шрифт выравнивался строго по центровой оси */
   text-align: center;
+
+  /* Маленький секрет: легкий наклон даёт +100 к естественности почерка */
+  transform: rotate(-1.5deg); 
 }
+
 
 /* 3. Контейнер логотипа (Справа) */
 .caption-logo-wrap {
