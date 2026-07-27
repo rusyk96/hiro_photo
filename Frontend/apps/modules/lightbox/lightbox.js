@@ -9,6 +9,7 @@ import {
 } from './base_lightbox/lightbox-core.js';
 import { bindLightboxEvents } from './base_lightbox/lightbox-events.js';
 import { CardRaiseAnimation } from './lightbox-animation/card-raise.js';
+import { RAW_BASE_URL } from '../api.js';
 
 const raiser = new CardRaiseAnimation();
 
