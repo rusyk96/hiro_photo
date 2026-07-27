@@ -142,7 +142,7 @@
 }
 
 .caption-logo {
-  height: 20px; /* Регулируй высоту под свой логотип */
+  height: 60px; /* Регулируй высоту под свой логотип */
   width: auto;
   display: block;
   opacity: 0.85;
