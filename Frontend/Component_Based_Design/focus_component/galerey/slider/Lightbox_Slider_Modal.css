@@ -173,39 +173,176 @@
 }
 
 /* Кнопки управления */
+/* 🎯 КНОПКИ УПРАВЛЕНИЯ И СТРЕЛКИ (Контрастные плашки) */
 .lightbox-close,
 .lightbox-nav {
   position: absolute;
-  background: transparent;
-  border: none;
-  color: #fff;
-  font-size: 2.5rem;
-  cursor: pointer;
-  padding: 10px 20px;
-  opacity: 0.6;
-  transition: opacity 0.2s, transform 0.2s;
   z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  /* Контрастный тёмный полупрозрачный фон с размытием */
+  background: rgba(18, 18, 18, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 50%; /* Чёткий круглый элемент */
+  
+  cursor: pointer;
+  outline: none;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+  
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              background-color 0.25s ease,
+              border-color 0.25s ease;
 }
 
+/* Эффект при наведении */
 .lightbox-close:hover,
 .lightbox-nav:hover {
-  opacity: 1;
-  transform: scale(1.1);
+  background: rgba(18, 18, 18, 0.9);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: scale(1.08);
 }
 
-.lightbox-close {
-  top: 20px;
-  right: 25px;
-  font-size: 3rem;
+/* Нажатие */
+.lightbox-close:active,
+.lightbox-nav:active {
+  transform: scale(0.95);
+}
+
+/* 📐 Размеры и позиционирование */
+/* 🎯 КНОПКИ УПРАВЛЕНИЯ И СТРЕЛКИ (Идеальный центринг) */
+/* 🎯 КНОПКИ УПРАВЛЕНИЯ И СТРЕЛКИ (Центр экрана + Оптическая подгонка) */
+.lightbox-close,
+.lightbox-nav {
+  position: absolute;
+  z-index: 10000;
+  
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  
+  background: rgba(18, 18, 18, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
+  
+  cursor: pointer;
+  outline: none;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+  
+  /* Убираем влияние высоты строки */
   line-height: 1;
+  
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              background-color 0.25s ease,
+              border-color 0.25s ease;
+}
+
+/* 📐 ПОЗИЦИОНИРОВАНИЕ СТРЕЛОК РОВНО ПО ЦЕНТРАЛЬНОЙ ОСИ ЭКРАНА (50% VH) */
+.lightbox-prev,
+.lightbox-next {
+  top: 50%;
+  width: 56px;
+  height: 56px;
+  font-size: 2.2rem;
 }
 
 .lightbox-prev {
-  left: 20px;
-  font-size: 4rem;
+  left: 32px;
+  /* Привязываем геометрию строго к вертикальному центру */
+  transform: translateY(-50%);
 }
 
 .lightbox-next {
-  right: 20px;
-  font-size: 4rem;
+  right: 32px;
+  transform: translateY(-50%);
+}
+
+/* 🎯 КРЕСТИК ЗАКРЫТИЯ (Остается вверху справа) */
+.lightbox-close {
+  top: 24px;
+  right: 24px;
+  width: 48px;
+  height: 48px;
+  font-size: 1.8rem;
+}
+
+/* 🎛 ОПТИЧЕСКАЯ ПОДГОНКА (Правим базовую линию текстовых иконок) */
+/* Стрелка "Назад" (обычно заваливается вправо-вниз) */
+.lightbox-prev::before,
+.lightbox-prev span {
+  display: block;
+  transform: translate(-1px, -2px); /* Сдвиг влево и чуть вверх */
+}
+
+/* Стрелка "Вперед" */
+.lightbox-next::before,
+.lightbox-next span {
+  display: block;
+  transform: translate(1px, -2px); /* Сдвиг вправо и чуть вверх */
+}
+
+/* Крестик закрытия */
+.lightbox-close::before,
+.lightbox-close span {
+  display: block;
+  transform: translateY(-1px);
+}
+
+/* 🚀 ХОВЕРЫ С СОХРАНЕНИЕМ ОТИЧЕСКИХ ТРАНСФОРМОВ */
+.lightbox-close:hover {
+  background: rgba(18, 18, 18, 0.9);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: scale(1.08);
+}
+
+.lightbox-prev:hover {
+  background: rgba(18, 18, 18, 0.9);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: translateY(-50%) scale(1.08);
+}
+
+.lightbox-next:hover {
+  background: rgba(18, 18, 18, 0.9);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: translateY(-50%) scale(1.08);
+}
+
+.lightbox-close:active {
+  transform: scale(0.95);
+}
+
+.lightbox-prev:active,
+.lightbox-next:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
+/* 📱 МОБИЛЬНЫЙ АДАПТИВ */
+@media (max-width: 768px) {
+  .lightbox-close {
+    top: 16px;
+    right: 16px;
+    width: 40px;
+    height: 40px;
+    font-size: 1.4rem;
+  }
+
+  .lightbox-prev,
+  .lightbox-next {
+    width: 44px;
+    height: 44px;
+    font-size: 1.6rem;
+  }
+
+  .lightbox-prev { left: 12px; }
+  .lightbox-next { right: 12px; }
 }

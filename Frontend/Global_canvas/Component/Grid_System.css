@@ -9,8 +9,16 @@
 
 .grid-auto-fit {
   display: grid;
-  /* 🚀 Поднимаем минималку до 360px — карточки станут крупнее, в ряд встанет ровно 3 штуки */
-  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  /* 🚀 Использование min() защищает от вылезания за края на мобилках */
+  grid-template-columns: repeat(auto-fit, minmax(min(360px, 100%), 1fr));
   gap: var(--grid-gap, 32px);
   width: 100%;
+  box-sizing: border-box;
+}
+
+/* 📱 Для мобильных экранов уменьшаем gap, чтобы картинка была крупнее */
+@media (max-width: 768px) {
+  .grid-auto-fit {
+    gap: 16px;
+  }
 }
