@@ -42,5 +42,19 @@
   <!-- JS-Загрузчик HTML-матрёшек -->
   <script type="module" src="/Frontend/apps/main.js"></script>
 
+  <script src="https://unpkg.com/css-paint-polyfill"></script>
+
+<script>
+  // Подключаем ворклет суперэллипса
+  if ('paintWorklet' in CSS) {
+    CSS.paintWorklet.addModule('assets/hudini/worklet-superellipse.js')
+      .then(() => {
+        document.body.classList.add('houdini-ready');
+        console.log('✨ Superellipse Paint Worklet loaded!');
+      })
+      .catch(err => console.error('Houdini Worklet Error:', err));
+  }
+</script>
+
 </body>
 </html>
