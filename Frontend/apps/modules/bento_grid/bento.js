@@ -62,8 +62,15 @@ export function waitForFirstImages(count = 4) {
   return Promise.all(loadPromises);
 }
 
+let lastWindowWidth = window.innerWidth;
 let resizeTimeout;
+
 window.addEventListener('resize', () => {
+  // 🛑 Проверяем реальную ширину: если изменилась только высота (панель браузера скрылась/появилась), игнорируем!
+  if (window.innerWidth === lastWindowWidth) return;
+  
+  lastWindowWidth = window.innerWidth;
+
   clearTimeout(resizeTimeout);
   resizeTimeout = setTimeout(() => {
     if (cachedPhotos.length > 0) {
