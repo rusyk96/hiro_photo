@@ -1,5 +1,5 @@
 /**
- * 🎬 Модуль выдвижения с эффектом проявки Polaroid
+ * 🎬 Модуль выдвижения с жестким сбросом и проявкой Polaroid
  */
 
 export class CardRaiseAnimation {
@@ -13,9 +13,11 @@ export class CardRaiseAnimation {
 
     const imgElement = document.getElementById('lightbox-img');
 
-    // 1. Сбрасываем проявку на старте (картинка "сырая")
+    // 🧹 ФАЗА 1: Полный сброс (Reset) старого состояния
     if (imgElement) {
       imgElement.classList.remove('developed');
+      // Очищаем src, чтобы не было "шлейфа" предыдущего кадра
+      imgElement.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxIDEiPjwvc3ZnPg==';
     }
 
     // 2. Включаем затемнение
@@ -24,7 +26,7 @@ export class CardRaiseAnimation {
       backdropEl.style.opacity = '1';
     }
 
-    // 3. Выдвигаем карточку снизу СРАЗУ
+    // 3. Выдвигаем чистую карточку снизу
     const startY = window.innerHeight;
     Object.assign(polaroidCard.style, {
       transition: 'none',
@@ -40,21 +42,27 @@ export class CardRaiseAnimation {
       });
     });
 
-    // 4. Запускаем "химическую реакцию" (проявку)
+    // 🧪 ФАЗА 2: Подгрузка и проявка нового кадра
     const startDeveloping = () => {
-      // Легкая микро-задержка для ощущения физики
       setTimeout(() => {
         if (imgElement) imgElement.classList.add('developed');
-      }, 150);
+      }, 100);
     };
 
     if (imgElement && imgUrl) {
-      imgElement.src = imgUrl;
-      
-      if (imgElement.complete) {
+      // Загружаем новый кадр
+      const tempImg = new Image();
+      tempImg.src = imgUrl;
+
+      const applyNewImage = () => {
+        imgElement.src = imgUrl;
         startDeveloping();
+      };
+
+      if (tempImg.complete) {
+        applyNewImage();
       } else {
-        imgElement.onload = () => startDeveloping();
+        tempImg.onload = applyNewImage;
       }
     }
 
@@ -94,8 +102,12 @@ export class CardRaiseAnimation {
       if (e.target !== polaroidCard) return;
       polaroidCard.removeEventListener('transitionend', handleEnd);
       
+      // Сбрасываем стили и очищаем src при закрытии
       polaroidCard.style.transform = '';
       polaroidCard.style.opacity = '';
+      if (imgElement) {
+        imgElement.src = '';
+      }
       
       this.isAnimating = false;
       if (onComplete) onComplete();

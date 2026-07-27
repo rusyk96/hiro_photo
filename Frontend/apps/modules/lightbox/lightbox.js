@@ -51,8 +51,20 @@ function updateLightboxImage() {
   const imgElement = document.getElementById('lightbox-img');
   if (!imgElement) return;
 
+  // 1. Снимаем проявку перед сменой слайда
+  imgElement.classList.remove('developed');
+
   const src = getCurrentImageUrl();
-  if (src) imgElement.src = src;
+  if (src) {
+    // 2. Ставим новый src и проявляем заново
+    const tempImg = new Image();
+    tempImg.src = src;
+    
+    tempImg.onload = () => {
+      imgElement.src = src;
+      setTimeout(() => imgElement.classList.add('developed'), 50);
+    };
+  }
 }
 
 export function nextSlide() {
