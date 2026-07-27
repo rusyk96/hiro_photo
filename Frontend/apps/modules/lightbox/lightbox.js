@@ -13,16 +13,33 @@ import { RAW_BASE_URL } from '../api.js';
 const raiser = new CardRaiseAnimation();
 
 /**
- * 🛠 Безопасная сборка URL файла (без двойного encodeURIComponent)
+ * 🛠 Абсолютно безопасная сборка URL файла
  */
 function getValidPhotoUrl(photoData) {
   if (!photoData) return '';
   if (photoData.url) return photoData.url;
   if (photoData.src) return photoData.src;
 
-  // Безопасно декодируем, затем кодируем РОВНО 1 РАЗ
-  const cleanName = decodeURIComponent(photoData.name);
-  return `${RAW_BASE_URL}/${encodeURIComponent(cleanName)}`;
+  let filename = photoData.name || '';
+
+  // 1. Снимаем все слои двойного кодирования (%25 -> %)
+  while (filename.includes('%25')) {
+    filename = filename.replace(/%25/g, '%');
+  }
+
+  // 2. Декодируем из %D0%9D в чистую кириллицу
+  try {
+    filename = decodeURIComponent(filename);
+  } catch (e) {
+    // Если строка уже сырая — пропускаем ошибку
+  }
+
+  // 3. Кодируем строго ОДИН РАЗ под стандарты URL (пробелы -> %20, кириллица -> %D0...)
+  const safeName = encodeURIComponent(filename)
+    .replace(/%2F/g, '/') // Сохраняем слэши, если есть подпапки
+    .replace(/%20/g, '%20'); // Гарантируем чистые пробелы
+
+  return `${RAW_BASE_URL}/${safeName}`;
 }
 
 export function setLightboxPhotos(photos) {
