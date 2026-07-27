@@ -1,5 +1,6 @@
 /**
- * 🎬 Модуль выдвижения с жестким сбросом и проявкой Polaroid
+ * 🎬 Модуль выдвижения карточки Polaroid
+ * Режиссура: Сброс шлейфа -> Выдвижение -> Определение ориентации (3:2 / 2:3) -> Химическая проявка.
  */
 
 export class CardRaiseAnimation {
@@ -7,25 +8,29 @@ export class CardRaiseAnimation {
     this.isAnimating = false;
   }
 
+  /**
+   * 🛫 Выдвижение и проявка кадра
+   */
   animateRaise(polaroidCard, backdropEl, imgUrl, onComplete) {
     if (!polaroidCard || this.isAnimating) return;
     this.isAnimating = true;
 
     const imgElement = document.getElementById('lightbox-img');
 
-    // 🧹 ФАЗА 1: Полный сброс (Reset) старого состояния
-   // Внутри animateRaise в блоке ФАЗЫ 1 (Reset):
-if (imgElement) {
-  imgElement.classList.remove('developed');
-  imgElement.style.opacity = '0'; // Гасим картинку, но рамка держит свой размер!
-}
-    // 2. Включаем затемнение
+    // 🧹 ФАЗА 1: Полный сброс (Reset)
+    if (imgElement) {
+      imgElement.classList.remove('developed');
+      imgElement.style.opacity = '0';
+      imgElement.src = ''; // Очищаем старый src, чтобы убрать шлейф
+    }
+
+    // 2. Включаем затемнение фона
     if (backdropEl) {
       backdropEl.style.transition = 'opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
       backdropEl.style.opacity = '1';
     }
 
-    // 3. Выдвигаем чистую карточку снизу
+    // 3. Выдвигаем чистую карточку снизу экрана
     const startY = window.innerHeight;
     Object.assign(polaroidCard.style, {
       transition: 'none',
@@ -41,27 +46,42 @@ if (imgElement) {
       });
     });
 
-    // 🧪 ФАЗА 2: Подгрузка и проявка нового кадра
+    // 📐 Вспомогательная функция переключения формата паспарту
+    const applyCardFormat = (imageWidth, imageHeight) => {
+      polaroidCard.classList.remove('landscape', 'portrait');
+
+      if (imageHeight > imageWidth) {
+        // Вертикальный кадр
+        polaroidCard.classList.add('portrait');
+      } else {
+        // Горизонтальный кадр
+        polaroidCard.classList.add('landscape');
+      }
+    };
+
+    // 🧪 ФАЗА 2: Подгрузка, установка формата и проявка
     const startDeveloping = () => {
-  setTimeout(() => {
-    if (imgElement) {
-      imgElement.style.opacity = ''; // Возвращаем стили проявке
-      imgElement.classList.add('developed');
-    }
-  }, 100);
-};
+      setTimeout(() => {
+        if (imgElement) {
+          imgElement.style.opacity = '';
+          imgElement.classList.add('developed');
+        }
+      }, 100);
+    };
 
     if (imgElement && imgUrl) {
-      // Загружаем новый кадр
       const tempImg = new Image();
       tempImg.src = imgUrl;
 
       const applyNewImage = () => {
+        // Задаем ориентацию рамки по реальным габаритам фото
+        applyCardFormat(tempImg.naturalWidth, tempImg.naturalHeight);
+
         imgElement.src = imgUrl;
         startDeveloping();
       };
 
-      if (tempImg.complete) {
+      if (tempImg.complete && tempImg.naturalWidth !== 0) {
         applyNewImage();
       } else {
         tempImg.onload = applyNewImage;
@@ -78,6 +98,9 @@ if (imgElement) {
     polaroidCard.addEventListener('transitionend', handleEnd);
   }
 
+  /**
+   * 🛬 Уход карточки обратно вниз при закрытии
+   */
   animateDrop(polaroidCard, backdropEl, onComplete) {
     if (!polaroidCard || this.isAnimating) return;
     this.isAnimating = true;
@@ -85,6 +108,7 @@ if (imgElement) {
     const imgElement = document.getElementById('lightbox-img');
     if (imgElement) {
       imgElement.classList.remove('developed');
+      imgElement.style.opacity = '0';
     }
 
     if (backdropEl) {
@@ -103,14 +127,16 @@ if (imgElement) {
     const handleEnd = (e) => {
       if (e.target !== polaroidCard) return;
       polaroidCard.removeEventListener('transitionend', handleEnd);
-      
-      // Сбрасываем стили и очищаем src при закрытии
+
+      // Сбрасываем стили после ухода
       polaroidCard.style.transform = '';
       polaroidCard.style.opacity = '';
+      polaroidCard.classList.remove('landscape', 'portrait');
+
       if (imgElement) {
         imgElement.src = '';
       }
-      
+
       this.isAnimating = false;
       if (onComplete) onComplete();
     };

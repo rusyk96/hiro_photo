@@ -34,33 +34,33 @@
   overflow: visible;
 }
 
-/* 📸 Атом карточки (Паспарту / Полароид) */
+/* 📸 Базовый атом карточки (Паспарту) */
 .polaroid-card {
   background: #ffffff;
-  padding: 14px 14px 42px 14px; 
-  border-radius: 12px;
-  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.45);
+  /* Белые поля: сверху и по бокам одинаковые (16px), снизу широкий "подбородок" (52px) */
+  padding: 16px 16px 52px 16px; 
+  border-radius: 14px;
+  box-shadow: 0 35px 70px rgba(0, 0, 0, 0.55);
   display: flex;
   flex-direction: column;
   align-items: center;
-  
-  /* 💥 ФИКС КАПСУЛЫ: Задаем стабильные базовые размеры, чтобы рамка не сжималась */
-  width: min(85vw, 520px);
-  min-height: 400px;
-  
   box-sizing: border-box;
   user-select: none;
   will-change: transform, opacity;
-  transform-origin: center center;
+  
+  /* Максимальные габариты, чтобы карточка занимала всё разумное место на экране */
+  max-width: 92vw;
+  max-height: 88vh;
+  transition: width 0.3s ease, height 0.3s ease;
 }
 
+/* 🖼 Внутренний рамка-контейнер (без черных ушей!) */
 .polaroid-frame {
   width: 100%;
-  /* 💥 Пропорция кадра 4:3 или 1:1, чтобы держала форму даже с пустой картинкой */
-  aspect-ratio: 4 / 3; 
+  height: 100%;
   border-radius: 6px;
   overflow: hidden;
-  background: #121212; /* Темно-графитовый фон неактивной эмульсии */
+  background: #1a1a1a;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -70,18 +70,37 @@
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover; /* Или contain, в зависимости от габаритов */
+  /* 💥 Картинка полностью зажимает кадр без рамок внутри */
+  object-fit: cover; 
   pointer-events: none;
   
   /* Эффект проявки */
-  filter: blur(10px) contrast(140%) brightness(30%);
+  filter: blur(12px) contrast(140%) brightness(30%);
   opacity: 0;
-  transition: filter 1s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.6s ease;
+  transition: filter 1s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s ease;
 }
 
 .polaroid-frame img.developed {
   filter: blur(0px) contrast(100%) brightness(100%);
   opacity: 1;
+}
+
+/* 📐 ДВА ШАБЛОНА ПРОПОРЦИЙ */
+
+/* 1. Горизонтальный шаблон (Landscape) */
+.polaroid-card.landscape {
+  width: min(88vw, 850px);
+}
+.polaroid-card.landscape .polaroid-frame {
+  aspect-ratio: 3 / 2; /* Стандарт репортажного кадра Canon */
+}
+
+/* 2. Вертикальный шаблон (Portrait) */
+.polaroid-card.portrait {
+  width: min(85vw, 480px);
+}
+.polaroid-card.portrait .polaroid-frame {
+  aspect-ratio: 2 / 3; /* Классический портрет */
 }
 
 .polaroid-caption {
