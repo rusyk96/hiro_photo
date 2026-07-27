@@ -14,12 +14,11 @@ export class CardRaiseAnimation {
     const imgElement = document.getElementById('lightbox-img');
 
     // 🧹 ФАЗА 1: Полный сброс (Reset) старого состояния
-    if (imgElement) {
-      imgElement.classList.remove('developed');
-      // Очищаем src, чтобы не было "шлейфа" предыдущего кадра
-      imgElement.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxIDEiPjwvc3ZnPg==';
-    }
-
+   // Внутри animateRaise в блоке ФАЗЫ 1 (Reset):
+if (imgElement) {
+  imgElement.classList.remove('developed');
+  imgElement.style.opacity = '0'; // Гасим картинку, но рамка держит свой размер!
+}
     // 2. Включаем затемнение
     if (backdropEl) {
       backdropEl.style.transition = 'opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
@@ -44,10 +43,13 @@ export class CardRaiseAnimation {
 
     // 🧪 ФАЗА 2: Подгрузка и проявка нового кадра
     const startDeveloping = () => {
-      setTimeout(() => {
-        if (imgElement) imgElement.classList.add('developed');
-      }, 100);
-    };
+  setTimeout(() => {
+    if (imgElement) {
+      imgElement.style.opacity = ''; // Возвращаем стили проявке
+      imgElement.classList.add('developed');
+    }
+  }, 100);
+};
 
     if (imgElement && imgUrl) {
       // Загружаем новый кадр
