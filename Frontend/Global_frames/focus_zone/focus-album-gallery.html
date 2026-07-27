@@ -13,21 +13,28 @@
   </section>
 
   <!-- Lightbox / Slider Modal -->
-  <div id="lightbox" class="lightbox">
-    <button class="lightbox-close" id="lightbox-close" aria-label="Close">&times;</button>
-    <button class="lightbox-nav lightbox-prev" id="lightbox-prev" aria-label="Previous">&lsaquo;</button>
-    <button class="lightbox-nav lightbox-next" id="lightbox-next" aria-label="Next">&rsaquo;</button>
-    
-    <div class="lightbox-content">
-      <!-- 📸 Карточка-Полароид с паспарту -->
-      <div class="polaroid-card" id="polaroid-card">
-        <div class="polaroid-frame">
-          <img id="lightbox-img" src="" alt="Large preview" />
+ <div id="lightbox" class="lightbox">
+  <button class="lightbox-close" id="lightbox-close" aria-label="Close">&times;</button>
+  <button class="lightbox-nav lightbox-prev" id="lightbox-prev" aria-label="Previous">&lsaquo;</button>
+  <button class="lightbox-nav lightbox-next" id="lightbox-next" aria-label="Next">&rsaquo;</button>
+  
+  <div class="lightbox-content">
+    <!-- 📸 Карточка-Полароид с паспарту -->
+    <div class="polaroid-card" id="polaroid-card">
+      <div class="polaroid-frame">
+        <img id="lightbox-img" src="" alt="Large preview" />
+      </div>
+      
+      <!-- Нижнее широкое поле полароида -->
+      <div class="polaroid-caption" id="polaroid-caption">
+        <span id="polaroid-counter" class="caption-counter">#01 / 01</span>
+        <h3 id="polaroid-title" class="caption-title">Восход</h3>
+        <div class="caption-logo-wrap">
+          <img src="./assets/base_logo.svg" alt="Logo" class="caption-logo" />
         </div>
-        <!-- Нижнее широкое поле полароида -->
-        <div class="polaroid-caption" id="polaroid-caption"></div>
       </div>
     </div>
   </div>
+</div>
 
 </main>
