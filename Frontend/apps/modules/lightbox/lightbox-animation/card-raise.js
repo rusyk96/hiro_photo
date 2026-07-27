@@ -9,11 +9,6 @@ export class CardRaiseAnimation {
 
   /**
    * 🛫 Выдвижение с зафиксированным типом из JSON и последующей проявкой
-   * @param {HTMLElement} polaroidCard 
-   * @param {HTMLElement} backdropEl 
-   * @param {Object} photoData - объект из JSON вида { name: "...", type: "landscape" }
-   * @param {string} fullImgUrl - полный путь к картинке
-   * @param {Function} onComplete 
    */
   animateRaise(polaroidCard, backdropEl, photoData, fullImgUrl, onComplete) {
     if (!polaroidCard || this.isAnimating) return;
@@ -31,17 +26,16 @@ export class CardRaiseAnimation {
     // 2. 📐 МГНОВЕННАЯ УСТАНОВКА ОРИЕНТАЦИИ ИЗ JSON (ЗА КАДРОМ)
     polaroidCard.classList.remove('landscape', 'portrait');
 
-    // Считываем поле "type" напрямую из твоего JSON
     const cardType = photoData?.type === 'portrait' ? 'portrait' : 'landscape';
     polaroidCard.classList.add(cardType);
 
-    // 3. 🌑 Затемнение фона
+    // 3. 🌑 Затемнение фона (300ms для быстрого отклика)
     if (backdropEl) {
-      backdropEl.style.transition = 'opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
+      backdropEl.style.transition = 'opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1)';
       backdropEl.style.opacity = '1';
     }
 
-    // 4. 🛫 Взлет карточки с зафиксированными пропорциями
+    // 4. 🛫 Взлет карточки (ускорен до 0.35s)
     const startY = window.innerHeight;
     Object.assign(polaroidCard.style, {
       transition: 'none',
@@ -51,25 +45,26 @@ export class CardRaiseAnimation {
 
     requestAnimationFrame(() => {
       Object.assign(polaroidCard.style, {
-        transition: 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease',
+        transition: 'transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease',
         transform: 'translateY(0) scale(1)',
         opacity: '1'
       });
     });
 
-    // 5. 🧪 Подгрузка и химическая проявка
+    // 5. 🧪 Подгрузка и химическая проявка (ровно 1s по CSS)
     if (imgElement && fullImgUrl) {
       const loader = new Image();
       loader.src = fullImgUrl;
 
       const triggerDevelopment = () => {
         imgElement.src = fullImgUrl;
-        setTimeout(() => {
+        // Небольшой микротаск для гарантированного применения transition
+        requestAnimationFrame(() => {
           if (imgElement) {
             imgElement.style.opacity = '';
             imgElement.classList.add('developed');
           }
-        }, 30);
+        });
       };
 
       if (loader.complete) {
@@ -90,7 +85,7 @@ export class CardRaiseAnimation {
   }
 
   /**
-   * 🛬 Уход карточки обратно вниз
+   * 🛬 Быстрый уход карточки обратно вниз (250ms)
    */
   animateDrop(polaroidCard, backdropEl, onComplete) {
     if (!polaroidCard || this.isAnimating) return;
@@ -103,14 +98,14 @@ export class CardRaiseAnimation {
     }
 
     if (backdropEl) {
-      backdropEl.style.transition = 'opacity 0.35s ease';
+      backdropEl.style.transition = 'opacity 0.25s ease';
       backdropEl.style.opacity = '0';
     }
 
     const endY = window.innerHeight;
 
     Object.assign(polaroidCard.style, {
-      transition: 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease',
+      transition: 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease',
       transform: `translateY(${endY}px) scale(0.95)`,
       opacity: '0'
     });

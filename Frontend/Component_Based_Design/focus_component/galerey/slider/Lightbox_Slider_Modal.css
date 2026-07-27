@@ -93,6 +93,7 @@
 }
 
 /* 🧪 Картинка и эффект химической проявки Polaroid */
+/* 🧪 Картинка и эффект химической проявки Polaroid */
 .polaroid-frame img {
   display: block;
   width: 100%;
@@ -101,16 +102,18 @@
   object-position: center;
   pointer-events: none;
   
-  /* Тоже дублируем маску на саму картинку, чтобы края резались без артефактов */
+  /* Дублируем маску на саму картинку, чтобы края резались без артефактов */
   -webkit-mask-image: paint(superellipse);
   mask-image: paint(superellipse);
   border-radius: 12px;
 
-  /* Исходное "непроявленное" состояние */
-  filter: blur(10px) contrast(140%) brightness(30%) saturate(20%);
-  opacity: 0.2;
-  transition: filter 0.45s cubic-bezier(0.16, 1, 0.3, 1), 
-              opacity 0.35s ease;
+  /* 🌌 Исходное "непроявленное" состояние (слегка размытый и затемненный кадр) */
+  filter: blur(8px) contrast(140%) brightness(30%) saturate(20%);
+  opacity: 0;
+  
+  /* ⏱ ВЫСТАВЛЯЕМ 1 СЕКУНДУ ДЛЯ ВСЕХ СВОЙСТВ */
+  transition: filter 1s cubic-bezier(0.16, 1, 0.3, 1), 
+              opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1);
   will-change: filter, opacity;
 }
 
