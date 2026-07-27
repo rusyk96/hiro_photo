@@ -1,6 +1,6 @@
 /**
- * 🎬 Модуль выдвижения карточки (True Bottom-Up Engine)
- * Карточка стартует строго за нижней границей Viewport.
+ * 🎬 Модуль выдвижения карточки (Preload & Lift Engine)
+ * Карточка ждёт полной загрузки изображения за краем экрана, а затем вылетает в кадр.
  */
 
 export class CardRaiseAnimation {
@@ -9,55 +9,76 @@ export class CardRaiseAnimation {
   }
 
   /**
-   * 🛫 Выдвижение снизу экрана в центр
+   * 🛫 Ожидание загрузки + Выдвижение снизу
    */
-  animateRaise(polaroidCard, backdropEl, onComplete) {
+  animateRaise(polaroidCard, backdropEl, imgUrl, onComplete) {
     if (!polaroidCard || this.isAnimating) return;
     this.isAnimating = true;
 
-    // 1. Плавный наплыв полупрозрачного фона
+    const imgElement = document.getElementById('lightbox-img');
+
+    // 1. Сразу включаем затемнение фона
     if (backdropEl) {
       backdropEl.style.transition = 'opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
       backdropEl.style.opacity = '1';
     }
 
-    // 2. Смещаем карточку СТРОГО за нижнюю границу экрана
-    // Передаем точное расстояние от центра до самого низа Viewport
-    const startY = window.innerHeight; 
-
+    // 2. Прячем карточку глубоко за нижний край экрана (готовим к вылету)
+    const startY = window.innerHeight;
     Object.assign(polaroidCard.style, {
       transition: 'none',
       transform: `translateY(${startY}px) scale(0.92)`,
       opacity: '0'
     });
 
-    // 3. На следующем кадре запускаем плавный взлет на родное место (translateY(0))
-    requestAnimationFrame(() => {
-      Object.assign(polaroidCard.style, {
-        transition: 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease',
-        transform: 'translateY(0) scale(1)',
-        opacity: '1'
+    // 3. Функция запуска взлета (вызывается ТОЛЬКО когда картинка готова)
+    const launchCard = () => {
+      requestAnimationFrame(() => {
+        Object.assign(polaroidCard.style, {
+          transition: 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease',
+          transform: 'translateY(0) scale(1)',
+          opacity: '1'
+        });
       });
-    });
 
-    const handleEnd = (e) => {
-      if (e.target !== polaroidCard) return;
-      polaroidCard.removeEventListener('transitionend', handleEnd);
-      this.isAnimating = false;
-      if (onComplete) onComplete();
+      const handleEnd = (e) => {
+        if (e.target !== polaroidCard) return;
+        polaroidCard.removeEventListener('transitionend', handleEnd);
+        this.isAnimating = false;
+        if (onComplete) onComplete();
+      };
+
+      polaroidCard.addEventListener('transitionend', handleEnd);
     };
 
-    polaroidCard.addEventListener('transitionend', handleEnd);
+    // 4. Предзагрузка изображения
+    if (imgUrl) {
+      const loaderImg = new Image();
+      loaderImg.src = imgUrl;
+
+      // Если картинка уже закеширована браузером — взлетаем мгновенно
+      if (loaderImg.complete) {
+        if (imgElement) imgElement.src = imgUrl;
+        launchCard();
+      } else {
+        // Если грузится из сети — ждём окончания загрузки за кадром
+        loaderImg.onload = () => {
+          if (imgElement) imgElement.src = imgUrl;
+          launchCard();
+        };
+      }
+    } else {
+      launchCard();
+    }
   }
 
   /**
-   * 🛬 Уход карточки обратно за нижнюю границу экрана
+   * 🛬 Уход карточки обратно вниз при закрытии
    */
   animateDrop(polaroidCard, backdropEl, onComplete) {
     if (!polaroidCard || this.isAnimating) return;
     this.isAnimating = true;
 
-    // Гасим фон
     if (backdropEl) {
       backdropEl.style.transition = 'opacity 0.35s ease';
       backdropEl.style.opacity = '0';
@@ -65,7 +86,6 @@ export class CardRaiseAnimation {
 
     const endY = window.innerHeight;
 
-    // Уводим карточку обратно вниз за пределы экрана
     Object.assign(polaroidCard.style, {
       transition: 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease',
       transform: `translateY(${endY}px) scale(0.95)`,
@@ -76,7 +96,6 @@ export class CardRaiseAnimation {
       if (e.target !== polaroidCard) return;
       polaroidCard.removeEventListener('transitionend', handleEnd);
       
-      // Сбрасываем стили после ухода
       polaroidCard.style.transform = '';
       polaroidCard.style.opacity = '';
       

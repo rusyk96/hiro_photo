@@ -18,17 +18,18 @@ export function setLightboxPhotos(photos) {
 
 export function openLightbox(index) {
   setCurrentIndex(index);
-  updateLightboxImage();
-
+  
   const lightbox = document.getElementById('lightbox');
   const polaroidCard = document.getElementById('polaroid-card');
+  const imgUrl = getCurrentImageUrl(); // Забираем ссылку на оригинальное фото
 
   if (lightbox) {
     lightbox.classList.add('active');
     document.body.style.overflow = 'hidden';
 
     if (polaroidCard) {
-      raiser.animateRaise(polaroidCard, lightbox);
+      // Передаем URL — карточка вылетит строго ПОСЛЕ подгрузки!
+      raiser.animateRaise(polaroidCard, lightbox, imgUrl);
     }
   }
 }
