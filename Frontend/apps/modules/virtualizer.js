@@ -102,8 +102,8 @@ function mountImagesInCard(card) {
 
   card.dataset.isMounted = 'true';
 
-  // Если картинка уже была загружена ранее, браузер отдаст её мгновенно из кэша без мигания
-  if (img.src !== originalSrc && img.src !== EMPTY_PIXEL) {
+  // Если картинка уже есть в DOM и совпадает — просто включаем класс
+  if (img.src === originalSrc) {
     img.classList.add('is-loaded');
     return;
   }
