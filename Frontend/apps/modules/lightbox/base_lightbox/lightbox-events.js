@@ -1,3 +1,5 @@
+import { initSwipeEvents } from './lightbox-store.js'; // Укажи свой путь к стору/модулю свайпов
+
 export function bindLightboxEvents({ onClose, onNext, onPrev }) {
   const lightbox = document.getElementById('lightbox');
   if (!lightbox) return;
@@ -22,4 +24,15 @@ export function bindLightboxEvents({ onClose, onNext, onPrev }) {
     if (e.key === 'ArrowRight') onNext();
     if (e.key === 'ArrowLeft') onPrev();
   };
+
+  // 📱 ИНИЦИАЛИЗИРУЕМ СВАЙПЫ
+  initSwipeEvents(
+    lightbox,
+    () => {
+      if (lightbox.classList.contains('active')) onNext();
+    },
+    () => {
+      if (lightbox.classList.contains('active')) onPrev();
+    }
+  );
 }
