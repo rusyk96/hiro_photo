@@ -115,7 +115,7 @@
 /* 1. Счетчик кадра (Слева) */
 .caption-counter {
   justify-self: start;
-  font-family: 'JetBrains Mono', monospace, sans-serif;
+  font-family: 'Steppe', sans-serif;
   font-size: 0.85rem;
   font-weight: 600;
   color: #888888;
@@ -126,6 +126,7 @@
 .caption-title {
   justify-self: center;
   margin: 0;
+  font-family: 'Bebas Neue', sans-serif;
   font-size: 1.1rem;
   font-weight: 700;
   color: #121212;
