@@ -1,6 +1,6 @@
 /**
  * 🎬 Модуль поднятия карточки (FLIP Animation Engine)
- * Отвечает за физику оторванной карточки: взлет из сетки, полет и обратную посадку.
+ * Отполированная режиссура: плавное паспарту, идеальное затемнение и точечный взлет.
  */
 
 export class CardRaiseAnimation {
@@ -9,67 +9,96 @@ export class CardRaiseAnimation {
   }
 
   /**
-   * 🛫 ФАЗА 1 и 2: Взлет карточки из Bento-сетки в центр лайтбокса
+   * 🛫 Взлет кадра и плавный раскрывающийся паспарту
    */
-  animateRaise(sourceImg, polaroidCard, onComplete) {
+  animateRaise(sourceImg, polaroidCard, backdropEl, onComplete) {
     if (!sourceImg || !polaroidCard) {
       if (onComplete) onComplete();
       return;
     }
 
-    // 1. Снимаем геометрические координаты исходной карточки в сетке
+    // 1. Точные координаты и стили исходика в Bento-сетке
     const rect = sourceImg.getBoundingClientRect();
+    const computedStyle = window.getComputedStyle(sourceImg);
 
-    // 2. Делаем целевую модалку видимой в DOM, но прячем оригинальный полароид на время полёта
+    // 2. Прячем целевой полароид до конца анимации
     polaroidCard.style.opacity = '0';
 
-    // 3. Создаем временный «летящий» клон
-    const clone = sourceImg.cloneNode(true);
+    // 3. Создаем клон, идентичный картинке в сетке (без рамок!)
+    const clone = document.createElement('div');
+    const cloneImg = document.createElement('img');
+    cloneImg.src = sourceImg.src;
+
+    // Вкладываем картинку в клон для имитации паспарту
+    clone.appendChild(cloneImg);
     this.activeClone = clone;
 
-    // Придаем клону стилистику полароида для плавного превращения
+    // Стили картинки внутри клона
+    Object.assign(cloneImg.style, {
+      width: '100%',
+      height: '100%',
+      objectFit: 'cover',
+      borderRadius: computedStyle.borderRadius || '8px',
+      transition: 'all 0.45s cubic-bezier(0.16, 1, 0.3, 1)'
+    });
+
+    // Стили самого летящего контейнера (на старте без паспарту)
     Object.assign(clone.style, {
       position: 'fixed',
       top: `${rect.top}px`,
       left: `${rect.left}px`,
       width: `${rect.width}px`,
       height: `${rect.height}px`,
-      margin: '0',
-      objectFit: 'cover',
-      borderRadius: '8px',
-      boxShadow: '0 10px 25px rgba(0,0,0,0.3)',
+      padding: '0px', // Паспарту изначально 0!
+      background: 'transparent',
+      borderRadius: computedStyle.borderRadius || '8px',
+      boxShadow: '0 10px 20px rgba(0,0,0,0.2)',
       zIndex: '10001',
       pointerEvents: 'none',
-      transformOrigin: 'center center',
+      boxSizing: 'border-box',
       transition: 'all 0.45s cubic-bezier(0.16, 1, 0.3, 1)'
     });
 
     document.body.appendChild(clone);
-
-    // Скрываем исходник в сетке, чтобы не дублировался визуально
     sourceImg.style.visibility = 'hidden';
 
-    // 4. На следующем кадре пересчитываем координаты и запускаем полет в центр
+    // 4. Плавно проявляем затемнение фона
+    if (backdropEl) {
+      backdropEl.style.transition = 'opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
+      backdropEl.style.opacity = '1';
+    }
+
+    // 5. Полет в центр с "раскрытием" паспарту
     requestAnimationFrame(() => {
       const targetRect = polaroidCard.getBoundingClientRect();
 
+      // Контейнер превращается в белый Полароид
       Object.assign(clone.style, {
         top: `${targetRect.top}px`,
         left: `${targetRect.left}px`,
         width: `${targetRect.width}px`,
         height: `${targetRect.height}px`,
+        padding: '14px 14px 42px 14px', // 💥 Раскрываем паспарту во время полета!
+        background: '#ffffff',
         borderRadius: '12px',
         boxShadow: '0 30px 60px rgba(0,0,0,0.5)',
-        transform: 'scale(1.02)' // Микро-овершут (Elastic effect)
+        transform: 'scale(1.02)' // Лёгкий пружинящий овершут
+      });
+
+      // Внутренняя картинка подстраивается под рамку
+      Object.assign(cloneImg.style, {
+        objectFit: 'contain',
+        borderRadius: '4px'
       });
     });
 
-    // 5. Завершение полета: передаем эстафету настоящему полароиду
-    const handleTransitionEnd = () => {
+    // 6. Передача управления настоящему лайтбоксу
+    const handleTransitionEnd = (e) => {
+      if (e.target !== clone) return;
       clone.removeEventListener('transitionend', handleTransitionEnd);
-      
-      // Показываем настоящий полароид и убираем клон
+
       polaroidCard.style.opacity = '1';
+      
       if (this.activeClone) {
         this.activeClone.remove();
         this.activeClone = null;
@@ -83,9 +112,9 @@ export class CardRaiseAnimation {
   }
 
   /**
-   * 🛬 ФАЗА 3: Обратная посадка карточки из лайтбокса в Bento-сетку
+   * 🛬 Плавная посадка обратно
    */
-  animateDrop(targetImg, polaroidCard, onComplete) {
+  animateDrop(targetImg, polaroidCard, backdropEl, onComplete) {
     if (!targetImg || !polaroidCard) {
       if (onComplete) onComplete();
       return;
@@ -94,7 +123,7 @@ export class CardRaiseAnimation {
     const currentRect = polaroidCard.getBoundingClientRect();
     const targetRect = targetImg.getBoundingClientRect();
 
-    // Создаем клон для полета назад
+    // Создаем клон для обратного полета
     const clone = polaroidCard.cloneNode(true);
     this.activeClone = clone;
 
@@ -114,21 +143,30 @@ export class CardRaiseAnimation {
     polaroidCard.style.opacity = '0';
     targetImg.style.visibility = 'hidden';
 
+    // Гасим фон
+    if (backdropEl) {
+      backdropEl.style.transition = 'opacity 0.35s ease';
+      backdropEl.style.opacity = '0';
+    }
+
     requestAnimationFrame(() => {
       Object.assign(clone.style, {
         top: `${targetRect.top}px`,
         left: `${targetRect.left}px`,
         width: `${targetRect.width}px`,
         height: `${targetRect.height}px`,
+        padding: '0px', // Схлопываем паспарту обратно
+        background: 'transparent',
         borderRadius: '8px',
         boxShadow: '0 5px 15px rgba(0,0,0,0.1)',
-        opacity: '0.5'
+        opacity: '0.2'
       });
     });
 
-    const handleTransitionEnd = () => {
+    const handleTransitionEnd = (e) => {
+      if (e.target !== clone) return;
       clone.removeEventListener('transitionend', handleTransitionEnd);
-      
+
       if (this.activeClone) {
         this.activeClone.remove();
         this.activeClone = null;
