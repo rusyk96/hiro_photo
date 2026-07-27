@@ -23,17 +23,23 @@ export function openLightbox(index) {
   const lightbox = document.getElementById('lightbox');
   const polaroidCard = document.getElementById('polaroid-card');
   
-  // Достаем объект кадра из массива JSON: { name: "...", type: "landscape" }
-  const photoData = photosData[index]; 
+  // 1. Достаем массив фотографий из ядра
+  const photosArray = getPhotos();
+  const photoData = photosArray[index]; 
   
-  // Собираем путь к файлу
-  const fullImgUrl = `./photos/${photoData.name}`; // Или функция получения URL из твоего API
+  if (!photoData) {
+    console.error(`Фотография по индексу ${index} не найдена в сторе!`);
+    return;
+  }
 
-  if (lightbox && polaroidCard && photoData) {
+  // 2. Формируем честный URL через API
+  const fullImgUrl = photoData.url || photoData.src || `${RAW_BASE_URL}/${photoData.name}`;
+
+  if (lightbox && polaroidCard) {
     lightbox.classList.add('active');
     document.body.style.overflow = 'hidden';
 
-    // Вызываем анимацию
+    // 3. Запускаем анимацию с передачей объекта из JSON и собранного URL
     raiser.animateRaise(polaroidCard, lightbox, photoData, fullImgUrl);
   }
 }
@@ -50,23 +56,47 @@ export function closeLightbox() {
   }
 }
 
+/**
+ * 🔄 Обновление картинки и геометрии при навигации (Next / Prev)
+ */
 function updateLightboxImage() {
   const imgElement = document.getElementById('lightbox-img');
-  if (!imgElement) return;
+  const polaroidCard = document.getElementById('polaroid-card');
+  if (!imgElement || !polaroidCard) return;
 
-  // 1. Снимаем проявку перед сменой слайда
+  const photosArray = getPhotos();
+  const currentIndex = getCurrentIndex();
+  const photoData = photosArray[currentIndex];
+
+  if (!photoData) return;
+
+  // 1. Снимаем проявку и меняем класс ориентации под новый кадр из JSON
   imgElement.classList.remove('developed');
+  imgElement.style.opacity = '0';
+  
+  polaroidCard.classList.remove('landscape', 'portrait');
+  const cardType = photoData.type === 'portrait' ? 'portrait' : 'landscape';
+  polaroidCard.classList.add(cardType);
 
-  const src = getCurrentImageUrl();
-  if (src) {
-    // 2. Ставим новый src и проявляем заново
-    const tempImg = new Image();
-    tempImg.src = src;
-    
-    tempImg.onload = () => {
-      imgElement.src = src;
-      setTimeout(() => imgElement.classList.add('developed'), 50);
-    };
+  // 2. Достаем новый URL
+  const fullImgUrl = photoData.url || photoData.src || `${RAW_BASE_URL}/${photoData.name}`;
+
+  // 3. Загружаем и проявляем
+  const loader = new Image();
+  loader.src = fullImgUrl;
+
+  const applyAndDevelop = () => {
+    imgElement.src = fullImgUrl;
+    setTimeout(() => {
+      imgElement.style.opacity = '';
+      imgElement.classList.add('developed');
+    }, 50);
+  };
+
+  if (loader.complete) {
+    applyAndDevelop();
+  } else {
+    loader.onload = applyAndDevelop;
   }
 }
 
