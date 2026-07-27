@@ -1,5 +1,5 @@
 /**
- * 🎬 Модуль вылета карточки по превью-габаритам + Проявка оригинала
+ * 🎬 Модуль выдвижения карточки с ориентацией из JSON (type: 'landscape' | 'portrait')
  */
 
 export class CardRaiseAnimation {
@@ -8,53 +8,40 @@ export class CardRaiseAnimation {
   }
 
   /**
-   * 🛫 Выдвижение с зафиксированной геометрией и последующей проявкой
+   * 🛫 Выдвижение с зафиксированным типом из JSON и последующей проявкой
+   * @param {HTMLElement} polaroidCard 
+   * @param {HTMLElement} backdropEl 
+   * @param {Object} photoData - объект из JSON вида { name: "...", type: "landscape" }
+   * @param {string} fullImgUrl - полный путь к картинке
+   * @param {Function} onComplete 
    */
-  animateRaise(polaroidCard, backdropEl, previewImg, fullImgUrl, onComplete) {
+  animateRaise(polaroidCard, backdropEl, photoData, fullImgUrl, onComplete) {
     if (!polaroidCard || this.isAnimating) return;
     this.isAnimating = true;
 
     const imgElement = document.getElementById('lightbox-img');
-    const polaroidFrame = polaroidCard.querySelector('.polaroid-frame');
 
     // 1. 🧹 РЕСЕТ СТАРОГО СОСТОЯНИЯ
     if (imgElement) {
       imgElement.classList.remove('developed');
+      imgElement.style.opacity = '0';
       imgElement.src = '';
     }
 
-    // 2. 📐 ШАГ 1: Задаем геометрические правила по превьюшке (ЕЩЁ ЗА КАДРОМ)
-    if (previewImg && polaroidFrame) {
-      const width = previewImg.naturalWidth || previewImg.clientWidth;
-      const height = previewImg.naturalHeight || previewImg.clientHeight;
+    // 2. 📐 МГНОВЕННАЯ УСТАНОВКА ОРИЕНТАЦИИ ИЗ JSON (ЗА КАДРОМ)
+    polaroidCard.classList.remove('landscape', 'portrait');
 
-      if (width && height) {
-        // Задаем точный Aspect Ratio рамки на основе быстрого превью
-        polaroidFrame.style.aspectRatio = `${width} / ${height}`;
-        
-        // Корректируем ширину карточки, чтобы вертикалки и горизонталки смотрелись одинаково сочно
-        if (height > width) {
-          // Вертикальное фото
-          polaroidCard.style.width = 'min(82vw, 460px)';
-        } else {
-          // Горизонтальное фото
-          polaroidCard.style.width = 'min(88vw, 820px)';
-        }
-      }
-    }
+    // Считываем поле "type" напрямую из твоего JSON
+    const cardType = photoData?.type === 'portrait' ? 'portrait' : 'landscape';
+    polaroidCard.classList.add(cardType);
 
-    // Ставим превьюшку как временную підложку
-    if (imgElement && previewImg) {
-      imgElement.src = previewImg.src;
-    }
-
-    // 3. 🌑 Включаем затемнение
+    // 3. 🌑 Затемнение фона
     if (backdropEl) {
       backdropEl.style.transition = 'opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
       backdropEl.style.opacity = '1';
     }
 
-    // 4. 🛫 ШАГ 2: Выдвигаем карточку с уже ИДЕАЛЬНОЙ геометрией
+    // 4. 🛫 Взлет карточки с зафиксированными пропорциями
     const startY = window.innerHeight;
     Object.assign(polaroidCard.style, {
       transition: 'none',
@@ -70,22 +57,25 @@ export class CardRaiseAnimation {
       });
     });
 
-    // 5. 🧪 ШАГ 3: Загружаем оригинал и запускаем проявку поверх превью
+    // 5. 🧪 Подгрузка и химическая проявка
     if (imgElement && fullImgUrl) {
-      const fullImgLoader = new Image();
-      fullImgLoader.src = fullImgUrl;
+      const loader = new Image();
+      loader.src = fullImgUrl;
 
       const triggerDevelopment = () => {
         imgElement.src = fullImgUrl;
         setTimeout(() => {
-          if (imgElement) imgElement.classList.add('developed');
+          if (imgElement) {
+            imgElement.style.opacity = '';
+            imgElement.classList.add('developed');
+          }
         }, 80);
       };
 
-      if (fullImgLoader.complete) {
+      if (loader.complete) {
         triggerDevelopment();
       } else {
-        fullImgLoader.onload = triggerDevelopment;
+        loader.onload = triggerDevelopment;
       }
     }
 
@@ -109,6 +99,7 @@ export class CardRaiseAnimation {
     const imgElement = document.getElementById('lightbox-img');
     if (imgElement) {
       imgElement.classList.remove('developed');
+      imgElement.style.opacity = '0';
     }
 
     if (backdropEl) {
@@ -130,12 +121,7 @@ export class CardRaiseAnimation {
 
       polaroidCard.style.transform = '';
       polaroidCard.style.opacity = '';
-      polaroidCard.style.width = '';
-
-      const polaroidFrame = polaroidCard.querySelector('.polaroid-frame');
-      if (polaroidFrame) {
-        polaroidFrame.style.aspectRatio = '';
-      }
+      polaroidCard.classList.remove('landscape', 'portrait');
 
       if (imgElement) {
         imgElement.src = '';

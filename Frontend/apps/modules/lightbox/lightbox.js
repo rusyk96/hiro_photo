@@ -17,30 +17,24 @@ export function setLightboxPhotos(photos) {
   setPhotos(photos);
 }
 
-export function openLightbox(index, clickEvent) {
+export function openLightbox(index) {
   setCurrentIndex(index);
 
   const lightbox = document.getElementById('lightbox');
   const polaroidCard = document.getElementById('polaroid-card');
-  const fullImgUrl = getCurrentImageUrl(); // Ссылка на оригинал из API
+  
+  // Достаем объект кадра из массива JSON: { name: "...", type: "landscape" }
+  const photoData = photosData[index]; 
+  
+  // Собираем путь к файлу
+  const fullImgUrl = `./photos/${photoData.name}`; // Или функция получения URL из твоего API
 
-  // Достаем кликнутую превьюшку из DOM
-  let previewImg = null;
-  if (clickEvent) {
-    const target = clickEvent.currentTarget || clickEvent.target;
-    previewImg = target.tagName === 'IMG' ? target : target.querySelector('img');
-  }
-
-  if (!previewImg) {
-    previewImg = document.querySelectorAll('#album-gallery-container img')[index];
-  }
-
-  if (lightbox && polaroidCard) {
+  if (lightbox && polaroidCard && photoData) {
     lightbox.classList.add('active');
     document.body.style.overflow = 'hidden';
 
-    // Запускаем выдвижение с прокидыванием превьюшка -> оригинал
-    raiser.animateRaise(polaroidCard, lightbox, previewImg, fullImgUrl);
+    // Вызываем анимацию
+    raiser.animateRaise(polaroidCard, lightbox, photoData, fullImgUrl);
   }
 }
 
