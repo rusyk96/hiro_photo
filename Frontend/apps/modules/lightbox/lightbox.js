@@ -16,31 +16,19 @@ export function setLightboxPhotos(photos) {
   setPhotos(photos);
 }
 
-export function openLightbox(index, clickEvent) {
+export function openLightbox(index) {
   setCurrentIndex(index);
   updateLightboxImage();
 
   const lightbox = document.getElementById('lightbox');
   const polaroidCard = document.getElementById('polaroid-card');
-  
-  // 🎯 Извлекаем ЧЕТКУЮ картинку, на которую кликнули (без гаданий)
-  let clickedImg = null;
-  if (clickEvent) {
-    const target = clickEvent.currentTarget || clickEvent.target;
-    clickedImg = target.tagName === 'IMG' ? target : target.querySelector('img');
-  }
-
-  // Запасной вариант, если клик был вызван без event
-  if (!clickedImg) {
-    clickedImg = document.querySelectorAll('#album-gallery-container img')[index];
-  }
 
   if (lightbox) {
     lightbox.classList.add('active');
     document.body.style.overflow = 'hidden';
 
-    if (clickedImg && polaroidCard) {
-      raiser.animateRaise(clickedImg, polaroidCard, lightbox);
+    if (polaroidCard) {
+      raiser.animateRaise(polaroidCard, lightbox);
     }
   }
 }
@@ -48,21 +36,12 @@ export function openLightbox(index, clickEvent) {
 export function closeLightbox() {
   const lightbox = document.getElementById('lightbox');
   const polaroidCard = document.getElementById('polaroid-card');
-  const currentIndex = getCurrentIndex();
-  
-  // При закрытии точно так же находим актуальный img в сетке
-  const targetImg = document.querySelectorAll('#album-gallery-container img')[currentIndex];
 
-  if (lightbox) {
-    if (targetImg && polaroidCard) {
-      raiser.animateDrop(targetImg, polaroidCard, lightbox, () => {
-        lightbox.classList.remove('active');
-        document.body.style.overflow = '';
-      });
-    } else {
+  if (lightbox && polaroidCard) {
+    raiser.animateDrop(polaroidCard, lightbox, () => {
       lightbox.classList.remove('active');
       document.body.style.overflow = '';
-    }
+    });
   }
 }
 
