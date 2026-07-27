@@ -1,4 +1,3 @@
-/* Базовый вид карточки (квадрат/модуль) */
 /* --- CATALOG GRID & CARDS --- */
 
 /* Контейнер всей карточки (Картинка + Мета под ней) */
@@ -12,23 +11,26 @@
   transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* 🚀 ХОВЕР 1: Плавное приподнимание всей карточки */
 .catalog-item:not(.card-disabled):hover {
-  transform: translateY(-4px);
+  transform: translateY(-4px); 
 }
 
-/* Сама рамка под фото */
 .work-card {
   position: relative;
   width: 100%;
-  aspect-ratio: 1 / 1; /* Квадратная форма как на макете (можно изменить на 4/3) */
+  aspect-ratio: 1 / 1;
   border-radius: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #e3e3e3; /* Серый плейсхолдер под макет */
+  
+  /* 🎛 ПОМЕНЯЙ ЭТОТ ЦВЕТ: ставь любой светлый фон (например, #E8E6E1 или #DCD8D0) */
+  background-color: #E2DFD9; 
+  
   overflow: hidden;
-  border: 1px solid transparent;
-  transition: border-color 0.2s ease, box-shadow 0.25s ease;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease, filter 0.25s ease, background-color 0.25s ease;
 }
 
 /* Активная карточка с фото */
@@ -39,29 +41,42 @@
   background-repeat: no-repeat;
 }
 
+/* 🚀 ХОВЕР 2: Затемнение карточки + Тень + Обводка */
 .catalog-item:not(.card-disabled):hover .work-card {
-  border-color: rgba(0, 0, 0, 0.15);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+  border-color: rgba(124, 120, 120, 0.743);
+  box-shadow: 0 12px 24px rgba(126, 126, 126, 0.643);
+
+  /* 🎛 НАСТРОЙКА ЗАТЕМНЕНИЯ: 
+     1.0 = 100% (обычная яркость)
+     0.85 = затемнение на 15% (рекомендуется)
+     0.70 = сильное затемнение на 30%
+     Регулируй значение ниже, чтобы подстроить под себя! */
+  filter: brightness(0.85); 
 }
 
-/* Заблокированные / Скоро */
-.catalog-item.card-disabled {
-  opacity: 0.6;
-  cursor: default;
-  user-select: none;
+/* 1. Блок карточки "Coming Soon" */
+.card-disabled .work-card {
+  background-color: #9b9a9acd; 
+  opacity: 1; 
+  border: 1px solid rgba(171, 171, 171, 0.547);
+  /* Блокируем реакцию на фильтры для неактивных карточек */
+  filter: none; 
 }
 
-.status-badge {
-  font-family: 'Steppe', sans-serif; 
+/* 2. Плашка "COMING SOON" внутри */
+.card-disabled .status-badge {
+  font-family: 'Steppe', sans-serif;
   font-size: 11px;
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: #666666;
-  border: 1px solid rgba(0, 0, 0, 0.2);
+  letter-spacing: 0.12em;
+  
+  color: rgba(48, 48, 48, 0.786);
+  border: 1px solid rgba(18, 18, 18, 0.15);
+  background-color: rgba(255, 255, 255, 0.848);
+  
   padding: 6px 14px;
   border-radius: 20px;
-  background: rgba(255, 255, 255, 0.4);
-  backdrop-filter: blur(4px);
 }
 
 /* --- МЕТА-ДАННЫЕ ПОД КАРТОЧКОЙ --- */
@@ -74,11 +89,19 @@
 .meta-title {
   margin: 0;
   font-family: 'Bebas Neue', sans-serif;
-  font-size: 1.80rem;
+  font-size: 1.6rem;
   font-weight: 600;
   color: #121212;
   line-height: 1.3;
-  letter-spacing: -0.08em;
+  letter-spacing: 0.03em;
+  
+  /* Плавный задел, если захочешь менять цвет текста на ховере */
+  transition: color 0.2s ease; 
+}
+
+/* 🚀 ХОВЕР 3 (Опционально): Реакция заголовка на наведение */
+.catalog-item:not(.card-disabled):hover .meta-title {
+  color: #000000; /* Делает текст на 100% глубоким черным */
 }
 
 .meta-subtitle {

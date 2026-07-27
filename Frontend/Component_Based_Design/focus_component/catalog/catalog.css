@@ -10,6 +10,6 @@
 /* Применять ховер-подсветку только к обычным карточкам */
 .work-card:not(.card-empty):hover {
   transform: translateY(-2px);
-  border-color: #444444;
+  border-color: #b9b9b9;
   background-color: #1f1f1f; /* Светло-серый #ababab сильно выбивается из тёмной темы, лучше тёмный акцент */
 }
