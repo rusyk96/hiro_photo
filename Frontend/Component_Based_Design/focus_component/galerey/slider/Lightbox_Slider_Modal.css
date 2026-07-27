@@ -119,8 +119,6 @@
   user-select: none;
 }
 
-@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@700&display=swap');
-
 /* 1. Счетчик кадра (Слева) */
 .caption-counter {
   justify-self: start;
