@@ -13,12 +13,11 @@ import { RAW_BASE_URL } from '../api.js';
 const raiser = new CardRaiseAnimation();
 
 /**
- * 🛠 Безопасная сборка URL с подробным логированием
+ * 🛠 Безопасная сборка URL без двойных слэшей и двойного энкодинга браузером
  */
 function getValidPhotoUrl(photoData) {
   console.group('🔍 [Lightbox Debug] Обработка URL');
   console.log('1. Входной photoData:', photoData);
-  console.log('2. RAW_BASE_URL из api.js:', RAW_BASE_URL);
 
   if (!photoData) {
     console.error('❌ photoData не передан!');
@@ -26,37 +25,35 @@ function getValidPhotoUrl(photoData) {
     return '';
   }
 
-  if (photoData.url || photoData.src) {
-    const directUrl = photoData.url || photoData.src;
-    console.log('3. Найдено готовое поле url/src:', directUrl);
+  // 1. Если есть готовое поле
+  if (photoData.fullUrl || photoData.url || photoData.src) {
+    const directUrl = photoData.fullUrl || photoData.url || photoData.src;
+    console.log('2. Найдено готовое поле:', directUrl);
     console.groupEnd();
     return directUrl;
   }
 
+  // 2. Чистим RAW_BASE_URL от слэша на конце, чтобы не было '//'
+  const baseUrl = RAW_BASE_URL.replace(/\/+$/, '');
+
+  // 3. Достаем имя файла и сбрасываем любые старые %25
   let rawName = photoData.name || '';
-  console.log('3. Исходное имя из JSON (photoData.name):', rawName);
-
-  // Многослойная очистка от двойного %25
-  let cleanName = rawName;
-  while (cleanName.includes('%25')) {
-    cleanName = cleanName.replace(/%25/g, '%');
+  while (rawName.includes('%25')) {
+    rawName = rawName.replace(/%25/g, '%');
   }
-  console.log('4. После очистки %25:', cleanName);
 
-  // Пробуем декодировать
+  // 4. Приводим к чистой незакодированной кириллице
   try {
-    cleanName = decodeURIComponent(cleanName);
-    console.log('5. После decodeURIComponent:', cleanName);
+    rawName = decodeURIComponent(rawName);
   } catch (e) {
-    console.warn('⚠️ Ошибка при decodeURIComponent (возможно, строка уже сырая):', e);
+    // Уже декодировано
   }
 
-  // Сборка финального URL
-  const encodedName = encodeURIComponent(cleanName);
-  console.log('6. Результат encodeURIComponent(cleanName):', encodedName);
+  console.log('3. Очищенное имя файла:', rawName);
 
-  const finalUrl = `${RAW_BASE_URL}/${encodedName}`;
-  console.log('7. 🚀 ФИНАЛЬНЫЙ СФОРМИРОВАННЫЙ URL:', finalUrl);
+  // 5. Формируем прямой путь (браузер сам закодирует кириллицу в сетевом запросе)
+  const finalUrl = `${baseUrl}/${rawName}`;
+  console.log('4. 🚀 ФИНАЛЬНЫЙ URL:', finalUrl);
   console.groupEnd();
 
   return finalUrl;
