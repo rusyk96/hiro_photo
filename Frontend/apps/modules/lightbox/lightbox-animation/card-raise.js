@@ -1,6 +1,5 @@
 /**
- * 🎬 Модуль выдвижения карточки (Preload & Lift Engine)
- * Карточка ждёт полной загрузки изображения за краем экрана, а затем вылетает в кадр.
+ * 🎬 Модуль выдвижения с эффектом проявки Polaroid
  */
 
 export class CardRaiseAnimation {
@@ -8,22 +7,24 @@ export class CardRaiseAnimation {
     this.isAnimating = false;
   }
 
-  /**
-   * 🛫 Ожидание загрузки + Выдвижение снизу
-   */
   animateRaise(polaroidCard, backdropEl, imgUrl, onComplete) {
     if (!polaroidCard || this.isAnimating) return;
     this.isAnimating = true;
 
     const imgElement = document.getElementById('lightbox-img');
 
-    // 1. Сразу включаем затемнение фона
+    // 1. Сбрасываем проявку на старте (картинка "сырая")
+    if (imgElement) {
+      imgElement.classList.remove('developed');
+    }
+
+    // 2. Включаем затемнение
     if (backdropEl) {
       backdropEl.style.transition = 'opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
       backdropEl.style.opacity = '1';
     }
 
-    // 2. Прячем карточку глубоко за нижний край экрана (готовим к вылету)
+    // 3. Выдвигаем карточку снизу СРАЗУ
     const startY = window.innerHeight;
     Object.assign(polaroidCard.style, {
       transition: 'none',
@@ -31,53 +32,50 @@ export class CardRaiseAnimation {
       opacity: '0'
     });
 
-    // 3. Функция запуска взлета (вызывается ТОЛЬКО когда картинка готова)
-    const launchCard = () => {
-      requestAnimationFrame(() => {
-        Object.assign(polaroidCard.style, {
-          transition: 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease',
-          transform: 'translateY(0) scale(1)',
-          opacity: '1'
-        });
+    requestAnimationFrame(() => {
+      Object.assign(polaroidCard.style, {
+        transition: 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease',
+        transform: 'translateY(0) scale(1)',
+        opacity: '1'
       });
+    });
 
-      const handleEnd = (e) => {
-        if (e.target !== polaroidCard) return;
-        polaroidCard.removeEventListener('transitionend', handleEnd);
-        this.isAnimating = false;
-        if (onComplete) onComplete();
-      };
-
-      polaroidCard.addEventListener('transitionend', handleEnd);
+    // 4. Запускаем "химическую реакцию" (проявку)
+    const startDeveloping = () => {
+      // Легкая микро-задержка для ощущения физики
+      setTimeout(() => {
+        if (imgElement) imgElement.classList.add('developed');
+      }, 150);
     };
 
-    // 4. Предзагрузка изображения
-    if (imgUrl) {
-      const loaderImg = new Image();
-      loaderImg.src = imgUrl;
-
-      // Если картинка уже закеширована браузером — взлетаем мгновенно
-      if (loaderImg.complete) {
-        if (imgElement) imgElement.src = imgUrl;
-        launchCard();
+    if (imgElement && imgUrl) {
+      imgElement.src = imgUrl;
+      
+      if (imgElement.complete) {
+        startDeveloping();
       } else {
-        // Если грузится из сети — ждём окончания загрузки за кадром
-        loaderImg.onload = () => {
-          if (imgElement) imgElement.src = imgUrl;
-          launchCard();
-        };
+        imgElement.onload = () => startDeveloping();
       }
-    } else {
-      launchCard();
     }
+
+    const handleEnd = (e) => {
+      if (e.target !== polaroidCard) return;
+      polaroidCard.removeEventListener('transitionend', handleEnd);
+      this.isAnimating = false;
+      if (onComplete) onComplete();
+    };
+
+    polaroidCard.addEventListener('transitionend', handleEnd);
   }
 
-  /**
-   * 🛬 Уход карточки обратно вниз при закрытии
-   */
   animateDrop(polaroidCard, backdropEl, onComplete) {
     if (!polaroidCard || this.isAnimating) return;
     this.isAnimating = true;
+
+    const imgElement = document.getElementById('lightbox-img');
+    if (imgElement) {
+      imgElement.classList.remove('developed');
+    }
 
     if (backdropEl) {
       backdropEl.style.transition = 'opacity 0.35s ease';
