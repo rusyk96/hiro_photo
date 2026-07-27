@@ -9,8 +9,8 @@
 
 .grid-auto-fit {
   display: grid;
-  /* Подняли порог до 340px — 4 карточки больше не влезут по ширине! */
-  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-  gap: var(--grid-gap);
+  /* 🚀 Поднимаем минималку до 360px — карточки станут крупнее, в ряд встанет ровно 3 штуки */
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: var(--grid-gap, 32px);
   width: 100%;
 }
