@@ -8,7 +8,7 @@ import {
   getPhotos
 } from './base_lightbox/lightbox-core.js';
 import { bindLightboxEvents } from './base_lightbox/lightbox-events.js';
-import { CardRaiseAnimation } from './lightbox-animation/card-raise.js';
+import { CardRaiseAnimation } from './lightbox-animetion/card-raise.js';
 
 const raiser = new CardRaiseAnimation();
 
