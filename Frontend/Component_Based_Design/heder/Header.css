@@ -28,3 +28,29 @@
   display: block;
   transition: height 0.2s ease; /* Плавность при ресайзе */
 }
+
+/* --- HEADER SOCIAL LINKS --- */
+.header-nav .social-links {
+  display: flex;
+  align-items: center;
+  gap: 24px; /* Расстояние между ссылками */
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.social-link {
+  font-family: 'Steppe', sans-serif; /* или твой основной шрифт */
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #121212;
+  text-decoration: none;
+  text-transform: lowercase;
+  letter-spacing: 0.02em;
+  opacity: 0.7;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.social-link:hover {
+  opacity: 1;
+}
