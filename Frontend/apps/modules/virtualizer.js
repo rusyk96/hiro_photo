@@ -1,5 +1,5 @@
 /**
- * Нативный виртуализатор VRAM с жестким лимитом зоны видимости
+ * Нативный виртуализатор VRAM с расширенным буфером и плавной подгрузкой
  */
 
 let isFastScrolling = false;
@@ -8,14 +8,15 @@ let lastScrollTop = window.scrollY;
 let lastScrollTime = Date.now();
 let isScrollListenerAttached = false;
 
-const VELOCITY_THRESHOLD = 2.0; 
+const VELOCITY_THRESHOLD = 2.5; 
 
-// Прозрачный 1x1 GIF для освобождения декодированной памяти VRAM
+// Прозрачный 1x1 GIF для освобождения VRAM
 const EMPTY_PIXEL = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
 
+// 🎯 Увеличиваем буфер до 1200px, так как картинки легкие и должны успевать рендериться до входа в кадр
 const OBSERVER_OPTIONS = {
   root: null,
-  rootMargin: '350px 0px 350px 0px', // Небольшой буфер для плавного скролла
+  rootMargin: '1200px 0px 1200px 0px',
   threshold: 0
 };
 
@@ -23,7 +24,6 @@ export function initChunkVirtualizer(containerId = 'album-gallery-container') {
   const container = document.getElementById(containerId);
   if (!container) return;
 
-  // 🎯 Наблюдаем строго за .gallery-card, так как у них есть физический DOM-box (aspect-ratio)
   const cards = container.querySelectorAll('.gallery-card');
   if (!cards.length) return;
 
@@ -44,7 +44,8 @@ export function initChunkVirtualizer(containerId = 'album-gallery-container') {
         }
       } else {
         card.dataset.inView = 'false';
-        unmountImagesFromCard(card); // 💥 Жёсткая выгрузка при выходе из viewport
+        // Выгружаем только если карточка реально далеко от экрана (сработал большой rootMargin)
+        unmountImagesFromCard(card);
       }
     });
   }, OBSERVER_OPTIONS);
@@ -80,7 +81,7 @@ function handleScrollVelocity() {
   scrollTimeout = setTimeout(() => {
     isFastScrolling = false;
     mountVisibleCardsOnly();
-  }, 80);
+  }, 100);
 }
 
 function mountVisibleCardsOnly() {
@@ -91,7 +92,6 @@ function mountVisibleCardsOnly() {
 }
 
 function mountImagesInCard(card) {
-  // Если уже смонтировано — пропускаем
   if (card.dataset.isMounted === 'true') return;
 
   const img = card.querySelector('img');
@@ -102,17 +102,21 @@ function mountImagesInCard(card) {
 
   card.dataset.isMounted = 'true';
 
+  // Если картинка уже была загружена ранее, браузер отдаст её мгновенно из кэша без мигания
+  if (img.src !== originalSrc && img.src !== EMPTY_PIXEL) {
+    img.classList.add('is-loaded');
+    return;
+  }
+
   const tempImg = new Image();
   tempImg.src = originalSrc;
 
   tempImg.decode()
     .then(() => {
-      // 🛑 Двойная проверка: монтируем ТОЛЬКО если карточка ДО СИХ ПОР видима!
       if (card.dataset.inView === 'true') {
         img.src = originalSrc;
         img.classList.add('is-loaded');
       } else {
-        // Если пока декодировалось, юзер уже ускроллил — сбрасываем статус
         card.dataset.isMounted = 'false';
       }
     })
@@ -132,9 +136,8 @@ function unmountImagesFromCard(card) {
   const img = card.querySelector('img');
   if (!img) return;
 
-  // 1. Ставим чистый пиксель
+  // Очищаем источник для экономии памяти, когда карточка далеко
   img.src = EMPTY_PIXEL;
-  // 2. Полностью удаляем атрибут src для гарантированного высвобождения памяти браком
   img.removeAttribute('src'); 
   img.classList.remove('is-loaded');
 }
