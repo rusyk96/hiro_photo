@@ -8,32 +8,15 @@ import {
 } from './base_lightbox/lightbox-core.js';
 import { bindLightboxEvents } from './base_lightbox/lightbox-events.js';
 import { CardRaiseAnimation } from './lightbox-animation/card-raise.js';
-import { RAW_BASE_URL } from '../api.js';
 
 const raiser = new CardRaiseAnimation();
 
 /**
- * 🛠 Безопасная сборка URL без двойных слэшей и двойного энкодинга браузером
+ * 🛠 Достаём готовый fullUrl прямо из объекта снимка
  */
 function getValidPhotoUrl(photoData) {
   if (!photoData) return '';
-
-  if (photoData.fullUrl || photoData.url || photoData.src) {
-    return photoData.fullUrl || photoData.url || photoData.src;
-  }
-
-  const baseUrl = RAW_BASE_URL.replace(/\/+$/, '');
-
-  let rawName = photoData.name || '';
-  while (rawName.includes('%25')) {
-    rawName = rawName.replace(/%25/g, '%');
-  }
-
-  try {
-    rawName = decodeURIComponent(rawName);
-  } catch (e) {}
-
-  return `${baseUrl}/${rawName}`;
+  return photoData.fullUrl || photoData.url || photoData.src || '';
 }
 
 /**
@@ -41,23 +24,19 @@ function getValidPhotoUrl(photoData) {
  */
 function getFrameNumber(photoData, index, totalCount) {
   const total = String(totalCount).padStart(2, '0');
-
   if (!photoData) return `#01 / ${total}`;
 
-  // 1. Сначала проверяем явное поле в JSON
   if (photoData.frame !== undefined) {
     const num = String(photoData.frame).padStart(2, '0');
     return `#${num} / ${total}`;
   }
 
-  // 2. Вытаскиваем последнее число перед расширением из имени "НЕ спонтанный концерт -1.webp"
   const match = photoData.name?.match(/-(\d+)(?:\.[a-zA-Z0-9]+)?$/);
   if (match && match[1]) {
     const num = String(match[1]).padStart(2, '0');
     return `#${num} / ${total}`;
   }
 
-  // 3. Порядковый номер в массиве по умолчанию
   const fallback = String(index + 1).padStart(2, '0');
   return `#${fallback} / ${total}`;
 }
@@ -78,7 +57,6 @@ export function openLightbox(index) {
   
   if (!photoData) return;
 
-  // Обновляем счетчик
   if (counterElement) {
     counterElement.textContent = getFrameNumber(photoData, index, photosArray.length);
   }
@@ -117,7 +95,6 @@ function updateLightboxImage() {
 
   if (!photoData) return;
 
-  // Обновляем счетчик кадра из JSON
   if (counterElement) {
     counterElement.textContent = getFrameNumber(photoData, currentIndex, photosArray.length);
   }
@@ -132,7 +109,6 @@ function updateLightboxImage() {
   const fullImgUrl = getValidPhotoUrl(photoData);
 
   const loader = new Image();
-  
   loader.onload = () => {
     imgElement.src = fullImgUrl;
     setTimeout(() => {

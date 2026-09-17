@@ -1,5 +1,5 @@
 /**
- * Нативный виртуализатор VRAM с расширенным буфером и плавной подгрузкой
+ * Нативный виртуализатор VRAM (Оптимизированный без фризов)
  */
 
 let isFastScrolling = false;
@@ -8,15 +8,14 @@ let lastScrollTop = window.scrollY;
 let lastScrollTime = Date.now();
 let isScrollListenerAttached = false;
 
-const VELOCITY_THRESHOLD = 2.5; 
-
-// Прозрачный 1x1 GIF для освобождения VRAM
+const VELOCITY_THRESHOLD = 3.0; // Чуть повысим порог для сглаживания
 const EMPTY_PIXEL = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
 
-// 🎯 Увеличиваем буфер до 1200px, так как картинки легкие и должны успевать рендериться до входа в кадр
+// На мобилках уменьшаем запас, чтобы не перегружать VRAM
+const isMobile = window.innerWidth <= 768;
 const OBSERVER_OPTIONS = {
   root: null,
-  rootMargin: '1200px 0px 1200px 0px',
+  rootMargin: isMobile ? '600px 0px 600px 0px' : '1000px 0px 1000px 0px',
   threshold: 0
 };
 
@@ -38,13 +37,11 @@ export function initChunkVirtualizer(containerId = 'album-gallery-container') {
 
       if (entry.isIntersecting) {
         card.dataset.inView = 'true';
-
         if (!isFastScrolling) {
           mountImagesInCard(card);
         }
       } else {
         card.dataset.inView = 'false';
-        // Выгружаем только если карточка реально далеко от экрана (сработал большой rootMargin)
         unmountImagesFromCard(card);
       }
     });
@@ -53,8 +50,9 @@ export function initChunkVirtualizer(containerId = 'album-gallery-container') {
   cards.forEach((card) => {
     const img = card.querySelector('img');
     if (img) {
-      if (!img.dataset.originalSrc) {
-        img.dataset.originalSrc = img.getAttribute('data-original-src') || img.src;
+      const realSrc = img.getAttribute('data-original-src') || img.dataset.originalSrc || img.src;
+      if (realSrc && realSrc !== EMPTY_PIXEL) {
+        img.dataset.originalSrc = realSrc;
       }
       img.setAttribute('decoding', 'async');
     }
@@ -81,7 +79,7 @@ function handleScrollVelocity() {
   scrollTimeout = setTimeout(() => {
     isFastScrolling = false;
     mountVisibleCardsOnly();
-  }, 100);
+  }, 120);
 }
 
 function mountVisibleCardsOnly() {
@@ -92,43 +90,70 @@ function mountVisibleCardsOnly() {
 }
 
 function mountImagesInCard(card) {
-  if (card.dataset.isMounted === 'true') return;
-
   const img = card.querySelector('img');
   if (!img) return;
 
-  const originalSrc = img.dataset.originalSrc;
-  if (!originalSrc) return;
+  const originalSrc = img.dataset.originalSrc || img.getAttribute('data-original-src');
+  if (!originalSrc || originalSrc === EMPTY_PIXEL) return;
 
+  if (card.dataset.isMounted === 'true' && img.src === originalSrc) return;
   card.dataset.isMounted = 'true';
 
-  // Если картинка уже есть в DOM и совпадает — просто включаем класс
-  if (img.src === originalSrc) {
-    img.classList.add('is-loaded');
-    return;
-  }
+  // 🚀 ШАГ 1: Мгновенно включаем скелетон и прячем растр
+  card.classList.add('skeleton-active');
+  img.style.opacity = '0';
 
-  const tempImg = new Image();
-  tempImg.src = originalSrc;
+  // 🚀 ШАГ 2: Даём браузеру 1 кадр на отрисовку скелетона (Paint)
+  requestAnimationFrame(() => {
+    // Если пользователь успел быстро пролистать мимо, отменяем
+    if (card.dataset.inView !== 'true') {
+      card.dataset.isMounted = 'false';
+      return;
+    }
 
-  tempImg.decode()
-    .then(() => {
-      if (card.dataset.inView === 'true') {
-        img.src = originalSrc;
+    // Подставляем реальный источник только ПОСЛЕ того, как скелетон отрисован
+    img.src = originalSrc;
+
+    // 🚀 ШАГ 3: Ждём декодирования растра
+    img.decode()
+      .then(() => {
+        if (card.dataset.inView !== 'true') {
+          card.dataset.isMounted = 'false';
+          return;
+        }
+
+        // Отменяем висящие анимации
+        img.getAnimations().forEach(a => a.cancel());
+
+        // Снимаем скелетон
+        card.classList.remove('skeleton-active');
         img.classList.add('is-loaded');
-      } else {
-        card.dataset.isMounted = 'false';
-      }
-    })
-    .catch(() => {
-      if (card.dataset.inView === 'true') {
-        img.src = originalSrc;
-        img.classList.add('is-loaded');
-      } else {
-        card.dataset.isMounted = 'false';
-      }
-    });
+
+        // Запускаем плавное проявление растра ПОВЕРХ уже показанного скелетона
+        img.animate(
+          [
+            { opacity: 0, transform: 'scale(0.97)' },
+            { opacity: 1, transform: 'scale(1)' }
+          ],
+          {
+            duration: 280,
+            easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
+            fill: 'forwards'
+          }
+        );
+      })
+      .catch(() => {
+        if (card.dataset.inView === 'true') {
+          card.classList.remove('skeleton-active');
+          img.classList.add('is-loaded');
+          img.style.opacity = '1';
+        } else {
+          card.dataset.isMounted = 'false';
+        }
+      });
+  });
 }
+
 
 function unmountImagesFromCard(card) {
   card.dataset.isMounted = 'false';
@@ -136,8 +161,12 @@ function unmountImagesFromCard(card) {
   const img = card.querySelector('img');
   if (!img) return;
 
-  // Очищаем источник для экономии памяти, когда карточка далеко
+  img.getAnimations().forEach(anim => anim.cancel());
+
+  // Возвращаем скелетон и размонтируем растр
+  img.style.opacity = '0';
   img.src = EMPTY_PIXEL;
-  img.removeAttribute('src'); 
   img.classList.remove('is-loaded');
+  
+  card.classList.add('skeleton-active');
 }

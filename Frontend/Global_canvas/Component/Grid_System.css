@@ -5,20 +5,23 @@
   display: grid;
   grid-template-columns: repeat(var(--grid-columns), 1fr);
   gap: var(--grid-gap);
+  align-items: start; /* 👈 ВАЖНО: Прижимаем карточки к верху, блокируя растяжение */
 }
 
 .grid-auto-fit {
   display: grid;
-  /* 🚀 Использование min() защищает от вылезания за края на мобилках */
-  grid-template-columns: repeat(auto-fit, minmax(min(360px, 100%), 1fr));
+  /* Уменьшаем минимальный размер с 360px до 240px, чтобы влезло больше колонок */
+  grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr));
   gap: var(--grid-gap, 32px);
   width: 100%;
   box-sizing: border-box;
+  align-items: start; /* 👈 Фиксирует верхушки всех сквирклов строго на одной линии */
 }
 
-/* 📱 Для мобильных экранов уменьшаем gap, чтобы картинка была крупнее */
+/* 📱 Для мобильных экранов */
 @media (max-width: 768px) {
   .grid-auto-fit {
+    grid-template-columns: repeat(auto-fill, minmax(min(160px, 100%), 1fr));
     gap: 16px;
   }
 }

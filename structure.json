@@ -1,0 +1,17 @@
+{
+  "Col_span.css" : "Frontend/Global_canvas/Component/Col_span.css",
+  "Global_style_canvas.css" : "Frontend/Global_canvas/Global_style_canvas.css",
+  "Global_style_container.css" : "Frontend/Global_canvas/Component/Global_style_container.css",
+  "Grid_System.css" : "Frontend/Global_canvas/Component/Grid_System.css",
+  "Header.css" : "Frontend/Component_Based_Design/heder/Header.css",
+  "Lightbox_Slider_Modal.css" : "Frontend/Component_Based_Design/focus_component/galerey/slider/Lightbox_Slider_Modal.css",
+  "all_card.css" : "Frontend/Component_Based_Design/focus_component/catalog/card/all_card.css",
+  "bento_grid.css" : "Frontend/Component_Based_Design/focus_component/galerey/bento_grid/bento_grid.css",
+  "breadcrumbs.css" : "Frontend/Component_Based_Design/breadcrumbs.css",
+  "catalog.css" : "Frontend/Component_Based_Design/focus_component/catalog/catalog.css",
+  "fonts_faces.css" : "Frontend/fonts/fonts_faces.css",
+  "footer.css" : "Frontend/Component_Based_Design/footer/footer.css",
+  "frontend.css" : "Frontend/frontend.css",
+  "galerey.css" : "Frontend/Component_Based_Design/focus_component/galerey/galerey.css",
+  "louder.css" : "Frontend/Component_Based_Design/louder.css"
+}

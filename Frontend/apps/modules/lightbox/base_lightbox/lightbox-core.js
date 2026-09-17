@@ -1,5 +1,3 @@
-import { RAW_BASE_URL } from '../../api.js';
-
 let globalPhotoFiles = [];
 let currentIndex = 0;
 
@@ -23,12 +21,10 @@ export function setCurrentIndex(index) {
 
 export function getCurrentImageUrl() {
   if (!globalPhotoFiles[currentIndex]) return '';
-
   const rawItem = globalPhotoFiles[currentIndex];
-  const fileName = typeof rawItem === 'string' ? rawItem : rawItem.name;
-  const cleanFileName = fileName.normalize('NFC');
-
-  return `${RAW_BASE_URL}${encodeURIComponent(cleanFileName)}`;
+  
+  // URL берём строго из уже сформированного объекта
+  return rawItem.fullUrl || rawItem.url || rawItem.src || '';
 }
 
 export function stepNext() {

@@ -1,29 +1,51 @@
-import { fetchManifestPhotos } from '../api.js';
+// --- BENTO_GRID/BENTO.JS ---
+
+import { fetchAlbumManifest } from '../api.js';
 import { setLightboxPhotos, initLightboxEvents } from '../lightbox/lightbox.js';
 import { initChunkVirtualizer } from '../virtualizer.js';
-import { GridEngine } from './grid/grid.js';
+import { GridEngine } from './grid/grid-engine.js';
 
 let cachedPhotos = [];
 
-export async function renderAlbumGallery() {
+export async function renderAlbumGallery(albumId) {
   const container = document.getElementById('album-gallery-container');
-  if (!container) return;
+  const crumbTitle = document.getElementById('crumb-album-title');
 
-  const rawPhotos = await fetchManifestPhotos();
-  setLightboxPhotos(rawPhotos);
+  if (!container) {
+    console.error('❌ [Bento] Ошибка: #album-gallery-container не найден в DOM');
+    return;
+  }
 
-  cachedPhotos = rawPhotos.map((item, index) => ({
+  // 1. Запрашиваем манифест альбома
+  const albumData = await fetchAlbumManifest(albumId);
+
+  if (!albumData || !albumData.photos || albumData.photos.length === 0) {
+    console.error(`❌ [Bento] Не удалось загрузить фотографии для альбома: "${albumId}"`);
+    if (crumbTitle) crumbTitle.textContent = 'ОШИБКА ЗАГРУЗКИ';
+    return;
+  }
+
+  // 2. Обновляем хлебные крошки названим альбома
+  if (crumbTitle && albumData.catalog?.title) {
+    crumbTitle.textContent = albumData.catalog.title.toUpperCase();
+  }
+
+  // 3. Отдаём полные данные в Lightbox
+  setLightboxPhotos(albumData.photos);
+
+  // 4. Формируем массив для Bento-движка с гарантированным флагом isPortrait
+  cachedPhotos = albumData.photos.map((item, index) => ({
     ...item,
     originalIndex: index,
-    isPortrait: item.type === 'portrait'
+    isPortrait: item.isPortrait ?? (item.type === 'portrait')
   }));
 
+  // 5. Строим Bento-сетку
   buildSmartBentoGallery(cachedPhotos);
 
+  // 6. Запускаем виртуализатор VRAM
   requestAnimationFrame(() => {
-    setTimeout(() => {
-      initChunkVirtualizer('album-gallery-container');
-    }, 0);
+    initChunkVirtualizer('album-gallery-container');
   });
 }
 
@@ -36,7 +58,7 @@ function buildSmartBentoGallery(photos) {
   const gridEngine = new GridEngine();
   const isMobile = window.innerWidth < 768;
 
-  // 🚀 Вся сложная сборка и рандомизация теперь происходят строго один раз внутри движка!
+  // 🚀 Генерируем HTML рядов
   const fullHtml = gridEngine.generateFullGrid(photos, isMobile);
 
   container.innerHTML = fullHtml;
@@ -66,7 +88,6 @@ let lastWindowWidth = window.innerWidth;
 let resizeTimeout;
 
 window.addEventListener('resize', () => {
-  // 🛑 Проверяем реальную ширину: если изменилась только высота (панель браузера скрылась/появилась), игнорируем!
   if (window.innerWidth === lastWindowWidth) return;
   
   lastWindowWidth = window.innerWidth;
