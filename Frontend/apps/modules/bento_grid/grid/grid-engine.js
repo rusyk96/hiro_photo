@@ -85,20 +85,24 @@ export class GridEngine {
     return this._renderTail(landscapes, portraits);
   }
 
-  _renderTail(landscapes, portraits) {
+_renderTail(landscapes, portraits) {
     const remain = [...landscapes, ...portraits].sort((a, b) => a.originalIndex - b.originalIndex);
     landscapes.length = 0;
     portraits.length = 0;
 
     if (remain.length === 0) return null;
 
-    const cards = remain.map(item => `
-      <div class="${item.isPortrait ? 'atom-vs' : 'atom-hl'}">
-        ${createCardHtml(item)}
-      </div>
-    `).join('');
+    // Генерируем адаптивные слоты под остаток
+    const cards = remain.map(item => {
+      // Для альбомных кадрируем на 6 колонок (50% ширины), для портретных — 3/4 колонки
+      const colSpanStyle = item.isPortrait ? 'grid-column: span 3;' : 'grid-column: span 6;';
+      const spanClass = item.isPortrait ? 'atom-vs' : 'atom-hl';
+      
+      return `<div class="${spanClass}" style="${colSpanStyle}">${createCardHtml(item)}</div>`;
+    }).join('');
 
-    return `<div class="bento-atom-grid mode-tail">${cards}</div>`;
+    // Добавляем режим `mode-tail` с принудительным заполнением пустот
+    return `<div class="bento-atom-grid mode-tail" style="grid-auto-flow: dense;">${cards}</div>`;
   }
 
   // 🎯 ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ДЕТЕРМИНИРОВАННОГО PRNG

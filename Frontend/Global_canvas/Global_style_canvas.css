@@ -23,11 +23,30 @@
   --grid-gap: 20px;
 }
 
+/* ==========================================================================
+   ГЛОБАЛЬНЫЙ ЛЕЙАУТ И ПРИЖИМ ПОДВАЛА
+   ========================================================================== */
+
 body {
   background-color: var(--bg-color);
   color: var(--text-color);
   font-family: system-ui, -apple-system, sans-serif;
   min-height: 100vh;
+  
+  /* Включаем вертикальный Flexbox для всей страницы */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Обертка основного контента (где лежит твой .grid-auto-fit или #album-gallery-container) */
+main, .main-content {
+  flex: 1 0 auto;
+}
+
+/* Сам подвал — выталкивается в самый низ, если контента мало */
+footer {
+  flex-shrink: 0;
+  margin-top: auto;
 }
 
 .row-span-2 { 

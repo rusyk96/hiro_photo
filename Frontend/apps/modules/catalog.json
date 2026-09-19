@@ -8,11 +8,11 @@
     "title" : "не спонтанный концерт"
   },
   {
-  "hero_url": "https://raw.githubusercontent.com/rusyk96/pickmeparty/main/webp_thumb/pickmeparty_01.webp",
-  "id": "pickmeparty",
-  "manifest_url": "https://raw.githubusercontent.com/rusyk96/pickmeparty/main/manifest.json",
-  "status": "active",
-  "subtitle": "Фестиваль",
-  "title": "Пикми пати"
-}
+    "hero_url" : "https://raw.githubusercontent.com/rusyk96/pickmyparty11/main/webp_thumb/nespontann_01.webp",
+    "id" : "pickmeparty",
+    "manifest_url" : "https://raw.githubusercontent.com/rusyk96/pickmyparty11/main/manifest.json",
+    "status" : "active",
+    "subtitle" : "Фестиваль ",
+    "title" : "Пикмипати"
+  }
 ]

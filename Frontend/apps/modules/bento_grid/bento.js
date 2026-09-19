@@ -16,7 +16,7 @@ export async function renderAlbumGallery(albumId) {
     return;
   }
 
-  // 1. Запрашиваем манифест альбома
+  // 1. Запрашиваем манифест конкретного альбома
   const albumData = await fetchAlbumManifest(albumId);
 
   if (!albumData || !albumData.photos || albumData.photos.length === 0) {
@@ -25,7 +25,7 @@ export async function renderAlbumGallery(albumId) {
     return;
   }
 
-  // 2. Обновляем хлебные крошки названим альбома
+  // 2. Обновляем хлебные крошки
   if (crumbTitle && albumData.catalog?.title) {
     crumbTitle.textContent = albumData.catalog.title.toUpperCase();
   }
@@ -33,19 +33,21 @@ export async function renderAlbumGallery(albumId) {
   // 3. Отдаём полные данные в Lightbox
   setLightboxPhotos(albumData.photos);
 
-  // 4. Формируем массив для Bento-движка с гарантированным флагом isPortrait
+  // 4. Формируем массив для Bento-движка с флагом ориентации
   cachedPhotos = albumData.photos.map((item, index) => ({
     ...item,
     originalIndex: index,
     isPortrait: item.isPortrait ?? (item.type === 'portrait')
   }));
 
-  // 5. Строим Bento-сетку
+  // 5. Строим сетку
   buildSmartBentoGallery(cachedPhotos);
 
-  // 6. Запускаем виртуализатор VRAM
+  // 6. Запускаем виртуализатор VRAM на следующем кадре
   requestAnimationFrame(() => {
-    initChunkVirtualizer('album-gallery-container');
+    setTimeout(() => {
+      initChunkVirtualizer('album-gallery-container');
+    }, 0);
   });
 }
 
@@ -58,7 +60,7 @@ function buildSmartBentoGallery(photos) {
   const gridEngine = new GridEngine();
   const isMobile = window.innerWidth < 768;
 
-  // 🚀 Генерируем HTML рядов
+  // 🚀 Вся сложная сборка и рандомизация происходит строго один раз внутри движка
   const fullHtml = gridEngine.generateFullGrid(photos, isMobile);
 
   container.innerHTML = fullHtml;
@@ -84,6 +86,7 @@ export function waitForFirstImages(count = 4) {
   return Promise.all(loadPromises);
 }
 
+// 🛑 Детектор Resize: игнорируем вертикальный прыжок из-за скрытия Safari/Chrome адрески
 let lastWindowWidth = window.innerWidth;
 let resizeTimeout;
 
