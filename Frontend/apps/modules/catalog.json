@@ -2,7 +2,7 @@
   {
     "hero_url" : "https://raw.githubusercontent.com/rusyk96/nespontanncon/main/webp_thumb/nespontann_01.webp",
     "id" : "nespontanny-koncert",
-    "manifest_url" : "https://raw.githubusercontent.com/rusyk96/nespontanncon/main/webp/manifest.json",
+    "manifest_url" : "https://raw.githubusercontent.com/rusyk96/nespontanncon/main/manifest.json",
     "status" : "active",
     "subtitle" : "концерт",
     "title" : "не спонтанный концерт"
