@@ -103,31 +103,30 @@ function mountImagesInCard(card) {
 
   card.dataset.isMounted = 'true';
 
+  // 1. МГНОВЕННО прячем картинку до любого назначения src,
+  // чтобы браузер не успел моргнуть пустым контейнером при смене EMPTY_PIXEL -> originalSrc
+  img.style.opacity = '0';
+  img.style.willChange = 'opacity, transform';
+
   const revealCard = () => {
-    // 1. Детектируем ориентацию карточки/изображения
+    // Детектируем ориентацию
     const isVertical = card.offsetHeight > card.offsetWidth || 
                        (img.naturalHeight && img.naturalHeight > img.naturalWidth);
 
-    // 2. ВАРИАТИВНЫЙ БУФЕР: разная задержка и параметры проявки
-    const delay = isVertical ? 70 : 40;            // Для вертикалок даем больше времени на расчёт Houdini/Reflow
-    const duration = isVertical ? 550 : 400;       // Вертикалки проявляем чуть мягче
-    const startScale = isVertical ? 0.98 : 0.96;  // Амплитуда масштабирования
+    const delay = isVertical ? 70 : 40;
+    const duration = isVertical ? 550 : 400;
+    const startScale = isVertical ? 0.98 : 0.96;
 
-    // Фиксируем стартовую прозрачность до запуска кадра
-    img.style.opacity = '0';
-
-    // ⏳ 3. Применяем вариативный таймаут-буфер
     setTimeout(() => {
-      // 🚀 4. Двойной rAF для гарантированной отрисовки нулевого кадра в GPU
       requestAnimationFrame(() => {
-        void img.offsetHeight; // Reflow-фиксация
+        void img.offsetHeight; // Принудительный Reflow
 
         requestAnimationFrame(() => {
           if (typeof img.getAnimations === 'function') {
             img.getAnimations().forEach(anim => anim.cancel());
           }
 
-          // 🚀 5. Аппаратный запуск WAAPI
+          // Аппаратная проявка через WAAPI
           const animation = img.animate(
             [
               { opacity: 0, transform: `scale(${startScale}) translateZ(0)` },
@@ -144,18 +143,20 @@ function mountImagesInCard(card) {
             img.classList.add('is-loaded');
             card.classList.remove('skeleton-active');
             img.style.opacity = '';
+            img.style.willChange = '';
           };
         });
       });
     }, delay);
   };
 
-  // Проверка кэша
+  // 2. Если картинка уже была в кэше и готова — проявляем мгновенно в следующем микротаске
   if (img.src === originalSrc && img.complete && img.naturalWidth > 0) {
     revealCard();
     return;
   }
 
+  // 3. Ставим реальный src ПОСЛЕ того, как img.style.opacity гарантированно равен '0'
   img.src = originalSrc;
 
   if (img.decode) {
@@ -164,7 +165,10 @@ function mountImagesInCard(card) {
       .catch(() => revealCard());
   } else {
     img.onload = () => revealCard();
-    img.onerror = () => card.classList.remove('skeleton-active');
+    img.onerror = () => {
+      card.classList.remove('skeleton-active');
+      img.style.opacity = '';
+    };
   }
 }
 
