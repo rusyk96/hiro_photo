@@ -103,21 +103,26 @@ function mountImagesInCard(card) {
   const originalSrc = img.dataset.originalSrc;
   if (!originalSrc) return;
 
-  // Если карточка уже улетела из поля зрения — даже не начинаем качать/декодировать!
-  if (card.dataset.inView !== 'true') return;
-
   card.dataset.isMounted = 'true';
 
+  // Если URL уже совпадает
   if (img.src === originalSrc) {
     img.classList.add('is-loaded');
     return;
   }
 
-  // На мобилках напрямую присваиваем src (браузер сам применит async decoding благодаря decoding="async")
-  img.src = originalSrc;
+  // Вешаем обработчик загрузки ДО установки src
   img.onload = () => {
     img.classList.add('is-loaded');
   };
+
+  // Если картинка уже была в кэше браузера и мгновенно загрузилась
+  if (img.complete && img.naturalWidth > 0) {
+    img.classList.add('is-loaded');
+  }
+
+  // Устанавливаем реальный путь (браузер сам начнет асинхронную загрузку)
+  img.src = originalSrc;
 }
 
 function unmountImagesFromCard(card) {
