@@ -14,5 +14,14 @@
     "status" : "active",
     "subtitle" : "Фестиваль ",
     "title" : "Пикмипати"
+  },
+  {
+    "hero_url" : "https://raw.githubusercontent.com/rusyk96/kitzamarket/main/webp_thumb/nespontann_136.webp",
+    "id" : "kitzamarket",
+    "manifest_url" : "https://raw.githubusercontent.com/rusyk96/kitzamarket/main/manifest.json",
+    "status" : "active",
+    "subtitle" : "Косплей маркет ",
+    "title" : "КИЦА"
   }
+
 ]
