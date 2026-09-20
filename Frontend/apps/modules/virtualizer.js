@@ -105,22 +105,26 @@ function mountImagesInCard(card) {
 
   card.dataset.isMounted = 'true';
 
-  // Функция для проявки фото и отключения скелетона
+  // Функция для проявки: сначала зажигаем картинку, а скелетон гасим ПОСЛЕ анимации
   const revealCard = () => {
+    // 1. Включаем плавную проявляющуюся картинку ПОВЕРХ скелетона
     img.classList.add('is-loaded');
-    card.classList.remove('skeleton-active');
+
+    // 2. Снимаем скелетон с небольшой задержкой (когда картинка уже перекрыла его)
+    setTimeout(() => {
+      card.classList.remove('skeleton-active');
+    }, 200);
   };
 
-  // Если URL уже совпадает и картинка загружена (кэш браузера)
+  // Если из кэша — проявляем мгновенно без задержки
   if (img.src === originalSrc && img.complete && img.naturalWidth > 0) {
-    revealCard();
+    img.classList.add('is-loaded');
+    card.classList.remove('skeleton-active');
     return;
   }
 
-  // Назначаем реальный URL
   img.src = originalSrc;
 
-  // Декодируем растр перед показом для плавности
   if (img.decode) {
     img.decode()
       .then(() => revealCard())

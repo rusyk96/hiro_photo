@@ -57,40 +57,39 @@
 /* 🎯 3. МАСКА СКУИРКЛА НА КАРТИНКЕ */
 .gallery-img,
 .gallery-card img {
+  position: relative;
+  z-index: 3; /* 🚀 Гарантируем, что картинка ЛЕЖИТ ПОВЕРХ скелетона (у скелетона z-index 1 и 2) */
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
   
-  /* 🚀 ИСХОДНОЕ СОСТОЯНИЕ (До загрузки) */
+  /* Исходное состояние */
   opacity: 0;
   transform: scale(0.96);
   
-  /* Плавный мягкий переход проявки и ховер-зума */
+  /* Плавный переход opacity и scale */
   transition: 
-    opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), 
-    transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
+    transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     
   min-width: 0;
   min-height: 0;
 
-  /* ВЕШАЕМ СУПЕРЭЛЛИПС ПРЯМО НА КАРТИНКУ */
   background: paint(superellipse);
   -webkit-mask-image: paint(superellipse);
   mask-image: paint(superellipse);
-  
-  /* Фолбэк для старых браузеров */
   border-radius: 16px; 
 }
 
-/* 🚀 КОГДА КАРТИНКА ПОЛНОСТЬЮ ДЕКОДИРОВАНА И ЗАГРУЖЕНА */
+/* Когда картинка полностью подгрузилась */
 .gallery-img.is-loaded,
 .gallery-card img.is-loaded {
   opacity: 1;
   transform: scale(1);
 }
 
-/* Hover-эффект (Ховер-зум от 1.0 к 1.04) */
+/* Hover-эффект */
 .gallery-card:hover .gallery-img.is-loaded,
 .gallery-card:hover img.is-loaded {
   transform: scale(1.04);
@@ -98,11 +97,9 @@
 
 /* 🎯 4. ШИММЕР СКЕЛЕТОН И ПЛАВНОЕ ПОЯВЛЕНИЕ */
 
-/* Контейнер скелетона (подложка) */
 .gallery-card.skeleton-active {
   position: relative;
   background-color: transparent;
-  animation: skeleton-fade-in 0.3s ease-out forwards;
 }
 
 /* Сам подстилающий плашка-скелетон со сквирклом */
@@ -114,14 +111,13 @@
   z-index: 1;
   transition: opacity 0.3s ease-out;
 
-  /* Применяем Paint Worklet напрямую к подложке */
   background: paint(superellipse);
   -webkit-mask-image: paint(superellipse);
   mask-image: paint(superellipse);
   border-radius: 16px;
 }
 
-/* Блик шиммера, режущийся по той же маске */
+/* Блик шиммера */
 .gallery-card.skeleton-active::after {
   content: '';
   position: absolute;
@@ -142,13 +138,6 @@
   border-radius: 16px;
 }
 
-/* Появление скелетона */
-@keyframes skeleton-fade-in {
-  from { opacity: 0; transform: scale(0.98); }
-  to { opacity: 1; transform: scale(1); }
-}
-
-/* Бесконечный блик */
 @keyframes bento-shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
