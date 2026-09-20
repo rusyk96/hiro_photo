@@ -105,32 +105,24 @@ function mountImagesInCard(card) {
 
   card.dataset.isMounted = 'true';
 
-  // Если картинка уже смонтирована и путь совпадает
+  // Если URL уже совпадает
   if (img.src === originalSrc) {
     img.classList.add('is-loaded');
     return;
   }
 
-  const tempImg = new Image();
-  tempImg.src = originalSrc;
+  // Вешаем обработчик загрузки ДО установки src
+  img.onload = () => {
+    img.classList.add('is-loaded');
+  };
 
-  tempImg.decode()
-    .then(() => {
-      if (card.dataset.inView === 'true') {
-        img.src = originalSrc;
-        img.classList.add('is-loaded');
-      } else {
-        card.dataset.isMounted = 'false';
-      }
-    })
-    .catch(() => {
-      if (card.dataset.inView === 'true') {
-        img.src = originalSrc;
-        img.classList.add('is-loaded');
-      } else {
-        card.dataset.isMounted = 'false';
-      }
-    });
+  // Если картинка уже была в кэше браузера и мгновенно загрузилась
+  if (img.complete && img.naturalWidth > 0) {
+    img.classList.add('is-loaded');
+  }
+
+  // Устанавливаем реальный путь (браузер сам начнет асинхронную загрузку)
+  img.src = originalSrc;
 }
 
 function unmountImagesFromCard(card) {
