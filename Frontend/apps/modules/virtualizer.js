@@ -98,18 +98,14 @@ function mountImagesInCard(card) {
 
   card.dataset.isMounted = 'true';
 
-  // Функция гарантированной проявки
+  // Функция для проявки с гарантированным запуском CSS Transition
   const revealCard = () => {
-    // Ждём следующий кадр отрисовки браузера
+    // 🚀 Форсируем смену кадра отрисовки, чтобы браузер точно применил opacity: 0 до старта transition
     requestAnimationFrame(() => {
-      // Принудительно заставляем WebKit/Gecko зафиксировать начальные стили (opacity: 0, scale: 0.96)
-      void img.offsetHeight;
-
       requestAnimationFrame(() => {
-        // Плавно проявляем фото
         img.classList.add('is-loaded');
 
-        // Снимаем скелетон только после того, как картинка набрала прозрачность
+        // Снимаем подложку скелетона после полного завершения проявки
         setTimeout(() => {
           card.classList.remove('skeleton-active');
         }, 300);
@@ -117,7 +113,7 @@ function mountImagesInCard(card) {
     });
   };
 
-  // Если из кэша
+  // Если из кэша — всё равно прогоняем через revealCard для плавности!
   if (img.src === originalSrc && img.complete && img.naturalWidth > 0) {
     revealCard();
     return;
