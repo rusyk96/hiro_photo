@@ -88,6 +88,14 @@ function handleScrollVelocity() {
 }
 
 function mountImagesInCard(card) {
+  // 🧪 ЭКСПЕРИМЕНТ: Загрузка шаблонов идет, но фотографии НЕ текут
+  // Возвращаем управление до того, как img запросит реальный src
+  return;
+
+  /* 
+     Вся логика проявки и назначения src ниже обесточена.
+     Шаблоны карточек и скелетоны встают в DOM, но сети и растра нет.
+  */
   if (card.dataset.isMounted === 'true') return;
 
   const img = card.querySelector('img');
@@ -99,48 +107,30 @@ function mountImagesInCard(card) {
   card.dataset.isMounted = 'true';
 
   const revealCard = () => {
-    // 🛑 1. Сразу прячем картинку в 0
-    img.style.opacity = '0';
+    void img.offsetHeight;
 
-    // ⏳ 2. Небольшой физический зазор (40мс), чтобы движок успел переварить декодирование
-    setTimeout(() => {
-      
-      // 🚀 3. Первый кадр: регистрируем стартовые стили
-      requestAnimationFrame(() => {
-        void img.offsetHeight; // Принудительный Reflow
+    if (typeof img.getAnimations === 'function') {
+      img.getAnimations().forEach(anim => anim.cancel());
+    }
 
-        // 🚀 4. Второй кадр: браузер 100% отрендерил opacity: 0 в GPU
-        requestAnimationFrame(() => {
-          
-          if (typeof img.getAnimations === 'function') {
-            img.getAnimations().forEach(anim => anim.cancel());
-          }
+    const animation = img.animate(
+      [
+        { opacity: 0, transform: 'scale(0.96) translateZ(0)' },
+        { opacity: 1, transform: 'scale(1) translateZ(0)' }
+      ],
+      {
+        duration: 400,
+        easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
+        fill: 'forwards'
+      }
+    );
 
-          // 🚀 5. Запускаем плавно в 1
-          const animation = img.animate(
-            [
-              { opacity: 0, transform: 'scale(0.96) translateZ(0)' },
-              { opacity: 1, transform: 'scale(1) translateZ(0)' }
-            ],
-            {
-              duration: 400,
-              easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
-              fill: 'forwards'
-            }
-          );
-
-          animation.onfinish = () => {
-            img.classList.add('is-loaded');
-            card.classList.remove('skeleton-active');
-            img.style.opacity = ''; // Снимаем инлайн-стиль
-          };
-        });
-      });
-
-    }, 40); // 40 мс — идеально глазом незаметно, но процессору хватает за глаза
+    animation.onfinish = () => {
+      img.classList.add('is-loaded');
+      card.classList.remove('skeleton-active');
+    };
   };
 
-  // Проверка кэша
   if (img.src === originalSrc && img.complete && img.naturalWidth > 0) {
     revealCard();
     return;
