@@ -13,11 +13,12 @@ const VELOCITY_THRESHOLD = 2.5;
 // Прозрачный 1x1 GIF для освобождения VRAM
 const EMPTY_PIXEL = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
 
-// 🚀 Запас прогрузки: ровно 2 экрана (200vh) сверху и 2 экрана снизу
-// Это обеспечивает плавный скролл с упреждающей загрузкой и быстрым сбросом VRAM
+const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
+
+// Увеличенный запас прогрузки карточек (до появления на экране)
 const OBSERVER_OPTIONS = {
   root: null,
-  rootMargin: '200vh 0px 200vh 0px',
+  rootMargin: '200% 0px 200% 0px',
   threshold: 0
 };
 
@@ -45,7 +46,7 @@ export function initChunkVirtualizer(containerId = 'album-gallery-container') {
         }
       } else {
         card.dataset.inView = 'false';
-        // Выгружаем из VRAM, когда карточка уходит за пределы 2 экранов
+        // Выгружаем из VRAM только когда карточка реально далеко за пределами rootMargin
         unmountImagesFromCard(card);
       }
     });
@@ -110,7 +111,7 @@ function mountImagesInCard(card) {
     card.classList.remove('skeleton-active');
   };
 
-  // Если URL уже совпадает и картинка загружена (из кэша)
+  // Если URL уже совпадает и картинка загружена (кэш браузера)
   if (img.src === originalSrc && img.complete && img.naturalWidth > 0) {
     revealCard();
     return;
