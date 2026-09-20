@@ -98,22 +98,22 @@ function mountImagesInCard(card) {
 
   card.dataset.isMounted = 'true';
 
-  // Функция для проявки с гарантированным запуском CSS Transition
+  // Функция для 100% плавной проявки
   const revealCard = () => {
-    // 🚀 Форсируем смену кадра отрисовки, чтобы браузер точно применил opacity: 0 до старта transition
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        img.classList.add('is-loaded');
+    // 🚀 Принудительный Reflow: заставляем браузер применить opacity: 0
+    void img.offsetHeight; 
 
-        // Снимаем подложку скелетона после полного завершения проявки
-        setTimeout(() => {
-          card.classList.remove('skeleton-active');
-        }, 300);
-      });
+    requestAnimationFrame(() => {
+      img.classList.add('is-loaded');
+
+      // Снимаем подложку скелетона после проявки
+      setTimeout(() => {
+        card.classList.remove('skeleton-active');
+      }, 300);
     });
   };
 
-  // Если из кэша — всё равно прогоняем через revealCard для плавности!
+  // Если фото загружено (в т.ч. из кэша) — всё равно прогоняем через Reflow
   if (img.src === originalSrc && img.complete && img.naturalWidth > 0) {
     revealCard();
     return;
