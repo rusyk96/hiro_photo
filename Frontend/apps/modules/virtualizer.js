@@ -98,16 +98,17 @@ function mountImagesInCard(card) {
 
   card.dataset.isMounted = 'true';
 
+  // 🚀 Проявка через Web Animations API (WAAPI)
   const revealCard = () => {
-    // 1. Фиксируем Reflow
+    // 1. Форсируем пересчет макета, чтобы фиксация стартовых пикселей произошла на GPU
     void img.offsetHeight;
 
-    // 2. Очищаем старые анимации с самой картинки
+    // 2. Отменяем предыдущие анимации на случай повторного маунта
     if (typeof img.getAnimations === 'function') {
       img.getAnimations().forEach(anim => anim.cancel());
     }
 
-    // 3. Плавно проявляем ТОЛЬКО картинку поверх скелетона
+    // 3. Запускаем аппаратную GPU-анимацию прямо из JS
     const animation = img.animate(
       [
         { opacity: 0, transform: 'scale(0.96) translateZ(0)' },
@@ -116,11 +117,11 @@ function mountImagesInCard(card) {
       {
         duration: 400,
         easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
-        fill: 'forwards'
+        fill: 'forwards' // Зафиксировать 100% opacity и scale(1)
       }
     );
 
-    // 4. Как только картинка на 100% накрыла скелетон — просто убираем его подложку
+    // 4. Как только GPU отрисовал последний кадр — закрепляем стили и гасим скелетон
     animation.onfinish = () => {
       img.classList.add('is-loaded');
       card.classList.remove('skeleton-active');
@@ -135,6 +136,7 @@ function mountImagesInCard(card) {
 
   img.src = originalSrc;
 
+  // Распаковка и запуск
   if (img.decode) {
     img.decode()
       .then(() => revealCard())
@@ -151,19 +153,14 @@ function unmountImagesFromCard(card) {
   const img = card.querySelector('img');
   if (!img) return;
 
-  // Отменяем анимации и сбрасываем стили
-  if (typeof img.getAnimations === 'function') {
-    img.getAnimations().forEach(anim => anim.cancel());
-  }
-
+  // Освобождаем ресурсы VRAM
   img.src = EMPTY_PIXEL;
   img.removeAttribute('src'); 
   img.classList.remove('is-loaded');
 
-  // Возвращаем скелетон под следующий проход
+  // Возвращаем скелетон для повторного скролла
   card.classList.add('skeleton-active');
 }
-
 
 // 🚀 ЭКСПОРТ-АЛИАС (для поддержки импортов)
 export { initChunkVirtualizer as initVirtualizer };
