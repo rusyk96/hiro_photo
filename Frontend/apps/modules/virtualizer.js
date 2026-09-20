@@ -98,34 +98,42 @@ function mountImagesInCard(card) {
 
   card.dataset.isMounted = 'true';
 
-  // 🚀 Проявка через Web Animations API (WAAPI)
   const revealCard = () => {
-    // 1. Форсируем пересчет макета, чтобы фиксация стартовых пикселей произошла на GPU
-    void img.offsetHeight;
+    // 🛑 ШАГ 1: Принудительно сбрасываем прозрачность в 0
+    img.style.opacity = '0';
 
-    // 2. Отменяем предыдущие анимации на случай повторного маунта
-    if (typeof img.getAnimations === 'function') {
-      img.getAnimations().forEach(anim => anim.cancel());
-    }
+    // 🚀 ШАГ 2: Первый кадр — фиксируем стили в движке
+    requestAnimationFrame(() => {
+      void img.offsetHeight; // Бьём по рукам Reflow
 
-    // 3. Запускаем аппаратную GPU-анимацию прямо из JS
-    const animation = img.animate(
-      [
-        { opacity: 0, transform: 'scale(0.96) translateZ(0)' },
-        { opacity: 1, transform: 'scale(1) translateZ(0)' }
-      ],
-      {
-        duration: 400,
-        easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
-        fill: 'forwards' // Зафиксировать 100% opacity и scale(1)
-      }
-    );
+      // 🚀 ШАГ 3: Второй кадр — браузер ГАРАНТИРОВАННО нарисовал opacity: 0 на экранах
+      requestAnimationFrame(() => {
+        
+        // Очищаем прошлые WAAPI анимации
+        if (typeof img.getAnimations === 'function') {
+          img.getAnimations().forEach(anim => anim.cancel());
+        }
 
-    // 4. Как только GPU отрисовал последний кадр — закрепляем стили и гасим скелетон
-    animation.onfinish = () => {
-      img.classList.add('is-loaded');
-      card.classList.remove('skeleton-active');
-    };
+        // 🚀 ШАГ 4: И только ТЕПЕРЬ запускаем проявку в 1!
+        const animation = img.animate(
+          [
+            { opacity: 0, transform: 'scale(0.96) translateZ(0)' },
+            { opacity: 1, transform: 'scale(1) translateZ(0)' }
+          ],
+          {
+            duration: 400,
+            easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
+            fill: 'forwards'
+          }
+        );
+
+        animation.onfinish = () => {
+          img.classList.add('is-loaded');
+          card.classList.remove('skeleton-active');
+          img.style.opacity = ''; // Снимаем инлайн-стиль, так как зафиксировал WAAPI и класс
+        };
+      });
+    });
   };
 
   // Проверка кэша
@@ -136,7 +144,6 @@ function mountImagesInCard(card) {
 
   img.src = originalSrc;
 
-  // Распаковка и запуск
   if (img.decode) {
     img.decode()
       .then(() => revealCard())
