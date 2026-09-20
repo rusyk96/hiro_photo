@@ -98,17 +98,14 @@ function mountImagesInCard(card) {
 
   card.dataset.isMounted = 'true';
 
-  // 🚀 Проявка через Web Animations API (WAAPI)
+  // 🚀 Проявка картинки поверх скелетона через WAAPI
   const revealCard = () => {
-    // 1. Форсируем пересчет макета, чтобы фиксация стартовых пикселей произошла на GPU
-    void img.offsetHeight;
+    void img.offsetHeight; // Reflow для фиксации базового opacity: 0
 
-    // 2. Отменяем предыдущие анимации на случай повторного маунта
     if (typeof img.getAnimations === 'function') {
       img.getAnimations().forEach(anim => anim.cancel());
     }
 
-    // 3. Запускаем аппаратную GPU-анимацию прямо из JS
     const animation = img.animate(
       [
         { opacity: 0, transform: 'scale(0.96) translateZ(0)' },
@@ -117,16 +114,30 @@ function mountImagesInCard(card) {
       {
         duration: 400,
         easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
-        fill: 'forwards' // Зафиксировать 100% opacity и scale(1)
+        fill: 'forwards'
       }
     );
 
-    // 4. Как только GPU отрисовал последний кадр — закрепляем стили и гасим скелетон
     animation.onfinish = () => {
       img.classList.add('is-loaded');
-      card.classList.remove('skeleton-active');
+      
+      // Плавное угасание скелетона (чтобы он не пропадал резко)
+      if (typeof card.animate === 'function') {
+        const skelFade = card.animate(
+          [{ opacity: 1 }, { opacity: 0 }],
+          { duration: 200, easing: 'ease-out' }
+        );
+        skelFade.onfinish = () => card.classList.remove('skeleton-active');
+      } else {
+        card.classList.remove('skeleton-active');
+      }
     };
   };
+
+  // Гарантируем, что скелетон подложкой активен перед загрузкой картинки
+  if (!card.classList.contains('skeleton-active') && !img.classList.contains('is-loaded')) {
+    card.classList.add('skeleton-active');
+  }
 
   // Проверка кэша
   if (img.src === originalSrc && img.complete && img.naturalWidth > 0) {
@@ -136,7 +147,6 @@ function mountImagesInCard(card) {
 
   img.src = originalSrc;
 
-  // Распаковка и запуск
   if (img.decode) {
     img.decode()
       .then(() => revealCard())
@@ -145,6 +155,26 @@ function mountImagesInCard(card) {
     img.onload = () => revealCard();
     img.onerror = () => card.classList.remove('skeleton-active');
   }
+}
+
+function unmountImagesFromCard(card) {
+  card.dataset.isMounted = 'false';
+
+  const img = card.querySelector('img');
+  if (!img) return;
+
+  // 1. Отменяем запущенные WAAPI-анимации проявки
+  if (typeof img.getAnimations === 'function') {
+    img.getAnimations().forEach(anim => anim.cancel());
+  }
+
+  // 2. Сбрасываем состояния растра
+  img.src = EMPTY_PIXEL;
+  img.removeAttribute('src'); 
+  img.classList.remove('is-loaded');
+
+  // 3. Возвращаем скелетон для следующего появления
+  card.classList.add('skeleton-active');
 }
 
 function unmountImagesFromCard(card) {
