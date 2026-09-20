@@ -98,14 +98,16 @@ function mountImagesInCard(card) {
 
   card.dataset.isMounted = 'true';
 
-  // 🚀 Проявка картинки поверх скелетона через WAAPI
   const revealCard = () => {
-    void img.offsetHeight; // Reflow для фиксации базового opacity: 0
+    // 1. Фиксируем Reflow
+    void img.offsetHeight;
 
+    // 2. Очищаем старые анимации с самой картинки
     if (typeof img.getAnimations === 'function') {
       img.getAnimations().forEach(anim => anim.cancel());
     }
 
+    // 3. Плавно проявляем ТОЛЬКО картинку поверх скелетона
     const animation = img.animate(
       [
         { opacity: 0, transform: 'scale(0.96) translateZ(0)' },
@@ -118,26 +120,12 @@ function mountImagesInCard(card) {
       }
     );
 
+    // 4. Как только картинка на 100% накрыла скелетон — просто убираем его подложку
     animation.onfinish = () => {
       img.classList.add('is-loaded');
-      
-      // Плавное угасание скелетона (чтобы он не пропадал резко)
-      if (typeof card.animate === 'function') {
-        const skelFade = card.animate(
-          [{ opacity: 1 }, { opacity: 0 }],
-          { duration: 200, easing: 'ease-out' }
-        );
-        skelFade.onfinish = () => card.classList.remove('skeleton-active');
-      } else {
-        card.classList.remove('skeleton-active');
-      }
+      card.classList.remove('skeleton-active');
     };
   };
-
-  // Гарантируем, что скелетон подложкой активен перед загрузкой картинки
-  if (!card.classList.contains('skeleton-active') && !img.classList.contains('is-loaded')) {
-    card.classList.add('skeleton-active');
-  }
 
   // Проверка кэша
   if (img.src === originalSrc && img.complete && img.naturalWidth > 0) {
@@ -163,19 +151,19 @@ function unmountImagesFromCard(card) {
   const img = card.querySelector('img');
   if (!img) return;
 
-  // 1. Отменяем запущенные WAAPI-анимации проявки
+  // Отменяем анимации и сбрасываем стили
   if (typeof img.getAnimations === 'function') {
     img.getAnimations().forEach(anim => anim.cancel());
   }
 
-  // 2. Сбрасываем состояния растра
   img.src = EMPTY_PIXEL;
   img.removeAttribute('src'); 
   img.classList.remove('is-loaded');
 
-  // 3. Возвращаем скелетон для следующего появления
+  // Возвращаем скелетон под следующий проход
   card.classList.add('skeleton-active');
 }
+
 
 // 🚀 ЭКСПОРТ-АЛИАС (для поддержки импортов)
 export { initChunkVirtualizer as initVirtualizer };
