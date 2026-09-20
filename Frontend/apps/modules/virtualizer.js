@@ -99,41 +99,45 @@ function mountImagesInCard(card) {
   card.dataset.isMounted = 'true';
 
   const revealCard = () => {
-    // 🛑 ШАГ 1: Принудительно сбрасываем прозрачность в 0
+    // 🛑 1. Сразу прячем картинку в 0
     img.style.opacity = '0';
 
-    // 🚀 ШАГ 2: Первый кадр — фиксируем стили в движке
-    requestAnimationFrame(() => {
-      void img.offsetHeight; // Бьём по рукам Reflow
-
-      // 🚀 ШАГ 3: Второй кадр — браузер ГАРАНТИРОВАННО нарисовал opacity: 0 на экранах
+    // ⏳ 2. Небольшой физический зазор (40мс), чтобы движок успел переварить декодирование
+    setTimeout(() => {
+      
+      // 🚀 3. Первый кадр: регистрируем стартовые стили
       requestAnimationFrame(() => {
-        
-        // Очищаем прошлые WAAPI анимации
-        if (typeof img.getAnimations === 'function') {
-          img.getAnimations().forEach(anim => anim.cancel());
-        }
+        void img.offsetHeight; // Принудительный Reflow
 
-        // 🚀 ШАГ 4: И только ТЕПЕРЬ запускаем проявку в 1!
-        const animation = img.animate(
-          [
-            { opacity: 0, transform: 'scale(0.96) translateZ(0)' },
-            { opacity: 1, transform: 'scale(1) translateZ(0)' }
-          ],
-          {
-            duration: 400,
-            easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
-            fill: 'forwards'
+        // 🚀 4. Второй кадр: браузер 100% отрендерил opacity: 0 в GPU
+        requestAnimationFrame(() => {
+          
+          if (typeof img.getAnimations === 'function') {
+            img.getAnimations().forEach(anim => anim.cancel());
           }
-        );
 
-        animation.onfinish = () => {
-          img.classList.add('is-loaded');
-          card.classList.remove('skeleton-active');
-          img.style.opacity = ''; // Снимаем инлайн-стиль, так как зафиксировал WAAPI и класс
-        };
+          // 🚀 5. Запускаем плавно в 1
+          const animation = img.animate(
+            [
+              { opacity: 0, transform: 'scale(0.96) translateZ(0)' },
+              { opacity: 1, transform: 'scale(1) translateZ(0)' }
+            ],
+            {
+              duration: 400,
+              easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
+              fill: 'forwards'
+            }
+          );
+
+          animation.onfinish = () => {
+            img.classList.add('is-loaded');
+            card.classList.remove('skeleton-active');
+            img.style.opacity = ''; // Снимаем инлайн-стиль
+          };
+        });
       });
-    });
+
+    }, 40); // 40 мс — идеально глазом незаметно, но процессору хватает за глаза
   };
 
   // Проверка кэша
