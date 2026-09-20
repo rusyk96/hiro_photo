@@ -18,7 +18,7 @@ const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
 // Увеличенный запас прогрузки карточек (до появления на экране)
 const OBSERVER_OPTIONS = {
   root: null,
-  rootMargin: isMobile ? '800px 0px 800px 0px' : '2500px 0px 2500px 0px',
+  rootMargin: isMobile ? '1000px 0px 1000px 0px' : '2500px 0px 2500px 0px',
   threshold: 0
 };
 
