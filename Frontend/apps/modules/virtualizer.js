@@ -177,20 +177,5 @@ function unmountImagesFromCard(card) {
   card.classList.add('skeleton-active');
 }
 
-function unmountImagesFromCard(card) {
-  card.dataset.isMounted = 'false';
-
-  const img = card.querySelector('img');
-  if (!img) return;
-
-  // Освобождаем ресурсы VRAM
-  img.src = EMPTY_PIXEL;
-  img.removeAttribute('src'); 
-  img.classList.remove('is-loaded');
-
-  // Возвращаем скелетон для повторного скролла
-  card.classList.add('skeleton-active');
-}
-
 // 🚀 ЭКСПОРТ-АЛИАС (для поддержки импортов)
 export { initChunkVirtualizer as initVirtualizer };
