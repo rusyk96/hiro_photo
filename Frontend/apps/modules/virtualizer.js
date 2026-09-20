@@ -18,7 +18,7 @@ const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
 // Увеличенный запас прогрузки карточек (до появления на экране)
 const OBSERVER_OPTIONS = {
   root: null,
-  rootMargin: isMobile ? '2000px 0px 2000px 0px' : '3500px 0px 3500px 0px',
+  rootMargin: isMobile ? '800px 0px 800px 0px' : '2500px 0px 2500px 0px',
   threshold: 0
 };
 
@@ -103,34 +103,21 @@ function mountImagesInCard(card) {
   const originalSrc = img.dataset.originalSrc;
   if (!originalSrc) return;
 
+  // Если карточка уже улетела из поля зрения — даже не начинаем качать/декодировать!
+  if (card.dataset.inView !== 'true') return;
+
   card.dataset.isMounted = 'true';
 
-  // Если картинка уже смонтирована и путь совпадает
   if (img.src === originalSrc) {
     img.classList.add('is-loaded');
     return;
   }
 
-  const tempImg = new Image();
-  tempImg.src = originalSrc;
-
-  tempImg.decode()
-    .then(() => {
-      if (card.dataset.inView === 'true') {
-        img.src = originalSrc;
-        img.classList.add('is-loaded');
-      } else {
-        card.dataset.isMounted = 'false';
-      }
-    })
-    .catch(() => {
-      if (card.dataset.inView === 'true') {
-        img.src = originalSrc;
-        img.classList.add('is-loaded');
-      } else {
-        card.dataset.isMounted = 'false';
-      }
-    });
+  // На мобилках напрямую присваиваем src (браузер сам применит async decoding благодаря decoding="async")
+  img.src = originalSrc;
+  img.onload = () => {
+    img.classList.add('is-loaded');
+  };
 }
 
 function unmountImagesFromCard(card) {
