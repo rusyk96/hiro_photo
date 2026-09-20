@@ -95,7 +95,6 @@ function mountVisibleCardsOnly() {
 }
 
 function mountImagesInCard(card) {
-  // Если уже смонтирована и картинка стоит — ничего не делаем
   if (card.dataset.isMounted === 'true') return;
 
   const img = card.querySelector('img');
@@ -104,32 +103,31 @@ function mountImagesInCard(card) {
   const originalSrc = img.dataset.originalSrc;
   if (!originalSrc) return;
 
-  // Помечаем, что процесс монтирования начался
   card.dataset.isMounted = 'true';
 
-  // Если URL уже совпадает (например, сработал кэш браузера)
-  if (img.src === originalSrc) {
+  // Функция для проявки фото и отключения скелетона
+  const revealCard = () => {
     img.classList.add('is-loaded');
+    card.classList.remove('skeleton-active');
+  };
+
+  // Если URL уже совпадает и картинка загружена (кэш браузера)
+  if (img.src === originalSrc && img.complete && img.naturalWidth > 0) {
+    revealCard();
     return;
   }
 
-  // 1. Сразу ставим src в <img> тег (браузер сам начнет параллельный async поток)
+  // Назначаем реальный URL
   img.src = originalSrc;
 
-  // 2. Используем decode() напрямую на самом теге <img> в DOM
+  // Декодируем растр перед показом для плавности
   if (img.decode) {
     img.decode()
-      .then(() => {
-        // Как только декодировалось — плавно проявляем через CSS
-        img.classList.add('is-loaded');
-      })
-      .catch(() => {
-        // Запасной фоллбек для старых браузеров или ошибок
-        img.classList.add('is-loaded');
-      });
+      .then(() => revealCard())
+      .catch(() => revealCard());
   } else {
-    // Фоллбек для браузеров без поддержки HTMLImageElement.decode()
-    img.onload = () => img.classList.add('is-loaded');
+    img.onload = () => revealCard();
+    img.onerror = () => card.classList.remove('skeleton-active');
   }
 }
 
@@ -139,10 +137,13 @@ function unmountImagesFromCard(card) {
   const img = card.querySelector('img');
   if (!img) return;
 
-  // Освобождаем видеопамять (VRAM)
+  // Освобождаем ресурсы VRAM
   img.src = EMPTY_PIXEL;
   img.removeAttribute('src'); 
   img.classList.remove('is-loaded');
+
+  // Возвращаем скелетон для повторного скролла
+  card.classList.add('skeleton-active');
 }
 
 // 🚀 ЭКСПОРТ-АЛИАС (для поддержки импортов)
