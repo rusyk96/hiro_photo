@@ -96,23 +96,34 @@ function mountImagesInCard(card) {
   const originalSrc = img.dataset.originalSrc;
   if (!originalSrc) return;
 
-  card.dataset.isMounted = 'true';
+  // 🚨 ЛОГ 1: Проверяем, сброшен ли класс при прошлом скрытии карточки
+  if (img.classList.contains('is-loaded')) {
+    console.warn('⚠️ [ПРОПУСК АНИМАЦИИ]: Класс is-loaded не был снят при unmount!', originalSrc.substring(0, 35));
+    // Принудительно чистим, чтобы спасти ситуацию
+    img.classList.remove('is-loaded'); 
+  }
 
-  // Функция для проявки с гарантированным запуском CSS Transition
-  const revealCard = () => {
-    // 1. Ждем старта ближайшего кадра отрисовки
+  card.dataset.isMounted = 'true';
+  const mountTime = performance.now();
+
+  const revealCard = (sourceType) => {
+    const revealTime = performance.now();
+    const decodeDuration = Math.round(revealTime - mountTime);
+
     requestAnimationFrame(() => {
       
-      // 🚀 КРИТИЧЕСКИ ВАЖНО ДЛЯ МОБИЛОК: Принудительный Reflow.
-      // Заставляем движок прочитать высоту. В этот момент браузер понимает: 
-      // "Ага, мне нужно применить базовые стили (opacity: 0, scale: 0.96) прямо сейчас!"
-      void img.offsetHeight;
+      // 🚨 ЛОГ 2: Проверяем, видит ли браузер геометрию
+      const currentHeight = img.offsetHeight;
+      if (currentHeight === 0) {
+        console.error(`❌ [ВЫСОТА 0]: Браузер не успел отрисовать карточку до проявки (${sourceType})`, originalSrc.substring(0, 35));
+      }
 
-      // 2. И только в следующем такте вешаем класс проявки
       requestAnimationFrame(() => {
         img.classList.add('is-loaded');
+        
+        // 🚨 ЛОГ 3: Успешная проявка и время затраченное на нее
+        console.log(`✅ [ПРОЯВКА: ${sourceType}] за ${decodeDuration}ms | Высота: ${currentHeight}px`, originalSrc.substring(0, 35));
 
-        // Снимаем подложку скелетона после полного завершения проявки
         setTimeout(() => {
           card.classList.remove('skeleton-active');
         }, 300);
@@ -120,21 +131,28 @@ function mountImagesInCard(card) {
     });
   };
 
-  // Если из кэша — всё равно прогоняем через revealCard для плавности!
+  // Проверка кэша
   if (img.src === originalSrc && img.complete && img.naturalWidth > 0) {
-    revealCard();
+    revealCard('CACHE');
     return;
   }
 
   img.src = originalSrc;
 
+  // Обработка загрузки
   if (img.decode) {
     img.decode()
-      .then(() => revealCard())
-      .catch(() => revealCard());
+      .then(() => revealCard('DECODE_SUCCESS'))
+      .catch((err) => {
+        console.warn('⚠️ [DECODE_ERROR]:', err);
+        revealCard('DECODE_CATCH');
+      });
   } else {
-    img.onload = () => revealCard();
-    img.onerror = () => card.classList.remove('skeleton-active');
+    img.onload = () => revealCard('ONLOAD');
+    img.onerror = () => {
+      console.error('❌ [ОШИБКА ЗАГРУЗКИ ФОТО]:', originalSrc);
+      card.classList.remove('skeleton-active');
+    };
   }
 }
 
