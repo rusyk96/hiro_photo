@@ -95,6 +95,7 @@ function mountVisibleCardsOnly() {
 }
 
 function mountImagesInCard(card) {
+  // Если уже смонтирована и картинка стоит — ничего не делаем
   if (card.dataset.isMounted === 'true') return;
 
   const img = card.querySelector('img');
@@ -103,34 +104,33 @@ function mountImagesInCard(card) {
   const originalSrc = img.dataset.originalSrc;
   if (!originalSrc) return;
 
+  // Помечаем, что процесс монтирования начался
   card.dataset.isMounted = 'true';
 
-  // Если картинка уже есть в DOM и совпадает — просто включаем класс
+  // Если URL уже совпадает (например, сработал кэш браузера)
   if (img.src === originalSrc) {
     img.classList.add('is-loaded');
     return;
   }
 
-  const tempImg = new Image();
-  tempImg.src = originalSrc;
+  // 1. Сразу ставим src в <img> тег (браузер сам начнет параллельный async поток)
+  img.src = originalSrc;
 
-  tempImg.decode()
-    .then(() => {
-      if (card.dataset.inView === 'true') {
-        img.src = originalSrc;
+  // 2. Используем decode() напрямую на самом теге <img> в DOM
+  if (img.decode) {
+    img.decode()
+      .then(() => {
+        // Как только декодировалось — плавно проявляем через CSS
         img.classList.add('is-loaded');
-      } else {
-        card.dataset.isMounted = 'false';
-      }
-    })
-    .catch(() => {
-      if (card.dataset.inView === 'true') {
-        img.src = originalSrc;
+      })
+      .catch(() => {
+        // Запасной фоллбек для старых браузеров или ошибок
         img.classList.add('is-loaded');
-      } else {
-        card.dataset.isMounted = 'false';
-      }
-    });
+      });
+  } else {
+    // Фоллбек для браузеров без поддержки HTMLImageElement.decode()
+    img.onload = () => img.classList.add('is-loaded');
+  }
 }
 
 function unmountImagesFromCard(card) {
