@@ -95,22 +95,27 @@
   transform: scale(1.04);
 }
 
-/* 🎯 4. ШИММЕР СКЕЛЕТОН И ПЛАВНОЕ ПОЯВЛЕНИЕ */
+/* 🎯 4. ПЛАВНОЕ ПОЯВЛЕНИЕ СКЕЛЕТОНА И ПОДЛОЖКИ */
 
 .gallery-card.skeleton-active {
   position: relative;
   background-color: transparent;
 }
 
-/* Блик шиммера */
-/* Убираем жесткий блик и ставим мягкое импульсное дыхание */
+/* Сам подстилающий плашка-скелетон со сквирклом */
 .gallery-card.skeleton-active::before {
   content: '';
   position: absolute;
   inset: 0;
   z-index: 1;
-  background-color: #161616;
-  animation: bento-pulse 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  background-color: #121212;
+
+  /* 🚀 ДВА В ОДНОМ: 
+     1. skeleton-appear — однократная плавная проявка и микро-зум при появлении (0.35s)
+     2. bento-pulse — бесконечное мягкое «дыхание» подложки */
+  animation: 
+    skeleton-appear 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards,
+    bento-pulse 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 
   background: paint(superellipse);
   -webkit-mask-image: paint(superellipse);
@@ -118,16 +123,24 @@
   border-radius: 16px;
 }
 
-/* Полностью убираем псевдоэлемент ::after */
-.gallery-card.skeleton-active::after {
-  display: none;
+/* Плавная отрисовка самой подложки */
+@keyframes skeleton-appear {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
+/* Бесконечное тёмное «дыхание» */
 @keyframes bento-pulse {
   0%, 100% {
     background-color: #121212;
   }
   50% {
-    background-color: #222222;
+    background-color: #202020;
   }
 }
