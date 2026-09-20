@@ -96,63 +96,54 @@ function mountImagesInCard(card) {
   const originalSrc = img.dataset.originalSrc;
   if (!originalSrc) return;
 
-  // 🚨 ЛОГ 1: Проверяем, сброшен ли класс при прошлом скрытии карточки
-  if (img.classList.contains('is-loaded')) {
-    console.warn('⚠️ [ПРОПУСК АНИМАЦИИ]: Класс is-loaded не был снят при unmount!', originalSrc.substring(0, 35));
-    // Принудительно чистим, чтобы спасти ситуацию
-    img.classList.remove('is-loaded'); 
-  }
-
   card.dataset.isMounted = 'true';
-  const mountTime = performance.now();
 
-  const revealCard = (sourceType) => {
-    const revealTime = performance.now();
-    const decodeDuration = Math.round(revealTime - mountTime);
+  // 🚀 Проявка через Web Animations API (WAAPI)
+  const revealCard = () => {
+    // 1. Форсируем пересчет макета, чтобы фиксация стартовых пикселей произошла на GPU
+    void img.offsetHeight;
 
-    requestAnimationFrame(() => {
-      
-      // 🚨 ЛОГ 2: Проверяем, видит ли браузер геометрию
-      const currentHeight = img.offsetHeight;
-      if (currentHeight === 0) {
-        console.error(`❌ [ВЫСОТА 0]: Браузер не успел отрисовать карточку до проявки (${sourceType})`, originalSrc.substring(0, 35));
+    // 2. Отменяем предыдущие анимации на случай повторного маунта
+    if (typeof img.getAnimations === 'function') {
+      img.getAnimations().forEach(anim => anim.cancel());
+    }
+
+    // 3. Запускаем аппаратную GPU-анимацию прямо из JS
+    const animation = img.animate(
+      [
+        { opacity: 0, transform: 'scale(0.96) translateZ(0)' },
+        { opacity: 1, transform: 'scale(1) translateZ(0)' }
+      ],
+      {
+        duration: 400,
+        easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
+        fill: 'forwards' // Зафиксировать 100% opacity и scale(1)
       }
+    );
 
-      requestAnimationFrame(() => {
-        img.classList.add('is-loaded');
-        
-        // 🚨 ЛОГ 3: Успешная проявка и время затраченное на нее
-        console.log(`✅ [ПРОЯВКА: ${sourceType}] за ${decodeDuration}ms | Высота: ${currentHeight}px`, originalSrc.substring(0, 35));
-
-        setTimeout(() => {
-          card.classList.remove('skeleton-active');
-        }, 300);
-      });
-    });
+    // 4. Как только GPU отрисовал последний кадр — закрепляем стили и гасим скелетон
+    animation.onfinish = () => {
+      img.classList.add('is-loaded');
+      card.classList.remove('skeleton-active');
+    };
   };
 
   // Проверка кэша
   if (img.src === originalSrc && img.complete && img.naturalWidth > 0) {
-    revealCard('CACHE');
+    revealCard();
     return;
   }
 
   img.src = originalSrc;
 
-  // Обработка загрузки
+  // Распаковка и запуск
   if (img.decode) {
     img.decode()
-      .then(() => revealCard('DECODE_SUCCESS'))
-      .catch((err) => {
-        console.warn('⚠️ [DECODE_ERROR]:', err);
-        revealCard('DECODE_CATCH');
-      });
+      .then(() => revealCard())
+      .catch(() => revealCard());
   } else {
-    img.onload = () => revealCard('ONLOAD');
-    img.onerror = () => {
-      console.error('❌ [ОШИБКА ЗАГРУЗКИ ФОТО]:', originalSrc);
-      card.classList.remove('skeleton-active');
-    };
+    img.onload = () => revealCard();
+    img.onerror = () => card.classList.remove('skeleton-active');
   }
 }
 
