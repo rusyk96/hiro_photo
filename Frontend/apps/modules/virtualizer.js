@@ -164,13 +164,21 @@ function unmountImagesFromCard(card) {
   const img = card.querySelector('img');
   if (!img) return;
 
-  // Освобождаем ресурсы VRAM
-  img.src = EMPTY_PIXEL;
-  img.removeAttribute('src'); 
+  // 1. Отменяем текущие WAAPI-анимации проявки, если они еще шли
+  if (typeof img.getAnimations === 'function') {
+    img.getAnimations().forEach(anim => anim.cancel());
+  }
+
+  // 2. Снимаем с картинки инлайн-стили и класс проявки
+  img.style.opacity = '0';
   img.classList.remove('is-loaded');
 
-  // Возвращаем скелетон для повторного скролла
+  // 3. Возвращаем скелетон, но МГНОВЕННО (без вызова skeleton-appear)
   card.classList.add('skeleton-active');
+
+  // 4. Освобождаем память VRAM от тяжелого растра
+  img.src = EMPTY_PIXEL;
+  img.removeAttribute('src');
 }
 
 // 🚀 ЭКСПОРТ-АЛИАС (для поддержки импортов)
