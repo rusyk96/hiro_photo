@@ -87,15 +87,12 @@ function handleScrollVelocity() {
   }, 100);
 }
 
-function mountImagesInCard(card) {
-  // 🧪 ЭКСПЕРИМЕНТ: Загрузка шаблонов идет, но фотографии НЕ текут
-  // Возвращаем управление до того, как img запросит реальный src
-  return;
+function mountVisibleCardsOnly() {
+  const visibleCards = document.querySelectorAll('.gallery-card[data-in-view="true"]');
+  visibleCards.forEach((card) => mountImagesInCard(card));
+}
 
-  /* 
-     Вся логика проявки и назначения src ниже обесточена.
-     Шаблоны карточек и скелетоны встают в DOM, но сети и растра нет.
-  */
+function mountImagesInCard(card) {
   if (card.dataset.isMounted === 'true') return;
 
   const img = card.querySelector('img');
@@ -107,30 +104,53 @@ function mountImagesInCard(card) {
   card.dataset.isMounted = 'true';
 
   const revealCard = () => {
-    void img.offsetHeight;
+    // 1. Детектируем ориентацию карточки/изображения
+    const isVertical = card.offsetHeight > card.offsetWidth || 
+                       (img.naturalHeight && img.naturalHeight > img.naturalWidth);
 
-    if (typeof img.getAnimations === 'function') {
-      img.getAnimations().forEach(anim => anim.cancel());
-    }
+    // 2. ВАРИАТИВНЫЙ БУФЕР: разная задержка и параметры проявки
+    const delay = isVertical ? 70 : 40;            // Для вертикалок даем больше времени на расчёт Houdini/Reflow
+    const duration = isVertical ? 550 : 400;       // Вертикалки проявляем чуть мягче
+    const startScale = isVertical ? 0.98 : 0.96;  // Амплитуда масштабирования
 
-    const animation = img.animate(
-      [
-        { opacity: 0, transform: 'scale(0.96) translateZ(0)' },
-        { opacity: 1, transform: 'scale(1) translateZ(0)' }
-      ],
-      {
-        duration: 400,
-        easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
-        fill: 'forwards'
-      }
-    );
+    // Фиксируем стартовую прозрачность до запуска кадра
+    img.style.opacity = '0';
 
-    animation.onfinish = () => {
-      img.classList.add('is-loaded');
-      card.classList.remove('skeleton-active');
-    };
+    // ⏳ 3. Применяем вариативный таймаут-буфер
+    setTimeout(() => {
+      // 🚀 4. Двойной rAF для гарантированной отрисовки нулевого кадра в GPU
+      requestAnimationFrame(() => {
+        void img.offsetHeight; // Reflow-фиксация
+
+        requestAnimationFrame(() => {
+          if (typeof img.getAnimations === 'function') {
+            img.getAnimations().forEach(anim => anim.cancel());
+          }
+
+          // 🚀 5. Аппаратный запуск WAAPI
+          const animation = img.animate(
+            [
+              { opacity: 0, transform: `scale(${startScale}) translateZ(0)` },
+              { opacity: 1, transform: 'scale(1) translateZ(0)' }
+            ],
+            {
+              duration: duration,
+              easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
+              fill: 'forwards'
+            }
+          );
+
+          animation.onfinish = () => {
+            img.classList.add('is-loaded');
+            card.classList.remove('skeleton-active');
+            img.style.opacity = '';
+          };
+        });
+      });
+    }, delay);
   };
 
+  // Проверка кэша
   if (img.src === originalSrc && img.complete && img.naturalWidth > 0) {
     revealCard();
     return;
@@ -154,7 +174,7 @@ function unmountImagesFromCard(card) {
   const img = card.querySelector('img');
   if (!img) return;
 
-  // 1. Отменяем текущие WAAPI-анимации проявки, если они еще шли
+  // 1. Отменяем текущие WAAPI-анимации проявки
   if (typeof img.getAnimations === 'function') {
     img.getAnimations().forEach(anim => anim.cancel());
   }
@@ -163,10 +183,10 @@ function unmountImagesFromCard(card) {
   img.style.opacity = '0';
   img.classList.remove('is-loaded');
 
-  // 3. Возвращаем скелетон, но МГНОВЕННО (без вызова skeleton-appear)
+  // 3. Возвращаем скелетон мгновенно без повторной проявки
   card.classList.add('skeleton-active');
 
-  // 4. Освобождаем память VRAM от тяжелого растра
+  // 4. Освобождаем память VRAM от растра
   img.src = EMPTY_PIXEL;
   img.removeAttribute('src');
 }
