@@ -8,9 +8,9 @@
     "title" : "не спонтанный концерт"
   },
   {
-    "hero_url" : "https://raw.githubusercontent.com/rusyk96/pickmyparty11/main/webp_thumb/nespontann_01.webp",
+    "hero_url" : "https://raw.githubusercontent.com/rusyk96/pickmepartyfest/main/webp_thumb/pickmeparty_01.webp",
     "id" : "pickmeparty",
-    "manifest_url" : "https://raw.githubusercontent.com/rusyk96/pickmyparty11/main/manifest.json",
+    "manifest_url" : "https://raw.githubusercontent.com/rusyk96/pickmepartyfest/main/manifest.json",
     "status" : "active",
     "subtitle" : "Фестиваль ",
     "title" : "Пикмипати"
