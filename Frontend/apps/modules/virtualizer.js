@@ -87,13 +87,6 @@ function handleScrollVelocity() {
   }, 100);
 }
 
-function mountVisibleCardsOnly() {
-  const visibleCards = document.querySelectorAll('.gallery-card[data-in-view="true"]');
-  visibleCards.forEach((card) => {
-    mountImagesInCard(card);
-  });
-}
-
 function mountImagesInCard(card) {
   if (card.dataset.isMounted === 'true') return;
 
@@ -105,21 +98,24 @@ function mountImagesInCard(card) {
 
   card.dataset.isMounted = 'true';
 
-  // Функция для проявки: сначала зажигаем картинку, а скелетон гасим ПОСЛЕ анимации
+  // Функция для проявки с гарантированным запуском CSS Transition
   const revealCard = () => {
-    // 1. Включаем плавную проявляющуюся картинку ПОВЕРХ скелетона
-    img.classList.add('is-loaded');
+    // 🚀 Форсируем смену кадра отрисовки, чтобы браузер точно применил opacity: 0 до старта transition
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        img.classList.add('is-loaded');
 
-    // 2. Снимаем скелетон с небольшой задержкой (когда картинка уже перекрыла его)
-    setTimeout(() => {
-      card.classList.remove('skeleton-active');
-    }, 200);
+        // Снимаем подложку скелетона после полного завершения проявки
+        setTimeout(() => {
+          card.classList.remove('skeleton-active');
+        }, 300);
+      });
+    });
   };
 
-  // Если из кэша — проявляем мгновенно без задержки
+  // Если из кэша — всё равно прогоняем через revealCard для плавности!
   if (img.src === originalSrc && img.complete && img.naturalWidth > 0) {
-    img.classList.add('is-loaded');
-    card.classList.remove('skeleton-active');
+    revealCard();
     return;
   }
 

@@ -26,7 +26,6 @@
   }
 }
 
-/* 🎯 2. КАРТОЧКА-КОНТЕЙНЕР (Определяет тень и микро-интерактив) */
 /* 🎯 2. КАРТОЧКА-КОНТЕЙНЕР */
 .gallery-card {
   position: relative;
@@ -35,23 +34,29 @@
   cursor: pointer;
   box-sizing: border-box;
 
-  /* 🎛 HOUDINI SUPERELLIPSE VARIABLES */
+  /* HOUDINI SUPERELLIPSE VARIABLES */
   --superellipse-n: 4.2;
   --superellipse-color: #121212;
 
   border-radius: 0 !important;
   background: transparent;
 
-  /* 🌌 В покое тень полностью прозрачная (или минимальная) */
+  /* В покое тень полностью прозрачная */
   filter: drop-shadow(0 0 0 rgba(0, 0, 0, 0));
   transition: filter 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   will-change: filter, transform;
 }
 
-/* 🚀 Тень проявляется ИСКЛЮЧИТЕЛЬНО при ховере */
-.gallery-card:hover {
-  /* По желанию можно чуть приподнять: transform: translateY(-2px); */
-  filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.574));
+/* 🚀 Тень и ховер-эффекты ТОЛЬКО для устройств с курсором/мышью */
+@media (hover: hover) and (pointer: fine) {
+  .gallery-card:hover {
+    filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.574));
+  }
+
+  .gallery-card:hover .gallery-img.is-loaded,
+  .gallery-card:hover img.is-loaded {
+    transform: scale(1.04);
+  }
 }
 
 /* 🎯 3. МАСКА СКУИРКЛА НА КАРТИНКЕ */
