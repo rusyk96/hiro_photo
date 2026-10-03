@@ -1,30 +1,12 @@
 // bento-helpers.js
 
-/**
- * Автоматически превращает сырые ссылки GitHub в глобальный CDN jsDelivr
- */
-function toCdnUrl(url) {
-  if (!url || typeof url !== 'string') return '';
-  
-  if (url.includes('raw.githubusercontent.com')) {
-    return url
-      .replace('https://raw.githubusercontent.com/', 'https://cdn.jsdelivr.net/gh/')
-      .replace(/\/main\//, '@main/')
-      .replace(/\/master\//, '@master/');
-  }
-  
-  return url;
-}
-
 export function createCardHtml(photoObj) {
   if (!photoObj) return '';
 
-  const rawSrc = typeof photoObj === 'string' 
+  // Берем оригинальный URL без сторонних CDN-прослоек
+  const thumbSrc = typeof photoObj === 'string' 
     ? photoObj 
     : (photoObj.thumbUrl || photoObj.thumb_url || photoObj.thumb || photoObj.url || photoObj.src);
-
-  // 🚀 Прогоняем через CDN для мгновенной отдачи по HTTP/3
-  const thumbSrc = toCdnUrl(rawSrc);
 
   const originalIdx = photoObj.originalIndex ?? 0;
   const isPortrait = photoObj.isPortrait ?? false;
