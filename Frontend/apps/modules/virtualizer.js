@@ -6,12 +6,11 @@ let lastScrollTop = typeof window !== 'undefined' ? window.scrollY : 0;
 let lastScrollTime = Date.now();
 let isScrollListenerAttached = false;
 
-const VELOCITY_THRESHOLD = 2.5; 
-const EMPTY_PIXEL = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+const VELOCITY_THRESHOLD = 2.5;
 
 const OBSERVER_OPTIONS = {
   root: null,
-  rootMargin: '150% 0px 150% 0px', // Запас прогрузки
+  rootMargin: '150% 0px 150% 0px',
   threshold: 0
 };
 
@@ -46,8 +45,8 @@ export function initChunkVirtualizer(containerId = 'album-gallery-container') {
   cards.forEach((card) => {
     const img = card.querySelector('img');
     if (img) {
-      const src = img.getAttribute('data-original-src') || img.dataset.originalSrc || img.src;
-      if (src && src !== EMPTY_PIXEL) {
+      const src = img.getAttribute('data-original-src') || img.dataset.originalSrc;
+      if (src) {
         img.dataset.originalSrc = src;
       }
       img.setAttribute('decoding', 'async');
@@ -82,7 +81,7 @@ function mountVisibleImagesOnly() {
   visibleCards.forEach((card) => mountImageOnly(card));
 }
 
-// 🎯 МОНТИРУЕМ ТОЛЬКО РАСТР КАРТИНКИ
+// 🎯 МОНТИРУЕМ ТОЛЬКО РАСТР
 function mountImageOnly(card) {
   if (card.dataset.isMounted === 'true') return;
 
@@ -99,14 +98,14 @@ function mountImageOnly(card) {
       img.getAnimations().forEach(anim => anim.cancel());
     }
 
-    // Проявляем растр поверх вечного скелета
+    // WAAPI плавно проявляет картинку поверх готового скелета
     const animation = img.animate(
       [
-        { opacity: 0, transform: 'scale(0.96) translateZ(0)' },
+        { opacity: 0, transform: 'scale(0.97) translateZ(0)' },
         { opacity: 1, transform: 'scale(1) translateZ(0)' }
       ],
       {
-        duration: 400,
+        duration: 350,
         easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
         fill: 'forwards'
       }
@@ -117,7 +116,9 @@ function mountImageOnly(card) {
     };
   };
 
-  if (img.src !== originalSrc) {
+  const currentSrc = img.getAttribute('src');
+
+  if (currentSrc !== originalSrc) {
     img.src = originalSrc;
     if (img.decode) {
       img.decode().then(() => revealImage()).catch(() => revealImage());
@@ -129,7 +130,7 @@ function mountImageOnly(card) {
   }
 }
 
-// 🎯 ВЫГРУЖАЕМ ТОЛЬКО РАСТР ИЗ VRAM (Скелетон остаётся нетронутым)
+// 🎯 ВЫГРУЖАЕМ ИЗ VRAM БЕЗ ПИКСЕЛЯ
 function unmountImageOnly(card) {
   card.dataset.isMounted = 'false';
 
@@ -142,7 +143,9 @@ function unmountImageOnly(card) {
 
   img.classList.remove('is-loaded');
   img.style.opacity = '0';
-  img.src = EMPTY_PIXEL; // Очищаем гигабайты VRAM
+  
+  // 🚀 ГЛАВНЫЙ ФИКС: Просто сбрасываем src полностью!
+  img.removeAttribute('src');
 }
 
 export { initChunkVirtualizer as initVirtualizer };
