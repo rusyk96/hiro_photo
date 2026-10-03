@@ -51,22 +51,23 @@ export async function renderAlbumGallery(albumId) {
   });
 }
 
-function buildSmartBentoGallery(photos) {
+function buildSmartBentoGallery(photos, albumId) {
   const container = document.getElementById('album-gallery-container');
   if (!container || !photos || photos.length === 0) return;
 
   container.innerHTML = '';
   
-  const gridEngine = new GridEngine();
+  // Передаём albumId для фиксированного сида LCG (чтобы паттерн сетки не "прыгал" при перезагрузке)
+  const gridEngine = new GridEngine(albumId);
   const isMobile = window.innerWidth < 768;
 
-  // 🚀 Вся сложная сборка и рандомизация происходит строго один раз внутри движка
+  // 1. Генерируем полный HTML со скелетами
   const fullHtml = gridEngine.generateFullGrid(photos, isMobile);
 
+  // 2. Вставляем ВСЕ скелетоны альбома в DOM сразу
   container.innerHTML = fullHtml;
   initLightboxEvents();
 }
-
 export function waitForFirstImages(count = 4) {
   const container = document.getElementById('album-gallery-container');
   if (!container) return Promise.resolve();

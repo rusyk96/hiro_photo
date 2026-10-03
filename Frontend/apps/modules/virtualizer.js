@@ -103,13 +103,7 @@ function mountImagesInCard(card) {
 
   card.dataset.isMounted = 'true';
 
-  // 1. МГНОВЕННО прячем картинку до любого назначения src,
-  // чтобы браузер не успел моргнуть пустым контейнером при смене EMPTY_PIXEL -> originalSrc
-  img.style.opacity = '0';
-  img.style.willChange = 'opacity, transform';
-
   const revealCard = () => {
-    // Детектируем ориентацию
     const isVertical = card.offsetHeight > card.offsetWidth || 
                        (img.naturalHeight && img.naturalHeight > img.naturalWidth);
 
@@ -119,56 +113,47 @@ function mountImagesInCard(card) {
 
     setTimeout(() => {
       requestAnimationFrame(() => {
-        void img.offsetHeight; // Принудительный Reflow
+        if (typeof img.getAnimations === 'function') {
+          img.getAnimations().forEach(anim => anim.cancel());
+        }
 
-        requestAnimationFrame(() => {
-          if (typeof img.getAnimations === 'function') {
-            img.getAnimations().forEach(anim => anim.cancel());
+        // WAAPI проявляет растр поверх ВСЕГДА ВАЛЯЮЩЕГОСЯ СЕРОГО СКЕЛЕТА
+        const animation = img.animate(
+          [
+            { opacity: 0, transform: `scale(${startScale}) translateZ(0)` },
+            { opacity: 1, transform: 'scale(1) translateZ(0)' }
+          ],
+          {
+            duration: duration,
+            easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
+            fill: 'forwards'
           }
+        );
 
-          // Аппаратная проявка через WAAPI
-          const animation = img.animate(
-            [
-              { opacity: 0, transform: `scale(${startScale}) translateZ(0)` },
-              { opacity: 1, transform: 'scale(1) translateZ(0)' }
-            ],
-            {
-              duration: duration,
-              easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
-              fill: 'forwards'
-            }
-          );
-
-          animation.onfinish = () => {
-            img.classList.add('is-loaded');
-            card.classList.remove('skeleton-active');
-            img.style.opacity = '';
-            img.style.willChange = '';
-          };
-        });
+        animation.onfinish = () => {
+          img.classList.add('is-loaded');
+          card.classList.remove('skeleton-active');
+          img.style.willChange = '';
+        };
       });
     }, delay);
   };
 
-  // 2. Если картинка уже была в кэше и готова — проявляем мгновенно в следующем микротаске
-  if (img.src === originalSrc && img.complete && img.naturalWidth > 0) {
+  // Переключаем src
+  if (img.src !== originalSrc) {
+    // Картинку держим скрыть через класс, пока она загрузится
+    img.classList.remove('is-loaded');
+    card.classList.add('skeleton-active'); // Скелетон под ней виден СРАЗУ
+    img.src = originalSrc;
+
+    if (img.decode) {
+      img.decode().then(() => revealCard()).catch(() => revealCard());
+    } else {
+      img.onload = () => revealCard();
+      img.onerror = () => card.classList.remove('skeleton-active');
+    }
+  } else if (img.complete) {
     revealCard();
-    return;
-  }
-
-  // 3. Ставим реальный src ПОСЛЕ того, как img.style.opacity гарантированно равен '0'
-  img.src = originalSrc;
-
-  if (img.decode) {
-    img.decode()
-      .then(() => revealCard())
-      .catch(() => revealCard());
-  } else {
-    img.onload = () => revealCard();
-    img.onerror = () => {
-      card.classList.remove('skeleton-active');
-      img.style.opacity = '';
-    };
   }
 }
 
@@ -178,21 +163,22 @@ function unmountImagesFromCard(card) {
   const img = card.querySelector('img');
   if (!img) return;
 
-  // 1. Отменяем текущие WAAPI-анимации проявки
+  // Отменяем текущие WAAPI-анимации
   if (typeof img.getAnimations === 'function') {
     img.getAnimations().forEach(anim => anim.cancel());
   }
 
-  // 2. Снимаем с картинки инлайн-стили и класс проявки
-  img.style.opacity = '0';
-  img.classList.remove('is-loaded');
-
-  // 3. Возвращаем скелетон мгновенно без повторной проявки
+  // 1. Возвращаем карточке статус скелетона СРАЗУ
   card.classList.add('skeleton-active');
+  
+  // 2. Снимаем класс загруженности (картинка прячется CSS-правилом .gallery-card:not(.is-loaded) img { opacity: 0 })
+  img.classList.remove('is-loaded');
+  
+  // 3. Убираем инлайн-стили opacity, чтобы CSS полностью управлял картинкой
+  img.style.opacity = '';
 
-  // 4. Освобождаем память VRAM от растра
+  // 4. Освобождаем VRAM
   img.src = EMPTY_PIXEL;
-  img.removeAttribute('src');
 }
 
 // 🚀 ЭКСПОРТ-АЛИАС (для поддержки импортов)

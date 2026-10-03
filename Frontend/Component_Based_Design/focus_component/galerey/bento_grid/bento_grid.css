@@ -42,21 +42,30 @@
   width: 100%;
 }
 
-/* 🎯 Пропорции карточек (Десктоп) */
-.atom-hl .gallery-card,
-.atom-hs .gallery-card {
-  aspect-ratio: 16 / 10;
+/* Геометрия держателей */
+.atom-hl .gallery-card, .atom-hs .gallery-card { aspect-ratio: 16 / 10; }
+.atom-vl .gallery-card, .atom-vs .gallery-card { aspect-ratio: 3 / 4; }
+
+/* Скелетон по умолчанию */
+.gallery-card {
+  position: relative;
+  background-color: #121212; /* Цвет скелетона до загрузки */
+  overflow: hidden;
   width: 100%;
   height: 100%;
-  /* ❌ Убрали object-fit: cover (он должен быть только у img) */
 }
 
-.atom-vl .gallery-card,
-.atom-vs .gallery-card {
-  aspect-ratio: 3 / 4;
+/* Плавное проявление растра поверх скелетона */
+.gallery-card img {
   width: 100%;
   height: 100%;
-  /* ❌ Убрали object-fit: cover */
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.25s ease-in-out;
+}
+
+.gallery-card img.loaded {
+  opacity: 1;
 }
 
 /* ==========================================================================
