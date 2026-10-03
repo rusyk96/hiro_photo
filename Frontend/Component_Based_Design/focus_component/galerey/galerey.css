@@ -82,27 +82,24 @@
 }
 
 /* 🎯 4. МАСКА СКУИРКЛА И РАСТР ФОТОГРАФИИ */
+/* 🎯 4. МАСКА СКУИРКЛА И РАСТР ФОТОГРАФИИ */
 .gallery-img,
 .gallery-card img {
-  position: relative;
-  z-index: 3; /* Картинка перекрывает подложку ::before (у подложки z-index: 1) */
+  position: absolute; /* Absolute позиционирование намертво привязывает фото к границам .gallery-card */
+  inset: 0;
+  z-index: 3;
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
   
-  /* Исходное состояние: картинка полностью прозрачна (виден вечный скелетон) */
   opacity: 0;
   
-  min-width: 0;
-  min-height: 0;
-
   background: paint(superellipse);
   -webkit-mask-image: paint(superellipse);
   mask-image: paint(superellipse);
   border-radius: 16px; 
 }
-
 /* Финальное состояние проявки растра */
 .gallery-img.is-loaded,
 .gallery-card img.is-loaded {
