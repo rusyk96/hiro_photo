@@ -1,24 +1,17 @@
-/**
- * Нативный виртуализатор VRAM с виртуализацией DOM
- */
+// --- VIRTUALIZER.JS ---
 
 let isFastScrolling = false;
 let scrollTimeout = null;
-let lastScrollTop = window.scrollY;
+let lastScrollTop = typeof window !== 'undefined' ? window.scrollY : 0;
 let lastScrollTime = Date.now();
 let isScrollListenerAttached = false;
 
 const VELOCITY_THRESHOLD = 2.5; 
-
-// Прозрачный 1x1 GIF для освобождения VRAM
 const EMPTY_PIXEL = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
 
-const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
-
-// Увеличенный запас прогрузки карточек (до появления на экране)
 const OBSERVER_OPTIONS = {
   root: null,
-  rootMargin: '200% 0px 200% 0px',
+  rootMargin: '150% 0px 150% 0px', // Запас прогрузки
   threshold: 0
 };
 
@@ -40,14 +33,12 @@ export function initChunkVirtualizer(containerId = 'album-gallery-container') {
 
       if (entry.isIntersecting) {
         card.dataset.inView = 'true';
-
         if (!isFastScrolling) {
-          mountImagesInCard(card);
+          mountImageOnly(card);
         }
       } else {
         card.dataset.inView = 'false';
-        // Выгружаем из VRAM только когда карточка реально далеко за пределами rootMargin
-        unmountImagesFromCard(card);
+        unmountImageOnly(card);
       }
     });
   }, OBSERVER_OPTIONS);
@@ -61,7 +52,6 @@ export function initChunkVirtualizer(containerId = 'album-gallery-container') {
       }
       img.setAttribute('decoding', 'async');
     }
-
     observer.observe(card);
   });
 }
@@ -83,16 +73,17 @@ function handleScrollVelocity() {
   clearTimeout(scrollTimeout);
   scrollTimeout = setTimeout(() => {
     isFastScrolling = false;
-    mountVisibleCardsOnly();
+    mountVisibleImagesOnly();
   }, 100);
 }
 
-function mountVisibleCardsOnly() {
+function mountVisibleImagesOnly() {
   const visibleCards = document.querySelectorAll('.gallery-card[data-in-view="true"]');
-  visibleCards.forEach((card) => mountImagesInCard(card));
+  visibleCards.forEach((card) => mountImageOnly(card));
 }
 
-function mountImagesInCard(card) {
+// 🎯 МОНТИРУЕМ ТОЛЬКО РАСТР КАРТИНКИ
+function mountImageOnly(card) {
   if (card.dataset.isMounted === 'true') return;
 
   const img = card.querySelector('img');
@@ -103,83 +94,55 @@ function mountImagesInCard(card) {
 
   card.dataset.isMounted = 'true';
 
-  const revealCard = () => {
-    const isVertical = card.offsetHeight > card.offsetWidth || 
-                       (img.naturalHeight && img.naturalHeight > img.naturalWidth);
+  const revealImage = () => {
+    if (typeof img.getAnimations === 'function') {
+      img.getAnimations().forEach(anim => anim.cancel());
+    }
 
-    const delay = isVertical ? 70 : 40;
-    const duration = isVertical ? 550 : 400;
-    const startScale = isVertical ? 0.98 : 0.96;
+    // Проявляем растр поверх вечного скелета
+    const animation = img.animate(
+      [
+        { opacity: 0, transform: 'scale(0.96) translateZ(0)' },
+        { opacity: 1, transform: 'scale(1) translateZ(0)' }
+      ],
+      {
+        duration: 400,
+        easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
+        fill: 'forwards'
+      }
+    );
 
-    setTimeout(() => {
-      requestAnimationFrame(() => {
-        if (typeof img.getAnimations === 'function') {
-          img.getAnimations().forEach(anim => anim.cancel());
-        }
-
-        // WAAPI проявляет растр поверх ВСЕГДА ВАЛЯЮЩЕГОСЯ СЕРОГО СКЕЛЕТА
-        const animation = img.animate(
-          [
-            { opacity: 0, transform: `scale(${startScale}) translateZ(0)` },
-            { opacity: 1, transform: 'scale(1) translateZ(0)' }
-          ],
-          {
-            duration: duration,
-            easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
-            fill: 'forwards'
-          }
-        );
-
-        animation.onfinish = () => {
-          img.classList.add('is-loaded');
-          card.classList.remove('skeleton-active');
-          img.style.willChange = '';
-        };
-      });
-    }, delay);
+    animation.onfinish = () => {
+      img.classList.add('is-loaded');
+    };
   };
 
-  // Переключаем src
   if (img.src !== originalSrc) {
-    // Картинку держим скрыть через класс, пока она загрузится
-    img.classList.remove('is-loaded');
-    card.classList.add('skeleton-active'); // Скелетон под ней виден СРАЗУ
     img.src = originalSrc;
-
     if (img.decode) {
-      img.decode().then(() => revealCard()).catch(() => revealCard());
+      img.decode().then(() => revealImage()).catch(() => revealImage());
     } else {
-      img.onload = () => revealCard();
-      img.onerror = () => card.classList.remove('skeleton-active');
+      img.onload = () => revealImage();
     }
   } else if (img.complete) {
-    revealCard();
+    revealImage();
   }
 }
 
-function unmountImagesFromCard(card) {
+// 🎯 ВЫГРУЖАЕМ ТОЛЬКО РАСТР ИЗ VRAM (Скелетон остаётся нетронутым)
+function unmountImageOnly(card) {
   card.dataset.isMounted = 'false';
 
   const img = card.querySelector('img');
   if (!img) return;
 
-  // Отменяем текущие WAAPI-анимации
   if (typeof img.getAnimations === 'function') {
     img.getAnimations().forEach(anim => anim.cancel());
   }
 
-  // 1. Возвращаем карточке статус скелетона СРАЗУ
-  card.classList.add('skeleton-active');
-  
-  // 2. Снимаем класс загруженности (картинка прячется CSS-правилом .gallery-card:not(.is-loaded) img { opacity: 0 })
   img.classList.remove('is-loaded');
-  
-  // 3. Убираем инлайн-стили opacity, чтобы CSS полностью управлял картинкой
-  img.style.opacity = '';
-
-  // 4. Освобождаем VRAM
-  img.src = EMPTY_PIXEL;
+  img.style.opacity = '0';
+  img.src = EMPTY_PIXEL; // Очищаем гигабайты VRAM
 }
 
-// 🚀 ЭКСПОРТ-АЛИАС (для поддержки импортов)
 export { initChunkVirtualizer as initVirtualizer };
