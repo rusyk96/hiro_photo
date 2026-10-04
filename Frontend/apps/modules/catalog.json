@@ -20,8 +20,16 @@
     "id" : "kitzamarket",
     "manifest_url" : "https://raw.githubusercontent.com/rusyk96/kitzamarket/main/manifest.json",
     "status" : "active",
-    "subtitle" : "Косплей маркет ",
+    "subtitle" : "Косплей маркет",
     "title" : "КИЦА"
+  },
+  {
+    "hero_url" : "https://raw.githubusercontent.com/rusyk96/volna/main/webp_thumb/volna_412.webp",
+    "id" : "volna",
+    "manifest_url" : "https://raw.githubusercontent.com/rusyk96/volna/main/manifest.json",
+    "status" : "active",
+    "subtitle" : "Фестиваль — концерт",
+    "title" : "Моя волна"
   }
 
 ]
