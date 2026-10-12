@@ -45,10 +45,12 @@
 }
 
 /* Активная карточка с фото */
+/* Активная карточка с фото */
 .work-card.card-active {
-  /* Временно убираем paint(), проверяем, появится ли картинка в Блинке */
-  background: var(--card-bg-url) center / cover no-repeat;
-  background-color: #1a1a1a;
+  background-image: var(--card-bg-url);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 /* 🚀 ХОВЕР 2: Затемнение + Мягкая глубокая тень суперэллипса */
