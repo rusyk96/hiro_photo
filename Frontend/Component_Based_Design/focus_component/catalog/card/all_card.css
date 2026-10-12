@@ -27,14 +27,14 @@
   justify-content: center;
   box-sizing: border-box;
   
-  /* 🎛 ПАРАМЕТРЫ СУПЕРЭЛЛИПСА (Houdini Worklet) */
   --superellipse-n: 4;
   --superellipse-color: #E2DFD9; 
   
-  /* Используем фоновую кисть ворклета вместо обычного background-color */
-  background: paint(superellipse);
-  -webkit-mask-image: paint(superellipse);
-  mask-image: paint(superellipse);
+  background: var(--card-bg-url) center / cover no-repeat; /* Чистый фон для теста */
+  
+  /* ✂️ ВРЕМЕННО ВЫКЛЮЧАЕМ МАСКУ ДЛЯ ПРОВЕРКИ */
+  /* -webkit-mask-image: paint(superellipse); */
+  /* mask-image: paint(superellipse); */
 
   border-radius: 16px; /* Фолбэк для браузеров без Houdini */
   border: none;
