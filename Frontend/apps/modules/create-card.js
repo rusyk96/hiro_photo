@@ -1,4 +1,4 @@
-//* --- CREATE-CARD.JS (WITH DETAILED LOGS) --- */
+//* --- CREATE-CARD.JS --- */
 
 /**
  * Генерирует одну карточку альбома (DOM-элемент)
@@ -32,9 +32,9 @@ export function createCard(album, onAlbumClick) {
     workCard.appendChild(badge);
     console.log('⏳ Добавлен бэдж COMING SOON');
   } else {
-    // Подставляем кастомную hero-обложку и логируем её
-    console.log(`🖼️ Установка background-image для ${album.id}:`, album.hero_url);
-    workCard.style.backgroundImage = `url('${album.hero_url}')`;
+    // 🚀 ПРАВИЛЬНОЕ МЕСТО: Передаем URL через CSS-переменную для Houdini-ворклета
+    console.log(`🖼️ Установка переменной фона для ${album.id}:`, album.hero_url);
+    workCard.style.setProperty('--card-bg-url', `url('${album.hero_url}')`);
   }
 
   // 3. Блок текстовой мета-информации под обложкой (.card-meta)
@@ -63,11 +63,11 @@ export function createCard(album, onAlbumClick) {
   if (!isComingSoon && typeof onAlbumClick === 'function') {
     itemLink.addEventListener('click', (e) => {
       e.preventDefault();
-      console.log(`🚀 Клик по карточке альбома: ${album.id}`);
+      console.log(`🚀 Клик по альбома: ${album.id}`);
       onAlbumClick(album.id);
     });
   } else if (!isComingSoon) {
-    console.warn(`⚠️ Коллбэк onAlbumClick не передан или не является функцией для альбома: ${album.id}`);
+    console.warn(`⚠️ Коллбэк onAlbumClick не передан для альбома: ${album.id}`);
   }
 
   console.log(`✅ Карточка ${album?.id} успешно собрана`);

@@ -46,9 +46,7 @@
 
 /* Активная карточка с фото */
 .work-card.card-active {
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  background: var(--card-bg-url) center / cover no-repeat, paint(superellipse);
 }
 
 /* 🚀 ХОВЕР 2: Затемнение + Мягкая глубокая тень суперэллипса */
