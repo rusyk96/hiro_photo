@@ -52,6 +52,36 @@
   animation: fadeIn 0.3s ease-out forwards, pulse 3s ease-in-out 0.3s infinite alternate;
 }
 
+.loader-content-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.loader-logo {
+  width: 120px; /* Задай размер логотипа под себя, если еще не задан */
+  height: auto;
+}
+
+/* Дорожка прогресс-бара */
+.loader-progress-track {
+  width: 200px;
+  height: 6px;
+  background: rgba(18, 18, 18, 0.08);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+/* Бегунок */
+.loader-progress-bar {
+  width: 0%;
+  height: 100%;
+  background-color: #F89721;
+  border-radius: 99px;
+  transition: width 0.2s ease-out;
+}
+
 @keyframes fadeIn {
   to {
     opacity: 1;
