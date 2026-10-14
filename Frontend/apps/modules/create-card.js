@@ -2,7 +2,6 @@
 
 /**
  * Генерирует одну карточку альбома (DOM-элемент)
- * 
  * @param {Object} album Данные альбома из catalog.json
  * @param {Function} onAlbumClick Коллбэк для перехода в SPA
  * @returns {HTMLElement} Ссылка-контейнер .catalog-item
@@ -32,9 +31,26 @@ export function createCard(album, onAlbumClick) {
     workCard.appendChild(badge);
     console.log('⏳ Добавлен бэдж COMING SOON');
   } else {
-    // 🚀 ПРАВИЛЬНОЕ МЕСТО: Передаем URL через CSS-переменную для Houdini-ворклета
-    console.log(`🖼️ Установка переменной фона для ${album.id}:`, album.hero_url);
-    workCard.style.setProperty('--card-bg-url', `url('${album.hero_url}')`);
+    // 🚀 ПЛАВНАЯ ПРЕДЗАГРУЗКА ИЗОБРАЖЕНИЯ
+    console.log(`🖼️ Предзагрузка изображения для ${album.id}:`, album.hero_url);
+    
+    const img = new Image();
+    img.src = album.hero_url;
+
+    const revealImage = () => {
+      workCard.style.setProperty('--card-bg-url', `url('${album.hero_url}')`);
+      // Микро-пауза через requestAnimationFrame для идеальной плавности рендера
+      requestAnimationFrame(() => {
+        workCard.classList.add('is-loaded');
+        console.log(`✨ Картинка для ${album.id} плавно проявилась`);
+      });
+    };
+
+    if (img.complete) {
+      revealImage();
+    } else {
+      img.onload = revealImage;
+    }
   }
 
   // 3. Блок текстовой мета-информации под обложкой (.card-meta)
@@ -63,7 +79,7 @@ export function createCard(album, onAlbumClick) {
   if (!isComingSoon && typeof onAlbumClick === 'function') {
     itemLink.addEventListener('click', (e) => {
       e.preventDefault();
-      console.log(`🚀 Клик по альбома: ${album.id}`);
+      console.log(`🚀 Клик по альбому: ${album.id}`);
       onAlbumClick(album.id);
     });
   } else if (!isComingSoon) {
@@ -78,7 +94,6 @@ export function createCard(album, onAlbumClick) {
 
 /**
  * Функция-пакет: Рендерит весь массив карточек в указанный контейнер
- * 
  * @param {HTMLElement} container Элемент #catalog-cards-container
  * @param {Array} catalogData Данные из catalog.json
  * @param {Function} onAlbumClick Коллбэк для перехода в альбом

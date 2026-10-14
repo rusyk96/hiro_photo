@@ -1,18 +1,20 @@
-<!-- 1. Сам header становится полосой на 100% ширины -->
 <header class="header-banner">
-  
-  <!-- 2. Внутри включаем ограничитель геометрии (сетку) -->
   <div class="container">
     <div class="site-header">
+      
+      <!-- Логотип слева -->
       <a href="/" class="header-logo" aria-label="Главная">
-        <img 
-          src="assets/img/logo/logo_gorisonal.svg" 
-          alt="Logo" 
-          class="logo-img"
-        />
+        <img src="assets/img/logo/logo_gorisonal.svg" alt="Logo" class="logo-img"/>
       </a>
       
-      <!-- Соцсети вместо "обо мне" -->
+      <!-- ТОГЛЫ (Табы) по центру -->
+      <nav class="header-tabs" aria-label="Категории съемок">
+        <button class="tab-btn active" data-category="concert">Концерт</button>
+        <button class="tab-btn" data-category="festival">Фестиваль</button>
+        <button class="tab-btn" data-category="cosplay">Косплей</button>
+      </nav>
+
+      <!-- Соцсети справа -->
       <nav class="header-nav">
         <ul class="social-links">
           <li>
@@ -27,7 +29,7 @@
           </li>
         </ul>
       </nav>
+
     </div>
   </div>
-
 </header>

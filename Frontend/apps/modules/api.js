@@ -95,7 +95,10 @@ export async function fetchAlbumManifest(albumId) {
 
     return {
       id: albumId,
-      catalog: manifestData.catalog || albumInfo || {},
+      catalog: {
+        ...(manifestData.catalog || {}),
+        ...albumInfo // <-- вот эта строчка гарантирует, что твоя категория из catalog.json точно попадет внутрь
+      },
       polaroid: manifestData.polaroid || {},
       photos: photos
     };

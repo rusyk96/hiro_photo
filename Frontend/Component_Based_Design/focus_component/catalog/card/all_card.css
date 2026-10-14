@@ -1,5 +1,17 @@
 /* --- CATALOG GRID & CARDS --- */
 
+/* 🚀 АНИМАЦИЯ ПОЯВЛЕНИЯ КАРТОЧЕК */
+@keyframes cardEntrance {
+  0% {
+    opacity: 0;
+    transform: translateY(24px); /* Чуть ниже исходной позиции */
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);    /* Встает на место */
+  }
+}
+
 /* Контейнер всей карточки (Картинка + Мета под ней) */
 .catalog-item {
   display: flex;
@@ -11,7 +23,19 @@
   width: 100%;
   align-self: start; /* Защита от растягивания по вертикали в Grid */
   transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Запуск анимации при рендере */
+  opacity: 0; /* Изначально скрыта, пока не сработает анимация */
+  animation: cardEntrance 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+/* 🌟 Каскадная задержка для красивого эффекта поочередного появления */
+.catalog-item:nth-child(1) { animation-delay: 0.04s; }
+.catalog-item:nth-child(2) { animation-delay: 0.08s; }
+.catalog-item:nth-child(3) { animation-delay: 0.12s; }
+.catalog-item:nth-child(4) { animation-delay: 0.16s; }
+.catalog-item:nth-child(5) { animation-delay: 0.20s; }
+.catalog-item:nth-child(6) { animation-delay: 0.24s; }
 
 /* 🚀 ХОВЕР 1: Плавное приподнимание всей карточки */
 .catalog-item:not(.card-disabled):hover {
@@ -30,21 +54,27 @@
   --superellipse-n: 4;
   --superellipse-color: #E2DFD9; 
   
-  background: var(--card-bg-url) center / cover no-repeat; /* Чистый фон для теста */
+  /* Изначально картинка скрыта (прозрачная) */
+  background: transparent center / cover no-repeat;
+  opacity: 0;
+  transform: scale(0.98); /* Чуть уменьшена для эффекта мягкого приближения */
   
-  /* ✂️ ВРЕМЕННО ВЫКЛЮЧАЕМ МАСКУ ДЛЯ ПРОВЕРКИ */
-  /* -webkit-mask-image: paint(superellipse); */
-  /* mask-image: paint(superellipse); */
-
-  border-radius: 16px; /* Фолбэк для браузеров без Houdini */
+  border-radius: 16px;
   border: none;
   
-  /* 🌌 Базовая тень по форме сквиркла */
   filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.06));
-  transition: filter 0.25s ease, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  
+  /* Плавный переход для появления */
+  transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), filter 0.25s ease;
 }
 
-/* Активная карточка с фото */
+/* Когда JS отдал картинку и повесил класс — она плавно проявляется */
+.work-card.is-loaded {
+  background-image: var(--card-bg-url);
+  opacity: 1;
+  transform: scale(1);
+}
+
 /* Активная карточка с фото */
 .work-card.card-active {
   background-image: var(--card-bg-url);
@@ -60,8 +90,8 @@
 
 /* 1. Блок карточки "Coming Soon" */
 .card-disabled .work-card {
-  background-color: transparent; /* Убираем фоновый цвет, ломавший Houdini */
-  --superellipse-color: #9B9A9A; /* Цвет отдаем напрямую в ворклет */
+  background-color: transparent;
+  --superellipse-color: #9B9A9A;
   opacity: 1; 
   filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.04));
 }
@@ -118,36 +148,35 @@
 /* --- MOBILE ADAPTIVE (<= 768px) --- */
 @media (max-width: 768px) {
   .catalog-grid {
-    grid-template-columns: repeat(2, 1fr); /* Ровно 2 колонки на телефоне */
-    gap: 20px 12px; /* Уменьшаем щели между карточками */
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px 12px;
     margin-bottom: 40px;
   }
 
   .catalog-item {
-    gap: 8px; /* Уменьшаем зазор между сквирклом и текстом под ним */
+    gap: 8px;
   }
 
   .work-card {
-    border-radius: 12px; /* Корректируем фолбэк скругления */
+    border-radius: 12px;
   }
 
   .card-disabled .status-badge {
-    font-size: 9px; /* Уменьшаем плашку COMING SOON, чтобы не вылезала на мелких экранах */
+    font-size: 9px;
     padding: 4px 8px;
     letter-spacing: 0.08em;
   }
 
   .meta-title {
-    font-size: 1.25rem; /* Уменьшаем Bebas Neue под узкие колонки */
+    font-size: 1.25rem;
     line-height: 1.1;
   }
 
   .meta-subtitle {
-    font-size: 0.78rem; /* Компактный сабтайтл */
+    font-size: 0.78rem;
   }
 }
 
-/* Совсем узкие экраны (<= 380px) — если нужно в 1 колонку */
 @media (max-width: 380px) {
   .catalog-grid {
     grid-template-columns: 1fr;

@@ -1,16 +1,18 @@
 /* Внешняя полоса — закрашивает весь экран по ширине */
 .header-banner {
   width: 100%;
-  background-color: #EDE7E4; /* Твой цвет фона */
-  margin-bottom: 40px;       /* Отодвигаем весь блок с фоном от контента ниже */
+  background-color: #EDE7E4;
+  margin-bottom: 40px;
 }
 
+/* --- СЕТКА ХЕДЕРА (ДЕСКТОП) --- */
 .site-header {
   display: flex;
-  align-items: center;            /* Выравнивание по вертикальному центру */
-  justify-content: space-between; /* Логотип слева, навигация справа */
+  align-items: center;
+  justify-content: space-between;
   padding-top: 20px;
   padding-bottom: 20px;
+  position: relative;
 }
 
 /* Контейнер логотипа */
@@ -22,25 +24,57 @@
 
 /* Картинка логотипа */
 .logo-img {
-  /* clamp(МИНИМУМ, ДИНАМИКА, МАКСИМУМ) */
   height: clamp(48px, 8vw, 80px);
-  width: auto; /* Сохраняет идеальные пропорции SVG */
+  width: auto;
   display: block;
-  transition: height 0.2s ease; /* Плавность при ресайзе */
+  transition: height 0.2s ease;
+}
+
+/* --- СТИЛИ ТОГЛОВ (ТАБОВ) ПО ЦЕНТРУ --- */
+.header-tabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px;
+  border-radius: 99px;
+}
+
+.tab-btn {
+  font-family: 'Steppe', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #121212;
+  background: transparent;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 99px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  text-transform: none;
+}
+
+.tab-btn:hover {
+  background: rgba(248, 151, 33, 0.15);
+}
+
+.tab-btn.active {
+  background-color: #F89721;
+  color: #121212;
+  font-weight: 600;
 }
 
 /* --- HEADER SOCIAL LINKS --- */
 .header-nav .social-links {
   display: flex;
   align-items: center;
-  gap: 24px; /* Расстояние между ссылками */
+  gap: 24px;
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
 .social-link {
-  font-family: 'Steppe', sans-serif; /* или твой основной шрифт */
+  font-family: 'Steppe', sans-serif;
   font-size: 0.95rem;
   font-weight: 500;
   color: #121212;
@@ -53,4 +87,90 @@
 
 .social-link:hover {
   opacity: 1;
+}
+
+/* --- МОБИЛЬНЫЙ АДАПТИВ (<= 850px) --- */
+@media (max-width: 850px) {
+  .site-header {
+    display: grid;
+    /* 1-я строка: Лого (авто) | Свободный отступ (1fr) | Соцсети (авто)
+       2-я строка: Табы на всю ширину */
+    grid-template-columns: auto 1fr auto;
+    grid-template-rows: auto auto;
+    align-items: center;
+    gap: 16px 0; /* Отступ только между 1-й и 2-й строкой */
+    padding-top: 24px;
+    padding-bottom: 16px;
+  }
+
+  /* Логотип слева в 1-й строке */
+  .header-logo {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  /* Соцсети справа в 1-й строке */
+  .header-nav {
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: end;
+  }
+
+  /* Табы во 2-й строке ровно по центру */
+  .header-tabs {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-content: center;
+    width: 100%;
+  }
+
+  /* Чуть уменьшаем лого на мобилке, чтобы смотрелось изящно */
+  .logo-img {
+    height: 48px;
+  }
+}
+
+/* --- HEADER GALLERY --- */
+.back-to-catalog-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Steppe', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #121212;
+  text-decoration: none;
+  padding: 8px 16px;
+  border-radius: 99px;
+  background: rgba(18, 18, 18, 0.04);
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.back-to-catalog-btn:hover {
+  background: #F89721; /* Ваш фирменный оранжевый акцент */
+  color: #121212;
+  transform: translateX(-2px); /* Легкое смещение влево при наведении */
+}
+
+.back-to-catalog-btn svg {
+  transition: transform 0.2s ease;
+}
+
+.back-to-catalog-btn:hover svg {
+  transform: translateX(-2px);
+}
+
+/* Мобильный адаптив для хедера галереи */
+@media (max-width: 850px) {
+  .header-gallery-banner .site-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  /* На мобилке можно оставить только иконку/компактную кнопку */
+  .back-to-catalog-btn {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+  }
 }

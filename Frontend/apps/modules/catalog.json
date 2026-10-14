@@ -5,15 +5,17 @@
     "manifest_url" : "https://raw.githubusercontent.com/rusyk96/nespontanncon/main/manifest.json",
     "status" : "active",
     "subtitle" : "концерт",
-    "title" : "не спонтанный концерт"
+    "title" : "не спонтанный концерт",
+    "category": "concert"  
   },
   {
     "hero_url" : "https://raw.githubusercontent.com/rusyk96/pickmepartyfest/main/webp_thumb/pickmeparty_01.webp",
     "id" : "pickmeparty",
     "manifest_url" : "https://raw.githubusercontent.com/rusyk96/pickmepartyfest/main/manifest.json",
     "status" : "active",
-    "subtitle" : "Фестиваль ",
-    "title" : "Пикмипати"
+    "subtitle" : "Фестиваль",
+    "title" : "Пикмипати",
+    "category": "festival"  
   },
   {
     "hero_url" : "https://raw.githubusercontent.com/rusyk96/kitzamarket/main/webp_thumb/nespontann_136.webp",
@@ -21,7 +23,8 @@
     "manifest_url" : "https://raw.githubusercontent.com/rusyk96/kitzamarket/main/manifest.json",
     "status" : "active",
     "subtitle" : "Косплей маркет",
-    "title" : "КИЦА"
+    "title" : "КИЦА",
+    "category": "festival"  
   },
   {
     "hero_url" : "https://raw.githubusercontent.com/rusyk96/volna/main/webp_thumb/volna_412.webp",
@@ -29,7 +32,8 @@
     "manifest_url" : "https://raw.githubusercontent.com/rusyk96/volna/main/manifest.json",
     "status" : "active",
     "subtitle" : "Фестиваль — концерт",
-    "title" : "Моя волна"
+    "title" : "Моя волна",
+    "category": "concert"  
   }
 
 ]
